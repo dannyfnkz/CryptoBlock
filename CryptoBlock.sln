@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.2015
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoBlock", "CryptoBlock1\CryptoBlock.csproj", "{3CF77A46-06F1-49A8-AE1D-564CCFDF9EB2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CMCAPI", "CMCAPI\CMCAPI.csproj", "{E0987F07-CFDE-4CF1-BA7B-23F1A53A7D34}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils", "Utils\Utils.csproj", "{6F6A790C-B7FD-4BE0-BC50-D9405654EB6B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3CF77A46-06F1-49A8-AE1D-564CCFDF9EB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3CF77A46-06F1-49A8-AE1D-564CCFDF9EB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3CF77A46-06F1-49A8-AE1D-564CCFDF9EB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3CF77A46-06F1-49A8-AE1D-564CCFDF9EB2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E0987F07-CFDE-4CF1-BA7B-23F1A53A7D34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E0987F07-CFDE-4CF1-BA7B-23F1A53A7D34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E0987F07-CFDE-4CF1-BA7B-23F1A53A7D34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E0987F07-CFDE-4CF1-BA7B-23F1A53A7D34}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F6A790C-B7FD-4BE0-BC50-D9405654EB6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F6A790C-B7FD-4BE0-BC50-D9405654EB6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F6A790C-B7FD-4BE0-BC50-D9405654EB6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F6A790C-B7FD-4BE0-BC50-D9405654EB6B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2B291AB4-9383-4997-A8AE-6EFF1D8FB7CC}
+	EndGlobalSection
+EndGlobal
