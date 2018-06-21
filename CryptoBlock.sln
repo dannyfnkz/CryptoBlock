@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27428.2015
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoBlock", "CryptoBlock1\CryptoBlock.csproj", "{3CF77A46-06F1-49A8-AE1D-564CCFDF9EB2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoBlock", "CryptoBlock\CryptoBlock.csproj", "{3CF77A46-06F1-49A8-AE1D-564CCFDF9EB2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CMCAPI", "CMCAPI\CMCAPI.csproj", "{E0987F07-CFDE-4CF1-BA7B-23F1A53A7D34}"
 EndProject
