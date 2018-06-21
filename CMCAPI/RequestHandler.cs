@@ -155,16 +155,16 @@ namespace CryptoBlock
             /// <see cref="StaticCoinData"/>array containing data of all coins in database,
             /// each element encapsulating static server data corresponding to a specific coin.
             /// </returns>
-            public static StaticCoinData[] RequestStaticCoinData()
+            public static CoinListing[] RequestCoinListings()
             {
-                StaticCoinData[] staticCoinDataArray;
+                CoinListing[] coinListingsArray;
 
                 string serverResponse = sendDataRequest(LISTINGS_REQUEST_URL);
 
                 try
                 {
-                    staticCoinDataArray = StaticCoinData.ParseStaticCoinDataArray(serverResponse);
-                    return staticCoinDataArray;
+                    coinListingsArray = CoinListing.ParseStaticCoinDataArray(serverResponse);
+                    return coinListingsArray;
 
                 }
                 catch (DataParseException dataParseException)

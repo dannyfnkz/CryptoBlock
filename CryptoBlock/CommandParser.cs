@@ -40,7 +40,17 @@ namespace CryptoBlock
 
             if (lowerCaseCommand.StartsWith("view data "))
             {
-                string[] parameters = StringUtils.Split(StringUtils.Substring(lowerCaseCommand, "view data "), " ");
+                string parameterString = StringUtils.Substring(lowerCaseCommand, "view data ");
+                string[] parameters;
+                if(parameterString != string.Empty)
+                {
+                    parameters = StringUtils.Split(parameterString, " ");
+                }
+                else
+                {
+                    parameters = new string[0];
+                }
+
                 parseViewDataCommand(parameters);
             }
             else
@@ -57,6 +67,7 @@ namespace CryptoBlock
             if(parameters.Length != 1)
             {
                 ConsoleUtils.LogLine("Wrong number of arguments.");
+                return;
             }
 
             string coinNameOrSymbol = parameters[0];

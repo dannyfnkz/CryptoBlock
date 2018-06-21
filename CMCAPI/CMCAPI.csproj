@@ -54,7 +54,7 @@
     <Compile Include="HttpGetRequestHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RequestHandler.cs" />
-    <Compile Include="StaticCoinData.cs" />
+    <Compile Include="CoinListing.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

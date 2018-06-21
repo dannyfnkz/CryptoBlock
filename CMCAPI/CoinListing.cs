@@ -6,14 +6,14 @@ namespace CryptoBlock
 {
     namespace CMCAPI
     {
-        public class StaticCoinData : Data
+        public class CoinListing : Data
         {
             private int id;
             private string name;
             private string symbol;
             private long unixTimestamp;
 
-            public StaticCoinData(int id, string name, string symbol, long unixTimestamp)
+            public CoinListing(int id, string name, string symbol, long unixTimestamp)
             {
                 this.id = id;
                 this.name = name;
@@ -44,9 +44,9 @@ namespace CryptoBlock
             // throws DataParseException.NullMetadataFieldException if metadata field was null
             // throws DataParseException.NullDataFieldException if data field was null
             // throws DataParseException if an inner data / metadata field was null
-            internal static StaticCoinData[] ParseStaticCoinDataArray(string ListingJSONString)
+            internal static CoinListing[] ParseStaticCoinDataArray(string ListingJSONString)
             {
-                StaticCoinData[] staticCoinDataArray = null;
+                CoinListing[] coinListingArray = null;
 
                 try
                 {
@@ -62,12 +62,12 @@ namespace CryptoBlock
                         throw new DataPropertyParseException("data.num_cryptocurrencies");
                     }
 
-                    staticCoinDataArray = new StaticCoinData[staticCoinDataArrayLength];
+                    coinListingArray = new CoinListing[staticCoinDataArrayLength];
 
                     JToken CoinListingsArray = staticCoinDataJToken["data"];
-                    fillStaticCoinDataArray(staticCoinDataArray, CoinListingsArray);
+                    fillStaticCoinDataArray(coinListingArray, CoinListingsArray);
 
-                    return staticCoinDataArray;
+                    return coinListingArray;
                 }
                 catch (Exception exception)
                 {
@@ -84,7 +84,7 @@ namespace CryptoBlock
 
             // throws ArgumentNullException if a required field does not exist in staticCoinDataJSONObject
             private static void fillStaticCoinDataArray(
-                StaticCoinData[] staticCoinDataArray,
+                CoinListing[] staticCoinDataArray,
                 JToken CoinListingArrayJToken)
             {
                 try
@@ -101,7 +101,7 @@ namespace CryptoBlock
                         string symbol = GetPropertyValue<string>(currentCoinListing, "symbol");
                         long unixTimestamp = Utils.DateTimeUtils.GetUnixTimestamp();
 
-                        staticCoinDataArray[i] = new StaticCoinData(id, name, symbol, unixTimestamp);
+                        staticCoinDataArray[i] = new CoinListing(id, name, symbol, unixTimestamp);
                     }
                 }
 

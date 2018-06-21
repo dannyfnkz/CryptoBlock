@@ -64,18 +64,18 @@ namespace CryptoBlock
 
         internal static void ExecuteViewDataCommand(string coinNameOrSymbol)
         {
-            if(StaticCoinDataManager.Instance.CoinNameExists(coinNameOrSymbol)
-                || StaticCoinDataManager.Instance.CoinSymbolExists(coinNameOrSymbol))
+            if(CoinListingManager.Instance.CoinNameExists(coinNameOrSymbol)
+                || CoinListingManager.Instance.CoinSymbolExists(coinNameOrSymbol))
             {
                 int coinId;
 
-                if (StaticCoinDataManager.Instance.CoinNameExists(coinNameOrSymbol))
+                if (CoinListingManager.Instance.CoinNameExists(coinNameOrSymbol))
                 {
-                    coinId = StaticCoinDataManager.Instance.GetCoinIdByName(coinNameOrSymbol);
+                    coinId = CoinListingManager.Instance.GetCoinIdByName(coinNameOrSymbol);
                 }
                 else // coin symbol provided as argument
                 {
-                    coinId = StaticCoinDataManager.Instance.GetCoinIdBySymbol(coinNameOrSymbol);
+                    coinId = CoinListingManager.Instance.GetCoinIdBySymbol(coinNameOrSymbol);
                 }
 
                 CoinData coinData = RequestHandler.RequestCoinData(coinId);

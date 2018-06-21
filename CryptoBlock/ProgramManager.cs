@@ -16,26 +16,25 @@ namespace CryptoBlock
             
             while(!staticCoinDataRepositoryInitialized)
             {
-                ConsoleUtils.LogLine("Initializing static coin data repository ..");
+                ConsoleUtils.LogLine("Initializing coin listings repository ..");
 
                 try
                 {                    
-                    StaticCoinDataManager.Instance.InitializeRepository();
+                    CoinListingManager.Instance.InitializeRepository();
                     staticCoinDataRepositoryInitialized = true;
                 }
-                catch (StaticCoinDataManager.RepositoryUpdateException repositoryUpdateException)
+                catch (CoinListingManager.RepositoryUpdateException repositoryUpdateException)
                 {
                     ExceptionManager.Instance.LogException(repositoryUpdateException);
 
-                    ConsoleUtils.LogLine("An error occurred while trying to initialize static coin data" +
-                        " repository");
+                    ConsoleUtils.LogLine("An error occurred while trying to initialize Coin listings repository");
                     ConsoleUtils.LogLine("Retrying ..");
                     Console.WriteLine();
                     Thread.Sleep(5000);
                 }
             }
             
-            ConsoleUtils.LogLine("Static coin data repository initialized successfully.");
+            ConsoleUtils.LogLine("Coin listings repository initialized successfully.");
 
             // some padding
             Console.WriteLine();
@@ -52,6 +51,9 @@ namespace CryptoBlock
             while(true)
             {
                 string userCommand = Console.ReadLine();
+
+                // padding
+                Console.WriteLine();
 
                 CommandParser.ParseCommand(userCommand);
             }

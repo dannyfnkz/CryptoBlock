@@ -8,7 +8,7 @@ using CryptoBlock.CMCAPI;
 
 namespace CryptoBlock
 {
-    internal class StaticCoinDataManager
+    internal class CoinListingManager
     {
         internal class ManagerException : Exception
         {
@@ -70,14 +70,18 @@ namespace CryptoBlock
             }
         }
 
-        private StaticCoinData[] staticCoinData;
+        private CoinListing[] staticCoinData;
         private bool repositoryInitialized;
-        private Dictionary<string, StaticCoinData> nameToStaticCoinData = 
-            new Dictionary<string, StaticCoinData>();
-        private Dictionary<string, StaticCoinData> symbolToStaticCoinData =
-            new Dictionary<string, StaticCoinData>();
 
-        public static readonly StaticCoinDataManager Instance = new StaticCoinDataManager();
+        // name key is in lowercase
+        private Dictionary<string, CoinListing> nameToStaticCoinData = 
+            new Dictionary<string, CoinListing>();
+
+        // symbol key is in lowercase
+        private Dictionary<string, CoinListing> symbolToStaticCoinData =
+            new Dictionary<string, CoinListing>();
+
+        public static readonly CoinListingManager Instance = new CoinListingManager();
 
         internal bool RepositoryInitialized
         {
@@ -96,14 +100,17 @@ namespace CryptoBlock
 
         internal bool CoinNameExists(string coinName)
         {
-            return nameToStaticCoinData.ContainsKey(coinName);
+            string lowercaseCoinMame = coinName.ToLower();
+            return nameToStaticCoinData.ContainsKey(lowercaseCoinMame);
         }
 
         internal int GetCoinIdByName(string coinName)
         {
-            if(CoinNameExists(coinName))
+            string lowercaseCoinName = coinName.ToLower();
+
+            if(CoinNameExists(lowercaseCoinName))
             {
-                return nameToStaticCoinData[coinName].Id;
+                return nameToStaticCoinData[lowercaseCoinName].Id;
             }
             else
             {
@@ -113,12 +120,15 @@ namespace CryptoBlock
 
         internal bool CoinSymbolExists(string coinSymbol)
         {
-            return symbolToStaticCoinData.ContainsKey(coinSymbol);
+            string lowercaseCoinSymbol = coinSymbol.ToLower();
+            return symbolToStaticCoinData.ContainsKey(lowercaseCoinSymbol);
         }
 
         internal int GetCoinIdBySymbol(string coinSymbol)
         {
-            if (CoinSymbolExists(coinSymbol))
+            string lowercaseCoinSymbol = coinSymbol.ToLower();
+
+            if (CoinSymbolExists(lowercaseCoinSymbol))
             {
                 return symbolToStaticCoinData[coinSymbol].Id;
             }
@@ -132,14 +142,17 @@ namespace CryptoBlock
         {
             try
             {
-                staticCoinData = RequestHandler.RequestStaticCoinData();
+                staticCoinData = RequestHandler.RequestCoinListings();
 
                 // update name-to-StaticCoinData, symbol-to-StaticCoinData dictionaries
                 for(int i = 0; i < staticCoinData.Length; i++)
                 {
-                    StaticCoinData currentStaticCoinData = staticCoinData[i];
-                    nameToStaticCoinData[currentStaticCoinData.Name] = currentStaticCoinData;
-                    symbolToStaticCoinData[currentStaticCoinData.Symbol] = currentStaticCoinData;
+                    CoinListing currentStaticCoinData = staticCoinData[i];
+                    string lowercaseName = currentStaticCoinData.Name.ToLower();
+                    string lowercaseSymbol = currentStaticCoinData.Symbol.ToLower();
+
+                    nameToStaticCoinData[lowercaseName] = currentStaticCoinData;
+                    symbolToStaticCoinData[lowercaseSymbol] = currentStaticCoinData;
                 }
             }
             catch(RequestHandler.DataRequestException dataRequestException)
