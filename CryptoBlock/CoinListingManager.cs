@@ -70,15 +70,45 @@ namespace CryptoBlock
             }
         }
 
+        internal class NoSuchCoinIdException : ManagerException
+        {
+            internal NoSuchCoinIdException(int coinId) : base(formatExceptionMessage(coinId))
+            {
+
+            }
+
+            private static string formatExceptionMessage(int coinId)
+            {
+                return string.Format("Coin id does not exist in database: {0}.", coinId);
+            }
+        }
+
+        internal class RepositoryNotInitializedException : ManagerException
+        {
+            internal RepositoryNotInitializedException() :
+                base(formatExceptionMessage())
+            {
+
+            }
+
+            private static string formatExceptionMessage()
+            {
+                return string.Format("Coin Listing repository has not been initialized.");
+            }
+        }
+
         private CoinListing[] staticCoinData;
         private bool repositoryInitialized;
 
+        private Dictionary<int, CoinListing> idToCoinListing =
+            new Dictionary<int, CoinListing>();
+
         // name key is in lowercase
-        private Dictionary<string, CoinListing> nameToStaticCoinData = 
+        private Dictionary<string, CoinListing> nameToCoinListing = 
             new Dictionary<string, CoinListing>();
 
         // symbol key is in lowercase
-        private Dictionary<string, CoinListing> symbolToStaticCoinData =
+        private Dictionary<string, CoinListing> symbolToCoinListing =
             new Dictionary<string, CoinListing>();
 
         public static readonly CoinListingManager Instance = new CoinListingManager();
@@ -98,19 +128,32 @@ namespace CryptoBlock
             repositoryInitialized = true;
         }
 
+
+        internal bool CoinIdExists(int coinId)
+        {
+            assertRepositoryInitialized();
+
+            return idToCoinListing.ContainsKey(coinId);
+        }
+
         internal bool CoinNameExists(string coinName)
         {
+            assertRepositoryInitialized();
+
             string lowercaseCoinMame = coinName.ToLower();
-            return nameToStaticCoinData.ContainsKey(lowercaseCoinMame);
+
+            return nameToCoinListing.ContainsKey(lowercaseCoinMame);
         }
 
         internal int GetCoinIdByName(string coinName)
         {
+            assertRepositoryInitialized();
+
             string lowercaseCoinName = coinName.ToLower();
 
             if(CoinNameExists(lowercaseCoinName))
             {
-                return nameToStaticCoinData[lowercaseCoinName].Id;
+                return nameToCoinListing[lowercaseCoinName].Id;
             }
             else
             {
@@ -120,21 +163,40 @@ namespace CryptoBlock
 
         internal bool CoinSymbolExists(string coinSymbol)
         {
+            assertRepositoryInitialized();
+
             string lowercaseCoinSymbol = coinSymbol.ToLower();
-            return symbolToStaticCoinData.ContainsKey(lowercaseCoinSymbol);
+
+            return symbolToCoinListing.ContainsKey(lowercaseCoinSymbol);
         }
 
         internal int GetCoinIdBySymbol(string coinSymbol)
         {
+            assertRepositoryInitialized();
+
             string lowercaseCoinSymbol = coinSymbol.ToLower();
 
             if (CoinSymbolExists(lowercaseCoinSymbol))
             {
-                return symbolToStaticCoinData[coinSymbol].Id;
+                return symbolToCoinListing[coinSymbol].Id;
             }
             else
             {
                 throw new NoSuchCoinSymbolException(coinSymbol);
+            }
+        }
+
+        internal CoinListing GetCoinListing(int coinId)
+        {
+            assertRepositoryInitialized();
+
+            if(CoinIdExists(coinId))
+            {
+                return idToCoinListing[coinId];
+            }
+            else
+            {
+                throw new NoSuchCoinIdException(coinId);
             }
         }
 
@@ -148,16 +210,27 @@ namespace CryptoBlock
                 for(int i = 0; i < staticCoinData.Length; i++)
                 {
                     CoinListing currentStaticCoinData = staticCoinData[i];
+
+                    int id = currentStaticCoinData.Id;
                     string lowercaseName = currentStaticCoinData.Name.ToLower();
                     string lowercaseSymbol = currentStaticCoinData.Symbol.ToLower();
 
-                    nameToStaticCoinData[lowercaseName] = currentStaticCoinData;
-                    symbolToStaticCoinData[lowercaseSymbol] = currentStaticCoinData;
+                    idToCoinListing[id] = currentStaticCoinData;
+                    nameToCoinListing[lowercaseName] = currentStaticCoinData;
+                    symbolToCoinListing[lowercaseSymbol] = currentStaticCoinData;
                 }
             }
             catch(RequestHandler.DataRequestException dataRequestException)
             {
                 throw new RepositoryUpdateException(dataRequestException);
+            }
+        }
+
+        private void assertRepositoryInitialized()
+        {
+            if(!repositoryInitialized)
+            {
+                throw new RepositoryNotInitializedException();
             }
         }
     }

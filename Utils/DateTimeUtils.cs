@@ -17,7 +17,7 @@ namespace CryptoBlock
 
             public static string GetCurrentDateTimeString()
             {
-                return DateTime.Now.ToString(@"yyyy-MM-dd hh:mm:ss");
+                return DateTime.Now.ToString(@"yyyy-MM-dd HH:mm:ss");
             }
         }
     }

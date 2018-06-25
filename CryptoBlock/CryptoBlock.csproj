@@ -60,6 +60,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Command.cs" />
     <Compile Include="CommandExecutor.cs" />
     <Compile Include="CommandParser.cs" />
     <Compile Include="ExceptionManager.cs" />

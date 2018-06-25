@@ -136,7 +136,7 @@ namespace CryptoBlock
                     coinData = CoinData.Parse(serverResponse);
                     return coinData;
                 }
-                catch (DataParseException dataParseException)
+                catch (Data.DataParseException dataParseException)
                 {
                     throw new InvalidServerResponse(dataParseException);
                 }
@@ -167,7 +167,7 @@ namespace CryptoBlock
                     return coinListingsArray;
 
                 }
-                catch (DataParseException dataParseException)
+                catch (Data.DataParseException dataParseException)
                 {
                     throw new InvalidServerResponse(dataParseException);
                 }        

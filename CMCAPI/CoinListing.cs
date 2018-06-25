@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -111,9 +112,31 @@ namespace CryptoBlock
                 }
             }
 
+            public static string GetTableColumnHeaderString()
+            {
+                StringBuilder stringBuilder = new StringBuilder();
+
+                stringBuilder.Append("ID".PadRight(ID_COLUMN_WIDTH));
+                stringBuilder.Append("Name".PadRight(NAME_COLUMN_WIDTH));
+                stringBuilder.Append("Symbol".PadRight(SYMBOL_COLUMN_WIDTH));
+
+                return stringBuilder.ToString();
+            }
+
+            public string ToTableRowString()
+            {
+                StringBuilder stringBuilder = new StringBuilder();
+
+                stringBuilder.Append(id.ToString().PadRight(ID_COLUMN_WIDTH));
+                stringBuilder.Append(name.PadRight(NAME_COLUMN_WIDTH));
+                stringBuilder.Append(symbol.PadRight(SYMBOL_COLUMN_WIDTH));
+
+                return stringBuilder.ToString();
+            }
+
             public override string ToString()
             {
-                return CryptoBlock.Utils.StringUtils.ToString(this);
+                return Utils.StringUtils.ToString(this);
             }
         }
     }

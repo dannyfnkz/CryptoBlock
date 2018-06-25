@@ -18,6 +18,12 @@ namespace CryptoBlock
 
         public static readonly ExceptionManager Instance = new ExceptionManager();
 
+        internal void PrintGenericServerDataFetchExceptionMessage()
+        {
+            ConsoleUtils.LogLine("An error occurred while trying to fetch data from server."
+                + " Refer to error log file for detailed information.");
+        }
+
         internal void LogException(Exception exception)
         {
             bool newFile = false;

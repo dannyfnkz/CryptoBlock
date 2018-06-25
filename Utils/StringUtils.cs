@@ -14,6 +14,11 @@ namespace CryptoBlock
             public const string TAB_STRING = "\t";
             public const char TAB_CHAR = '\t';
 
+            public static string ToString<T>(T? nullable, string defaultStringValue) where T : struct
+            {
+                return nullable.HasValue ? nullable.Value.ToString() : defaultStringValue;
+            }
+
             /// <summary>
             /// appends <paramref name="appendant"/>to <paramref name="stringBuilder"/>
             /// <paramref name="numberOfTimes"/> times.

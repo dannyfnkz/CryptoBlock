@@ -62,9 +62,36 @@ namespace CryptoBlock
             }
         }
 
-        internal static void ExecuteViewDataCommand(string coinNameOrSymbol)
+        internal static void ExecuteCommand(Command command)
         {
-            if(CoinListingManager.Instance.CoinNameExists(coinNameOrSymbol)
+            // check for empty parameters
+            if(Array.IndexOf(command.Parameters, string.Empty) > -1)
+            {
+                ConsoleUtils.LogLine("Wrong number of arguments.");
+
+                return;
+            }
+
+            // call method corresponding to command type
+            if (command.Type == Command.eCommandType.ViewCoinData
+                || command.Type == Command.eCommandType.ViewCoinListing)
+            {
+                executeViewCoinCommand(command);
+            }
+        }
+
+        // common method to all "view coin" commands
+        private static void executeViewCoinCommand(Command command)
+        {
+            if (command.Parameters.Length != 1)
+            {
+                ConsoleUtils.LogLine("Wrong number of arguments.");
+                return;
+            }
+
+            string coinNameOrSymbol = command.Parameters[0];
+
+            if (CoinListingManager.Instance.CoinNameExists(coinNameOrSymbol)
                 || CoinListingManager.Instance.CoinSymbolExists(coinNameOrSymbol))
             {
                 int coinId;
@@ -78,17 +105,54 @@ namespace CryptoBlock
                     coinId = CoinListingManager.Instance.GetCoinIdBySymbol(coinNameOrSymbol);
                 }
 
-                CoinData coinData = RequestHandler.RequestCoinData(coinId);
-                Console.WriteLine(CoinData.TableColumnHeaderString());
-                Console.WriteLine(coinData.ToTableRowString());
+                if(command.Type == Command.eCommandType.ViewCoinData)
+                {
+                    executeViewCoinDataCommand(coinId);
+                }
+                else if(command.Type == Command.eCommandType.ViewCoinListing)
+                {
+                    executeViewCoinListingCommand(coinId);
+                }
             }
-            else
+            else // name or symbol is invalid (does not exist in coin listing repository)
             {
                 string message = string.Format(
                     "Coin with specified name or symbol not found: {0}.",
                     coinNameOrSymbol);
+
                 ConsoleUtils.LogLine(message);
             }
+        }
+
+        private static void executeViewCoinDataCommand(int coinId)
+        {
+            try
+            {
+                CoinData coinData = RequestHandler.RequestCoinData(coinId);
+
+                Console.WriteLine(CoinData.GetTableColumnHeaderString());
+                Console.WriteLine(coinData.ToTableRowString());
+            }
+            catch(RequestHandler.DataRequestException dataRequestException)
+            {
+                ExceptionManager.Instance.PrintGenericServerDataFetchExceptionMessage();
+
+                // log exception in error log file
+                ExceptionManager.Instance.LogException(dataRequestException);
+            }
+
+            // some padding
+            Console.WriteLine();
+        }
+
+        private static void executeViewCoinListingCommand(int coinId)
+        {
+            // fetching CoinListing guaranteed to be successful as repository is initialized
+            // & coin id is associated with an existing coin name / symbol
+            CoinListing coinListing = CoinListingManager.Instance.GetCoinListing(coinId);
+
+            Console.WriteLine(CoinListing.GetTableColumnHeaderString());
+            Console.WriteLine(coinListing.ToTableRowString());
         }
     }
 }
