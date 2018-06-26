@@ -64,14 +64,6 @@ namespace CryptoBlock
 
         internal static void ExecuteCommand(Command command)
         {
-            // check for empty parameters
-            if(Array.IndexOf(command.Parameters, string.Empty) > -1)
-            {
-                ConsoleUtils.LogLine("Wrong number of arguments.");
-
-                return;
-            }
-
             // call method corresponding to command type
             if (command.Type == Command.eCommandType.ViewCoinData
                 || command.Type == Command.eCommandType.ViewCoinListing)
@@ -80,22 +72,17 @@ namespace CryptoBlock
             }
         }
 
-        // common method to all "view coin" commands
+        // common preparatory method for all "view coin" commands
         private static void executeViewCoinCommand(Command command)
         {
-            if (command.Parameters.Length != 1)
-            {
-                ConsoleUtils.LogLine("Wrong number of arguments.");
-                return;
-            }
-
-            string coinNameOrSymbol = command.Parameters[0];
+            string coinNameOrSymbol = command.Arguments[0];
 
             if (CoinListingManager.Instance.CoinNameExists(coinNameOrSymbol)
                 || CoinListingManager.Instance.CoinSymbolExists(coinNameOrSymbol))
             {
                 int coinId;
 
+                // coin name provided as argument
                 if (CoinListingManager.Instance.CoinNameExists(coinNameOrSymbol))
                 {
                     coinId = CoinListingManager.Instance.GetCoinIdByName(coinNameOrSymbol);
@@ -114,7 +101,7 @@ namespace CryptoBlock
                     executeViewCoinListingCommand(coinId);
                 }
             }
-            else // name or symbol is invalid (does not exist in coin listing repository)
+            else // coin  name or symbol is invalid (does not exist in coin listing repository)
             {
                 string message = string.Format(
                     "Coin with specified name or symbol not found: {0}.",

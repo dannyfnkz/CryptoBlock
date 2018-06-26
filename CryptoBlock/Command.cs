@@ -42,7 +42,7 @@ namespace CryptoBlock
 
         internal class WrongNumberOfArgumentsException : CommandException
         {
-            internal WrongNumberOfArgumentsException() : base("Wrong numbe of arguments.")
+            internal WrongNumberOfArgumentsException() : base("Wrong number of arguments.")
             {
 
             }
@@ -56,20 +56,33 @@ namespace CryptoBlock
 
         private static readonly Dictionary<eCommandType, string> commandTypeToString =
             new Dictionary<eCommandType, string>();
+        private static readonly Dictionary<eCommandType, int> commandTypeToMinNumberOfArguments =
+            new Dictionary<eCommandType, int>();
+        private static readonly Dictionary<eCommandType, int> commandTypeToMaxNumberOfArguments =
+            new Dictionary<eCommandType, int>();
 
         static Command()
         {
+            // init commandTypeToString dictionary
             commandTypeToString[eCommandType.ViewCoinData] = "view coin data";
             commandTypeToString[eCommandType.ViewCoinListing] = "view coin listing";
+
+            // init commandTypeToMinNumberOfArguments, commandTypeToMaxNumberOfArguments dictionaries
+            commandTypeToMinNumberOfArguments[eCommandType.ViewCoinData] = 1;
+            commandTypeToMaxNumberOfArguments[eCommandType.ViewCoinData] = 1;
+
+            commandTypeToMinNumberOfArguments[eCommandType.ViewCoinListing] = 1;
+            commandTypeToMaxNumberOfArguments[eCommandType.ViewCoinListing] = 1;
         }
 
         private readonly eCommandType type;
-        private string[] parameters;
+        private string[] arguments;
 
-        internal Command(eCommandType type, string[] parameters)
+        // expects a valid arguments array (matching command type)
+        internal Command(eCommandType type, string[] arguments)
         {
             this.type = type;
-            this.parameters = parameters;
+            this.arguments = arguments;
         }
 
         internal eCommandType Type
@@ -77,38 +90,65 @@ namespace CryptoBlock
             get { return type; }
         }
 
-        internal string[] Parameters
+        internal string[] Arguments
         {
-            get { return parameters; }
+            get { return arguments; }
+        }
+
+        internal int NumberOfArguments
+        {
+            get { return arguments.Length; }
         }
 
         internal static Command Parse(string userInput)
         {
+            eCommandType commandType = getCommandType(userInput);
+
             string lowerCaseUserInput = userInput.ToLower();
 
-            // check if command user entered is valid
+            // check if there's a space directly after command type
+            if (lowerCaseUserInput.StartsWith(commandTypeToString[commandType] + " "))
+            {
+                string parameterString = StringUtils.Substring(
+                    lowerCaseUserInput,
+                    commandTypeToString[commandType] + " ");
+
+                string[] arguments = StringUtils.Split(parameterString, " ");
+
+                // wrong number of arguments
+                if (arguments.Length < commandTypeToMinNumberOfArguments[commandType]
+                    || arguments.Length > commandTypeToMaxNumberOfArguments[commandType])
+                {
+                    throw new WrongNumberOfArgumentsException();
+                }
+
+                // empty argument in argument list
+                if (Array.IndexOf(arguments, string.Empty) > -1)
+                {
+                    throw new WrongNumberOfArgumentsException();
+                }
+
+                Command command = new Command(commandType, arguments);
+
+                return command;
+            }
+            else // no space directly after command type
+            {
+                throw new WrongNumberOfArgumentsException();
+            }
+        }
+
+        private static eCommandType getCommandType(string userInput)
+        {
+            string lowercaseUserInput = userInput.ToLower();
+
+            // check if command type is valid
             foreach (eCommandType commandType in commandTypeToString.Keys)
             {
                 // user entered a valid command type
-                if (lowerCaseUserInput.StartsWith(commandTypeToString[commandType]))
+                if (lowercaseUserInput.StartsWith(commandTypeToString[commandType]))
                 {
-                    // no space directly after command name
-                    if (!lowerCaseUserInput.StartsWith(commandTypeToString[commandType] + " "))
-                    {
-                        throw new WrongNumberOfArgumentsException();
-                    }
-                    else // valid command type with space directly after
-                    {
-                        string parameterString = StringUtils.Substring(
-                            lowerCaseUserInput,
-                            commandTypeToString[commandType] + " ");
-
-                        string[] parameters = StringUtils.Split(parameterString, " ");
-
-                        Command command = new Command(commandType, parameters);
-
-                        return command;
-                    }
+                    return commandType;
                 }
             }
 

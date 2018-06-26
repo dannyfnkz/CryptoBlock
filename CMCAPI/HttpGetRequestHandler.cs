@@ -2,6 +2,7 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 
 namespace CryptoBlock
 {
@@ -14,34 +15,114 @@ namespace CryptoBlock
         /// to send an additional request, instantiate a new <see cref="HttpGetRequestHandler"/>object.
         /// </remarks>
         /// </summary>
-        internal class HttpGetRequestHandler
+        public class HttpGetRequestHandler
         {
+            public class GetRequestParameter
+            {
+                public class ParameterNameValueArrayLengthMismatchException : Exception
+                {
+                    public ParameterNameValueArrayLengthMismatchException()
+                        : base(formatExceptionMessage())
+                    {
+
+                    }
+
+                    private static string formatExceptionMessage()
+                    {
+                        return "Parameter name array and value array must have the same length.";
+                    }
+                }
+
+                private string name;
+                private string value;
+
+                public GetRequestParameter(string name, string value)
+                {
+                    this.name = name;
+                    this.value = value;
+                }
+
+                public string Name { get { return name; } }
+                public string Value { get { return value; } }
+
+                public static GetRequestParameter[] ToGetRequestParameterArray(
+                    string[] parameterNames,
+                    string[] parameterValues)
+                {
+                    if(parameterNames.Length != parameterValues.Length)
+                    {
+                        throw new ParameterNameValueArrayLengthMismatchException();
+                    }
+
+                    GetRequestParameter[] parameters = new GetRequestParameter[parameterNames.Length];
+
+                    for(int i = 0; i < parameters.Length; i++)
+                    {
+                        parameters[i] = new GetRequestParameter(parameterNames[i], parameterValues[i]);
+                    }
+
+                    return parameters;
+                }
+
+                public void appendToUri(StringBuilder uriStringBuilder, bool firstParameterInUri)
+                {
+                    if(firstParameterInUri)
+                    {
+                        uriStringBuilder.Append("?");
+                    }
+
+                    uriStringBuilder.Append(name);
+                    uriStringBuilder.Append("=");
+                    uriStringBuilder.Append(value);
+                }
+            }
             /// <summary>
             /// thrown if an error occurres while trying to call one of <see cref="HttpGetRequestHandler"/>'s methods.
             /// </summary>
-            internal class HttpGetRequestHandlerException : Exception
+            public class HttpGetRequestHandlerException : Exception
             {
+                public HttpGetRequestHandlerException(string message)
+                    : base(message)
+                {
+
+                }
+            }
+
+            public class NullGetRequestParameterArrayException : HttpGetRequestHandlerException
+            {
+                public NullGetRequestParameterArrayException()
+                    : base (formatExceptionMessage())
+                {
+
+                }
+
+                private static string formatExceptionMessage()
+                {
+                    return "Get request parameter array cannot be null.";
+                }
             }
 
             /// <summary>
             /// thrown when trying to access one of <see cref="HttpGetRequestHandler"/>'s properties
             /// before <see cref="SendRequest()"/> was called. 
             /// </summary>
-            internal class RequestNotSentYetException : Exception
+            public class RequestNotSentYetException : HttpGetRequestHandlerException
             {
-                internal RequestNotSentYetException() : base("Call SendRequest() first.")
+                public RequestNotSentYetException() : base("Call SendRequest() first.")
                 {
+
                 }
             }
 
             /// <summary>
             /// thrown when trying to call <see cref="SendRequest()"/>again after it was already called.
             /// </summary>
-            internal class RequestAlreadySentException : Exception
+            public class RequestAlreadySentException : HttpGetRequestHandlerException
             {
-                internal RequestAlreadySentException()
+                public RequestAlreadySentException()
                     : base("Instantiate a new HttpGetRequestHandler object to send a new request.")
                 {
+
                 }
             }
 
@@ -49,9 +130,9 @@ namespace CryptoBlock
             /// <exception cref="RequestFailedException">thrown if <see cref="SendRequest"/> was called but request
             /// failed to be sent, or server failed to respond.</exception>
             /// </summary>
-            internal class RequestFailedException : Exception
+            public class RequestFailedException : HttpGetRequestHandlerException
             {
-                internal RequestFailedException()
+                public RequestFailedException()
                     : base("Request failed to be sent to server.")
                 {
 
@@ -59,6 +140,7 @@ namespace CryptoBlock
             }
 
             private readonly string uri;
+            private readonly GetRequestParameter[] parameters;
             private bool requestSent;
             private bool requestFailed;
             private bool successfulStatusCode;
@@ -67,20 +149,36 @@ namespace CryptoBlock
             private Exception exception;
             private string exceptionMessage;
 
-            internal HttpGetRequestHandler(string uri)
+            public HttpGetRequestHandler(string uri) : this(uri, new GetRequestParameter[0])
             {
-                this.uri = uri;
+
             }
 
-            internal string Uri { get { return uri; } }
+            public HttpGetRequestHandler(string uri, string[] parameterNames, string[] parameterValues)
+                : this(uri, GetRequestParameter.ToGetRequestParameterArray(parameterNames, parameterValues))
+            {
 
-            internal bool RequestSent { get { return requestSent; } }
+            }
 
-            internal bool RequestFailed { get { return requestFailed; } }
+            public HttpGetRequestHandler(string uri, GetRequestParameter[] parameters)
+            {
+                this.uri = uri;
+                this.parameters = parameters ?? throw new NullGetRequestParameterArrayException();
+            }
+
+            public string Uri { get { return uri; } }
+
+            public GetRequestParameter[] Parameters { get { return parameters; } }
+
+            public int ParameterCount { get { return parameters.Length; } }
+
+            public bool RequestSent { get { return requestSent; } }
+
+            public bool RequestFailed { get { return requestFailed; } }
 
             /// <exception cref="RequestNotSentYetException"><see cref="assertRequestSentSuccessfully()"/></exception>
             /// <exception cref="RequestFailedException"><see cref="assertRequestSentSuccessfully()"/></exception>
-            internal bool SuccessfulStatusCode
+            public bool SuccessfulStatusCode
             {
                 get
                 {
@@ -91,7 +189,7 @@ namespace CryptoBlock
 
             /// <exception cref="RequestNotSentYetException"><see cref="assertRequestSentSuccessfully()"/></exception>
             /// <exception cref="RequestFailedException"><see cref="assertRequestSentSuccessfully()"/></exception>
-            internal string Response
+            public string Response
             {
                 get
                 {
@@ -102,7 +200,7 @@ namespace CryptoBlock
 
             /// <exception cref="RequestNotSentYetException"><see cref="assertRequestSentSuccessfully()"/></exception>
             /// <exception cref="RequestFailedException"><see cref="assertRequestSentSuccessfully()"/></exception>
-            internal HttpStatusCode StatusCode
+            public HttpStatusCode StatusCode
             {
                 get
                 {
@@ -112,7 +210,7 @@ namespace CryptoBlock
             }
 
             /// <exception cref="RequestNotSentYetException"><see cref="assertRequestSent()"/>
-            internal Exception Exception
+            public Exception Exception
             {
                 get
                 {
@@ -122,7 +220,7 @@ namespace CryptoBlock
             }
 
             /// <exception cref="RequestNotSentYetException"><see cref="assertRequestSent()"/>
-            internal string ExceptionMessage
+            public string ExceptionMessage
             {
                 get
                 {
@@ -169,7 +267,7 @@ namespace CryptoBlock
             /// </summary>
             /// <exception cref="RequestAlreadySentException">thrown if <see cref="SendRequest"/>was already called.
             /// </exception>
-            internal void SendRequest()
+            public void SendRequest()
             {
                 if (requestSent)
                 {
@@ -178,6 +276,9 @@ namespace CryptoBlock
 
                 requestSent = true;
 
+                // append get request parameters to uri
+                string uriWithAppendedParameters = getUriWithAppendedParameters(uri, parameters);
+
                 using (
                     HttpClient client = new HttpClient(
                         new HttpClientHandler
@@ -185,7 +286,7 @@ namespace CryptoBlock
                             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
                         }))
                 {
-                    client.BaseAddress = new Uri(uri);
+                    client.BaseAddress = new Uri(uriWithAppendedParameters);
 
                     try
                     {
@@ -211,6 +312,30 @@ namespace CryptoBlock
                         exceptionMessage = exception.Message;
                     }
                 }
+            }
+
+            private static string getUriWithAppendedParameters(string uri, GetRequestParameter[] parameters)
+            {
+                StringBuilder uriStringBuilder = new StringBuilder(uri);
+
+                bool firstParameterInUri = true;
+
+                foreach(GetRequestParameter parameter in parameters)
+                {
+                    parameter.appendToUri(uriStringBuilder, firstParameterInUri);
+
+                    if(Array.IndexOf(parameters, parameter) < parameters.Length - 1)
+                    {
+                        uriStringBuilder.Append("&");
+                    }
+
+                    if (firstParameterInUri)
+                    {
+                        firstParameterInUri = false;
+                    }
+                }
+
+                return uriStringBuilder.ToString();
             }
         }
     }
