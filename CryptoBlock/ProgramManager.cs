@@ -10,39 +10,9 @@ namespace CryptoBlock
 {
     internal class ProgramManager
     {
-        private void initializeStaticCoinDataRepository()
-        {          
-            bool staticCoinDataRepositoryInitialized = false;
-            
-            while(!staticCoinDataRepositoryInitialized)
-            {
-                ConsoleUtils.LogLine("Initializing coin listings repository ..");
-
-                try
-                {                    
-                    CoinListingManager.Instance.InitializeRepository();
-                    staticCoinDataRepositoryInitialized = true;
-                }
-                catch (CoinListingManager.RepositoryUpdateException repositoryUpdateException)
-                {
-                    ExceptionManager.Instance.LogException(repositoryUpdateException);
-
-                    ConsoleUtils.LogLine("An error occurred while trying to initialize Coin listings repository");
-                    ConsoleUtils.LogLine("Retrying ..");
-                    Console.WriteLine();
-                    Thread.Sleep(5000);
-                }
-            }
-            
-            ConsoleUtils.LogLine("Coin listings repository initialized successfully.");
-
-            // some padding
-            Console.WriteLine();
-        }
-
         internal void StartProgram()
         {
-            initializeStaticCoinDataRepository();
+            initializeCoinListingRepository();
             ListenForUserCommands();
         }
 
@@ -57,6 +27,37 @@ namespace CryptoBlock
 
                 CommandParser.ParseCommand(userCommand);
             }
+        }
+
+        private void initializeCoinListingRepository()
+        {
+            bool coinListingRepositoryInitialized = false;
+
+            while (!coinListingRepositoryInitialized)
+            {
+                ConsoleUtils.LogLine("Initializing coin listing repository ..");
+
+                try
+                {
+                    CoinListingManager.Instance.InitializeRepository();
+                    coinListingRepositoryInitialized = true;
+                }
+                catch (CoinListingManager.RepositoryUpdateException repositoryUpdateException)
+                {
+                    ExceptionManager.Instance.LogException(repositoryUpdateException);
+
+                    ExceptionManager.Instance.PrintGenericCoinLisitingRepositoryInitializationExceptionMessage();
+                    ConsoleUtils.LogLine("Retrying ..");
+                    Console.WriteLine();
+
+                    Thread.Sleep(5000);
+                }
+            }
+
+            ConsoleUtils.LogLine("Coin listings repository initialized successfully.");
+
+            // some padding
+            Console.WriteLine();
         }
     }
 }

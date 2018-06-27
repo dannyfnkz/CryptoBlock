@@ -47,26 +47,29 @@ namespace CryptoBlock
             // throws DataParseException if an inner data / metadata field was null
             internal static CoinListing[] ParseStaticCoinDataArray(string ListingJSONString)
             {
-                CoinListing[] coinListingArray = null;
-
                 try
                 {
-                    JToken staticCoinDataJToken = (JToken)JsonConvert.DeserializeObject(ListingJSONString);
-                    AssertExist(staticCoinDataJToken, "metadata", "data");
+                    CoinListing[] coinListingArray = null;
 
-                    JToken staticCoinMetadataJToken = staticCoinDataJToken["metadata"];
-                    AssertExist(staticCoinMetadataJToken, "num_cryptocurrencies");
-                    int staticCoinDataArrayLength = GetPropertyValue<int>(staticCoinMetadataJToken, "num_cryptocurrencies");
+                    JToken coinListingJToken = (JToken)JsonConvert.DeserializeObject(ListingJSONString);
 
-                    if (staticCoinDataArrayLength <= 0)
+                    AssertExist(coinListingJToken, "metadata", "data");
+
+                    JToken coinListingMetadataJToken = coinListingJToken["metadata"];
+                    AssertExist(coinListingMetadataJToken, "num_cryptocurrencies");
+                    int coinListingArrayLength = GetPropertyValue<int>(
+                        coinListingMetadataJToken,
+                        "num_cryptocurrencies");
+
+                    if (coinListingArrayLength <= 0)
                     {
                         throw new DataPropertyParseException("data.num_cryptocurrencies");
                     }
 
-                    coinListingArray = new CoinListing[staticCoinDataArrayLength];
+                    coinListingArray = new CoinListing[coinListingArrayLength];
 
-                    JToken CoinListingsArray = staticCoinDataJToken["data"];
-                    fillStaticCoinDataArray(coinListingArray, CoinListingsArray);
+                    JToken CoinListingsArrayJToken = coinListingJToken["data"];
+                    fillCoinListingArray(coinListingArray, CoinListingsArrayJToken);
 
                     return coinListingArray;
                 }
@@ -84,13 +87,13 @@ namespace CryptoBlock
             }
 
             // throws ArgumentNullException if a required field does not exist in staticCoinDataJSONObject
-            private static void fillStaticCoinDataArray(
-                CoinListing[] staticCoinDataArray,
+            private static void fillCoinListingArray(
+                CoinListing[] coinListingArray,
                 JToken CoinListingArrayJToken)
             {
                 try
                 {
-                    for (int i = 0; i < staticCoinDataArray.Length; i++)
+                    for (int i = 0; i < coinListingArray.Length; i++)
                     {
                         AssertExist(CoinListingArrayJToken, i);
                         JToken currentCoinListing = CoinListingArrayJToken[i];
@@ -102,11 +105,11 @@ namespace CryptoBlock
                         string symbol = GetPropertyValue<string>(currentCoinListing, "symbol");
                         long unixTimestamp = Utils.DateTimeUtils.GetUnixTimestamp();
 
-                        staticCoinDataArray[i] = new CoinListing(id, name, symbol, unixTimestamp);
+                        coinListingArray[i] = new CoinListing(id, name, symbol, unixTimestamp);
                     }
                 }
 
-                catch (ArgumentOutOfRangeException) // reported listing array size was incorrect
+                catch (ArgumentOutOfRangeException) // listing array size specified in JSON string was incorrect
                 {
                     throw new DataPropertyParseException("metadata.num_cryptocurrencies");
                 }

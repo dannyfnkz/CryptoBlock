@@ -61,7 +61,7 @@ namespace CryptoBlock
                 try
                 {
                     // propertyName field exists in jToken, but its value is null
-                    if (jToken[propertyName].Type == JTokenType.Null)
+                    if(IsNull(jToken, propertyName))
                     {
                         return default(T);
                     }
@@ -83,6 +83,19 @@ namespace CryptoBlock
                 }
             }
 
+            protected static bool CheckExist(JToken jToken, params object[] properties)
+            {
+                foreach (object property in properties)
+                {
+                    if (jToken[property] == null)
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
             protected static void AssertExist(JToken jToken, params object[] properties)
             {
                 foreach (object property in properties)
@@ -92,6 +105,11 @@ namespace CryptoBlock
                         throw new DataPropertyParseException(property.ToString());
                     }
                 }
+            }
+
+            protected static bool IsNull(JToken jToken, string propertyName)
+            {
+                return jToken[propertyName].Type == JTokenType.Null;
             }
 
             protected string GetTableDisplayString<T>(T? propertyValue) where T : struct

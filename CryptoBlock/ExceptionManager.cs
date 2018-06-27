@@ -10,6 +10,8 @@ namespace CryptoBlock
 {
     internal class ExceptionManager
     {
+        private const string REFER_TO_LOG_FILE_MESSAGE = "Refer to error log file for detailed information.";
+
         private const string LOG_FILE_PATH = @"error_log.txt";
         private static readonly string LOG_FILE_HEADER = string.Format(
             @"CryptoBlock Error Log File{0}{1}",
@@ -21,7 +23,13 @@ namespace CryptoBlock
         internal void PrintGenericServerDataFetchExceptionMessage()
         {
             ConsoleUtils.LogLine("An error occurred while trying to fetch data from server."
-                + " Refer to error log file for detailed information.");
+                + " " + REFER_TO_LOG_FILE_MESSAGE);
+        }
+
+        internal void PrintGenericCoinLisitingRepositoryInitializationExceptionMessage()
+        {
+            ConsoleUtils.LogLine("An error occurred while trying to initialize coin listing repository."
+                + " " + REFER_TO_LOG_FILE_MESSAGE);
         }
 
         internal void LogException(Exception exception)

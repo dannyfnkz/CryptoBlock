@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using CryptoBlock.Utils;
 using Newtonsoft.Json;
@@ -10,6 +11,30 @@ namespace CryptoBlock
     {
         public class CoinData : Data
         {
+            public class InvalidCoinIndexException : Exception
+            {
+                private int coinIndex;
+
+                public InvalidCoinIndexException(int coinIndex)
+                    : base(formatExceptionMessage(coinIndex))
+                {
+                    this.coinIndex = coinIndex;
+                }
+
+                public int CoinIndex
+                {
+                    get { return coinIndex; }
+                }
+
+                private static string formatExceptionMessage(int coinIndex)
+                {
+                    return string.Format("Coin index not found: {0}.", coinIndex);
+                }
+
+            }
+
+            private const string RESPONSE_COIN_ID_NOT_FOUND_ERROR_FIELD_VALUE = "id not found";
+
             private int id;
             private string name;
             private string symbol;
@@ -111,75 +136,76 @@ namespace CryptoBlock
                 get { return unixTimestamp; }
             }
 
-            public static CoinData Parse(string tickerJSONString)
+            public static CoinData[] ParseArray(
+                string tickerArrayJSONString,
+                int coinIndex,
+                int coinDataArrayMaxSize)
             {
                 try
                 {
-                    JToken coinDataJToken = (JToken)JsonConvert.DeserializeObject(tickerJSONString);
+                    List<CoinData> coinDataList = new List<CoinData>();
 
-                    AssertExist(coinDataJToken, "data");
-                    JToken coinDataDataJToken = coinDataJToken["data"];
-
-                    // handle data fields
-                    AssertExist(
-                        coinDataDataJToken,
-                        "id",
-                        "name",
-                        "symbol",
-                        "rank",
-                        "circulating_supply",
-                        "total_supply",
-                        "max_supply");
-
-                    int id = GetPropertyValue<int>(coinDataDataJToken, "id");
-                    string name = GetPropertyValue<string>(coinDataDataJToken, "name");
-                    string symbol = GetPropertyValue<string>(coinDataDataJToken, "symbol");
-                    int rank = GetPropertyValue<int>(coinDataDataJToken, "rank");
-                    double? circulatingSupply = GetPropertyValue<double>(coinDataDataJToken, "circulating_supply");
-                    double? totalSupply = GetPropertyValue<double>(coinDataDataJToken, "total_supply");
-                    double? maxSupply = GetPropertyValue<double>(coinDataDataJToken, "max_supply");
-
-                    AssertExist(coinDataDataJToken, "quotes");
-                    JToken coinDataDataQuotesJToken = coinDataDataJToken["quotes"];
-                    AssertExist(coinDataDataQuotesJToken, "USD");
-                    JToken coinDataDataQuotesUsdJToken = coinDataDataQuotesJToken["USD"];
-
-                    // handle data.quotes.USD fields
-                    AssertExist(coinDataDataQuotesUsdJToken, "price", "volume_24h", "market_cap", "percent_change_24h");
-
-                    double priceUsd = GetPropertyValue<double>(coinDataDataQuotesUsdJToken, "price");
-                    double? volume24hUsd = GetPropertyValue<double>(coinDataDataQuotesUsdJToken, "volume_24h");
-                    double? marketCapUsd = GetPropertyValue<double>(coinDataDataQuotesUsdJToken, "market_cap");
-                    double percentChange24hUsd = GetPropertyValue<double>(
-                        coinDataDataQuotesUsdJToken,
-                        "percent_change_24h");
+                    JToken coinTickerArrayJToken = (JToken)JsonConvert.DeserializeObject(tickerArrayJSONString);
 
                     // handle metadata fields
-                    AssertExist(coinDataJToken, "metadata");
-                    JToken coinDataMetadataJToken = coinDataJToken["metadata"];
+                    AssertExist(coinTickerArrayJToken, "metadata");
+                    JToken coinTickerArrayMetadataJToken = coinTickerArrayJToken["metadata"];
+                    long unixTimestamp = parseUnixTimestamp(coinTickerArrayMetadataJToken);
 
-                    AssertExist(coinDataMetadataJToken, "timestamp");
-                    int unixTimestamp = GetPropertyValue<int>(coinDataMetadataJToken, "timestamp");
+                    assertNoErrorSpecifiedInResponse(coinTickerArrayMetadataJToken, coinIndex);
 
-                    CoinData coinData = new CoinData(
-                        id,
-                        name,
-                        symbol,
-                        rank,
-                        circulatingSupply,
-                        totalSupply,
-                        maxSupply,
-                        priceUsd,
-                        volume24hUsd,
-                        marketCapUsd,
-                        percentChange24hUsd,
-                        unixTimestamp);
+                    AssertExist(coinTickerArrayJToken, "data");
+                    JToken coinTickerArrayDataJToken = coinTickerArrayJToken["data"];
 
-                    return coinData;
+                    fillCoinDataList(
+                        coinDataList,
+                        coinTickerArrayDataJToken,
+                        unixTimestamp,
+                        coinDataArrayMaxSize);
+
+                    return coinDataList.ToArray();
                 }
                 catch (Exception exception)
                 {
                     if (exception is JsonReaderException || exception is InvalidCastException)
+                    {
+                        throw new DataParseException("Invalid JSON string.");
+                    }
+                    else
+                    {
+                        throw exception;
+                    }
+                }
+            }
+
+            public static CoinData Parse(string tickerJSONString, int coinId)
+            {
+                try
+                {
+                    JToken coinTickerJToken = (JToken)JsonConvert.DeserializeObject(tickerJSONString);
+
+                    // handle metadata fields
+                    AssertExist(coinTickerJToken, "metadata");
+                    JToken coinTickerMetadataJToken = coinTickerJToken["metadata"];
+                    long unixTimestamp = parseUnixTimestamp(coinTickerMetadataJToken);
+
+                    assertNoErrorSpecifiedInResponse(coinTickerMetadataJToken, coinId);
+                    
+                    // handle data fields
+                    AssertExist(coinTickerJToken, "data");
+                    JToken coinTickerDataJToken = coinTickerJToken["data"];
+
+                    CoinData CoinData = parseCoinData(coinTickerDataJToken, unixTimestamp);
+
+                    return CoinData;
+                }
+
+                catch (Exception exception)
+                {
+                    if (
+                        exception is JsonReaderException 
+                        || exception is InvalidCastException
+                        || exception is InvalidOperationException)
                     {
                         throw new DataParseException("Invalid JSON string.", exception);
                     }
@@ -190,55 +216,82 @@ namespace CryptoBlock
                 }
             }
 
-            //// set to work with CMC public API V2
-            //public static CoinData Parse(string coinDataJSONString)
-            //{
-            //    CoinData coinData = null;
+            private static CoinData parseCoinData(JToken coinTickerDataJToken, long unixTimestamp)
+            {
+                // handle data fields
+                AssertExist(
+                    coinTickerDataJToken,
+                    "id",
+                    "name",
+                    "symbol",
+                    "rank",
+                    "circulating_supply",
+                    "total_supply",
+                    "max_supply");
 
-            //    dynamic coinDataJSONObject = JsonConvert.DeserializeObject(coinDataJSONString);
+                int id = GetPropertyValue<int>(coinTickerDataJToken, "id");
+                string name = GetPropertyValue<string>(coinTickerDataJToken, "name");
+                string symbol = GetPropertyValue<string>(coinTickerDataJToken, "symbol");
+                int rank = GetPropertyValue<int>(coinTickerDataJToken, "rank");
+                double? circulatingSupply = GetPropertyValue<double>(coinTickerDataJToken, "circulating_supply");
+                double? totalSupply = GetPropertyValue<double>(coinTickerDataJToken, "total_supply");
+                double? maxSupply = GetPropertyValue<double>(coinTickerDataJToken, "max_supply");
 
-            //    if(coinDataJSONObject.data == null)
-            //    {
-            //        throw new DataParseException("data");
-            //    }
+                AssertExist(coinTickerDataJToken, "quotes");
+                JToken coinDataDataQuotesJToken = coinTickerDataJToken["quotes"];
+                AssertExist(coinDataDataQuotesJToken, "USD");
+                JToken coinDataDataQuotesUsdJToken = coinDataDataQuotesJToken["USD"];
 
-            //    try
-            //    {
-            //        int id = coinDataJSONObject.data.id;
-            //        string name = coinDataJSONObject.data.name;
-            //        string symbol = coinDataJSONObject.data.symbol;
-            //        int rank = coinDataJSONObject.data.rank;
-            //        double circulatingSupply = coinDataJSONObject.data.circulating_supply;
-            //        double totalSupply = coinDataJSONObject.data.total_supply;
-            //        double maxSupply = coinDataJSONObject.data.max_supply;
-            //        double priceUsd = coinDataJSONObject.data.quotes.USD.price;
-            //        double volume24hUsd = coinDataJSONObject.data.quotes.USD.volume_24h;
-            //        double marketCapUsd = coinDataJSONObject.data.quotes.USD.market_cap;
-            //        double percentChange24hUsd = coinDataJSONObject.data.quotes.USD.percent_change_24h;
-            //        int unixTimestamp = coinDataJSONObject.metadata.timestamp;
+                // handle data.quotes.USD fields
+                AssertExist(coinDataDataQuotesUsdJToken, "price", "volume_24h", "market_cap", "percent_change_24h");
 
-            //        coinData = new CoinData(
-            //            id,
-            //            name,
-            //            symbol,
-            //            rank,
-            //            circulatingSupply,
-            //            totalSupply,
-            //            maxSupply,
-            //            priceUsd,
-            //            volume24hUsd,
-            //            marketCapUsd,
-            //            percentChange24hUsd,
-            //            unixTimestamp);
-            //    }
+                double priceUsd = GetPropertyValue<double>(coinDataDataQuotesUsdJToken, "price");
+                double? volume24hUsd = GetPropertyValue<double>(coinDataDataQuotesUsdJToken, "volume_24h");
+                double? marketCapUsd = GetPropertyValue<double>(coinDataDataQuotesUsdJToken, "market_cap");
+                double percentChange24hUsd = GetPropertyValue<double>(
+                    coinDataDataQuotesUsdJToken,
+                    "percent_change_24h");
 
-            //    catch(ArgumentNullException argumentNullException)
-            //    {
-            //        throw new DataParseException(argumentNullException.ParamName);
-            //    }
+                CoinData coinData = new CoinData(
+                    id,
+                    name,
+                    symbol,
+                    rank,
+                    circulatingSupply,
+                    totalSupply,
+                    maxSupply,
+                    priceUsd,
+                    volume24hUsd,
+                    marketCapUsd,
+                    percentChange24hUsd,
+                    unixTimestamp);
 
-            //    return coinData;
-            //}
+                return coinData;
+            }
+
+            private static void fillCoinDataList(
+                List<CoinData> coinDataList,
+                JToken coinTickerArrayDataJToken,
+                long unixTimestamp,
+                int coinDataArrayMaxSize)
+            {
+                for (int i = 0; i < coinDataArrayMaxSize; i++)
+                {
+                    AssertExist(coinTickerArrayDataJToken, i);
+                    JToken currentCoinDataJToken = coinTickerArrayDataJToken[i];
+
+                    CoinData currentCoinData = parseCoinData(currentCoinDataJToken, unixTimestamp);
+                    coinDataList.Add(currentCoinData);
+                }
+            }
+
+            private static long parseUnixTimestamp(JToken metadataJToken)
+            {
+                AssertExist(metadataJToken, "timestamp");
+                long unixTimestamp = GetPropertyValue<int>(metadataJToken, "timestamp");
+
+                return unixTimestamp;
+            }
 
             public static string GetTableColumnHeaderString()
             {
@@ -278,10 +331,27 @@ namespace CryptoBlock
 
             public override string ToString()
             {
-                return Utils.StringUtils.ToString(this);
+                return StringUtils.ToString(this);
             }
 
+            private static void assertNoErrorSpecifiedInResponse(JToken metadataJToken, int coinIndex)
+            {
+                AssertExist(metadataJToken, "error");
+
+                if (!IsNull(metadataJToken, "error")) // error in response
+                {
+                    string errorMessage = GetPropertyValue<string>(metadataJToken, "error");
+
+                    if (errorMessage == RESPONSE_COIN_ID_NOT_FOUND_ERROR_FIELD_VALUE)
+                    {
+                        throw new InvalidCoinIndexException(coinIndex);
+                    }
+                    else // unhandled error 
+                    {
+                        throw new DataParseException(errorMessage);
+                    }
+                }
+            }
         }
     }
-
 }

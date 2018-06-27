@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Net;
-
+using System.Collections.Generic;
 namespace CryptoBlock
 {
     namespace CMCAPI
@@ -13,6 +13,11 @@ namespace CryptoBlock
         /// </remarks>
         public static class RequestHandler
         {
+            public enum eSortType
+            {
+                Id, Rank, Volume24h, PercentChange24h
+            }
+
             /// <summary>
             /// thrown if error occurs while trying to request data from server. 
             /// </summary>
@@ -73,17 +78,10 @@ namespace CryptoBlock
             /// <summary>
             /// thrown if server response string could not be parsed.
             /// </summary>
-            public class InvalidServerResponse : DataRequestException
+            public class ServerResponseParseException : DataRequestException
             {
-                public InvalidServerResponse(string dataParseExceptionMessage, Exception innerException)
-                    : base(
-                          string.Format("Server response could not be parsed: {0}", dataParseExceptionMessage),
-                          innerException)
-                {
-
-                }
-
-                public InvalidServerResponse(Exception innerException) : base(null, innerException)
+                public ServerResponseParseException(Exception innerException)
+                    : base(innerException)
                 {
 
                 }
@@ -100,9 +98,124 @@ namespace CryptoBlock
                 }
             }
 
+            public class CoinIdDoesNotExistException : DataRequestException
+            {
+                public CoinIdDoesNotExistException(int coinId)
+                    : base(formatExceptionMessage(coinId))
+                {
+
+                }
+
+                public CoinIdDoesNotExistException(int coinId, Exception innerException)
+                    : base(formatExceptionMessage(coinId), innerException)
+                {
+
+                }
+
+                private static string formatExceptionMessage(int coinId)
+                {
+                    return string.Format("Coin id does not exist in database: {0}.", coinId);
+                }
+            }
+
+            public class CoinDataRequestInvalidStartIndexException : DataRequestException
+            {
+                public CoinDataRequestInvalidStartIndexException(int startIndex)
+                    : base(formatExceptionMessage(startIndex))
+                {
+
+                }
+                public CoinDataRequestInvalidStartIndexException(int startIndex, Exception innerException) 
+                    : base(formatExceptionMessage(startIndex), innerException)
+                {
+
+                }
+
+                private static string formatExceptionMessage(int startIndex)
+                {
+                    return string.Format(
+                        "Start index must be a non-negative integer and not larger than" +
+                        " total number of coins in database: {0}.",
+                        startIndex);
+                }
+            }
+
+            public class CoinDataRequestInvalidNumberOfCoinsException : DataRequestException
+            {
+                public CoinDataRequestInvalidNumberOfCoinsException(int lo, int hi)
+                    : base(formatExceptionMessage(lo, hi))
+                {
+
+                }
+
+                private static string formatExceptionMessage(int lo, int hi)
+                {
+                    return string.Format("Number of coins must be between {0} and {1}.", lo, hi);
+                }
+            }
+
             private const string BASE_URL = @"https://api.coinmarketcap.com/v2/";
             private const string COIN_DATA_REQUEST_URL = BASE_URL + @"ticker/";
             private const string LISTINGS_REQUEST_URL = BASE_URL + @"listings/";
+
+            private const int COIN_DATA_REQUEST_MAX_NUMBER_OF_COINS = 100;
+            private const string COIN_DATA_REQUEST_STRUCTURE_TYPE = "array";
+
+            private static readonly Dictionary<eSortType, string> sortTypeToString = 
+                new Dictionary<eSortType, string>();
+
+            static RequestHandler()
+            {
+                sortTypeToString[eSortType.Id] = "id";
+                sortTypeToString[eSortType.PercentChange24h] = "percent_change_24h";
+                sortTypeToString[eSortType.Rank] = "rank";
+                sortTypeToString[eSortType.Volume24h] = "volume_24h";
+            }
+
+            public static CoinData[] RequestCoinData(
+                int startIndex,
+                int numberOfCoins,
+                eSortType sortType = eSortType.Id)
+            {
+                if(startIndex < 0)
+                {
+                    throw new CoinDataRequestInvalidStartIndexException(startIndex);
+                }
+
+                if(numberOfCoins <= 0 || numberOfCoins > COIN_DATA_REQUEST_MAX_NUMBER_OF_COINS)
+                {
+                    throw new CoinDataRequestInvalidNumberOfCoinsException(1, 100);
+                }
+
+                string uri = COIN_DATA_REQUEST_URL;
+                HttpGetRequestHandler.GetRequestParameter[] requestParameters
+                    = HttpGetRequestHandler.GetRequestParameter.ToGetRequestParameterArray(
+                        new string[] { "start", "limit", "sort", "structure" },
+                        new string[]
+                        {
+                            startIndex.ToString(),
+                            numberOfCoins.ToString(),
+                            sortTypeToString[sortType],
+                            COIN_DATA_REQUEST_STRUCTURE_TYPE
+                        });
+
+                string serverResponseJson = sendDataRequest(uri, requestParameters);
+
+                try
+                {
+                    CoinData[] coinDataArray = CoinData.ParseArray(serverResponseJson, startIndex, numberOfCoins);
+
+                    return coinDataArray;
+                }
+                catch(CoinData.InvalidCoinIndexException invalidCoinIndexException)
+                {
+                    throw new CoinDataRequestInvalidStartIndexException(startIndex, invalidCoinIndexException);
+                }
+                catch (Data.DataParseException dataParseException)
+                {
+                    throw new ServerResponseParseException(dataParseException);
+                }
+            }
 
             /// <summary>
             /// returns a <see cref="CoinData"/>object encapsulating dynamic server data
@@ -133,12 +246,16 @@ namespace CryptoBlock
 
                 try
                 {
-                    coinData = CoinData.Parse(serverResponse);
+                    coinData = CoinData.Parse(serverResponse, coinId);
                     return coinData;
+                }
+                catch (CoinData.InvalidCoinIndexException invalidCoinIndexException)
+                {
+                    throw new CoinIdDoesNotExistException(coinId, invalidCoinIndexException);
                 }
                 catch (Data.DataParseException dataParseException)
                 {
-                    throw new InvalidServerResponse(dataParseException);
+                    throw new ServerResponseParseException(dataParseException);
                 }
             }
 
@@ -169,7 +286,7 @@ namespace CryptoBlock
                 }
                 catch (Data.DataParseException dataParseException)
                 {
-                    throw new InvalidServerResponse(dataParseException);
+                    throw new ServerResponseParseException(dataParseException);
                 }        
             }
 
@@ -185,26 +302,23 @@ namespace CryptoBlock
             /// <returns>
             /// server response string.
             /// </returns>
-            private static string sendDataRequest(string uri)
+            private static string sendDataRequest(
+                string uri,
+                HttpGetRequestHandler.GetRequestParameter[] requestParameters = null)
             {
                 string serverResponse = null;
 
-                HttpGetRequestHandler httpGetRequestHandler = new HttpGetRequestHandler(uri);
+                HttpGetRequestHandler httpGetRequestHandler = new HttpGetRequestHandler(uri, requestParameters);
                 httpGetRequestHandler.SendRequest();
 
                 // server responded with a successful status code
-                if (!httpGetRequestHandler.RequestFailed && httpGetRequestHandler.SuccessfulStatusCode)
+                if (!httpGetRequestHandler.RequestFailed)
                 {
                     serverResponse = httpGetRequestHandler.Response;
                 }
-                // an error occurred while trying to send request, or server returned an unsuccessful status code
-                else if (httpGetRequestHandler.RequestFailed)
+                else // an error occurred while trying to send request
                 {
                     throw new DataRequestFailedException(httpGetRequestHandler.Exception);
-                }
-                else // server returned an unsuccessful status code
-                {
-                    throw new DataRequestUnsuccessfulStatusCodeException(httpGetRequestHandler.StatusCode);
                 }
 
                 return serverResponse;

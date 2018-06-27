@@ -88,20 +88,6 @@ namespace CryptoBlock
                 }
             }
 
-            public class NullGetRequestParameterArrayException : HttpGetRequestHandlerException
-            {
-                public NullGetRequestParameterArrayException()
-                    : base (formatExceptionMessage())
-                {
-
-                }
-
-                private static string formatExceptionMessage()
-                {
-                    return "Get request parameter array cannot be null.";
-                }
-            }
-
             /// <summary>
             /// thrown when trying to access one of <see cref="HttpGetRequestHandler"/>'s properties
             /// before <see cref="SendRequest()"/> was called. 
@@ -163,7 +149,7 @@ namespace CryptoBlock
             public HttpGetRequestHandler(string uri, GetRequestParameter[] parameters)
             {
                 this.uri = uri;
-                this.parameters = parameters ?? throw new NullGetRequestParameterArrayException();
+                this.parameters = parameters ?? new GetRequestParameter[0];
             }
 
             public string Uri { get { return uri; } }
@@ -292,17 +278,11 @@ namespace CryptoBlock
                     {
                         HttpResponseMessage response = client.GetAsync(string.Empty).Result;
 
+                        this.response = response.Content.ReadAsStringAsync().Result;
+
                         statusCode = response.StatusCode;
 
-                        if (response.IsSuccessStatusCode)
-                        {
-                            this.response = response.Content.ReadAsStringAsync().Result;
-                            successfulStatusCode = true;
-                        }
-                        else
-                        {
-                            successfulStatusCode = false;
-                        }
+                        successfulStatusCode = response.IsSuccessStatusCode;
                     }
 
                     catch (AggregateException aggregateException)
