@@ -50,11 +50,11 @@ namespace CryptoBlock
             }
             catch(Command.CommandException commandException)
             {
-                ConsoleUtils.LogLine(commandException.Message);
+                ConsoleIOManager.Instance.LogError(commandException.Message);
             }
 
             // some padding
-            Console.WriteLine();
+ ////           Console.WriteLine();
         }
     }
 }

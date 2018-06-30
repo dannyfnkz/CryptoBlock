@@ -107,29 +107,52 @@ namespace CryptoBlock
                     "Coin with specified name or symbol not found: {0}.",
                     coinNameOrSymbol);
 
-                ConsoleUtils.LogLine(message);
+                ConsoleIOManager.Instance.LogError(message);
             }
         }
 
+        // assumes coinId is valid (exists in coin listing repository)
         private static void executeViewCoinDataCommand(int coinId)
         {
+            //try
+            //{
+            //    CoinData coinData = RequestHandler.RequestCoinData(coinId);
+
+            //    Console.WriteLine(CoinData.GetTableColumnHeaderString());
+            //    Console.WriteLine(coinData.ToTableRowString());
+            //}
+            //catch(RequestHandler.DataRequestException dataRequestException)
+            //{
+            //    ConsoleUtils.LogLine("An error occurred while trying to fetch coin data from server.");
+            //    ExceptionManager.Instance.LogReferToErrorLogFileMessage();
+
+            //    // log exception in error log file
+            //    ExceptionManager.Instance.LogException(dataRequestException);
+            //}
+
             try
             {
-                CoinData coinData = RequestHandler.RequestCoinData(coinId);
+                CoinData coinData = CoinDataManager.Instance.GetCoinData(coinId);
 
-                Console.WriteLine(CoinData.GetTableColumnHeaderString());
-                Console.WriteLine(coinData.ToTableRowString());
+                ConsoleIOManager.Instance.LogData(CoinData.GetTableColumnHeaderString());
+                ConsoleIOManager.Instance.LogData(coinData.ToTableRowString());
             }
-            catch(RequestHandler.DataRequestException dataRequestException)
+            // CoinData of specified coinId does not exist in coin data repository
+            catch (CoinDataManager.CoinIdNotFoundException coinIdNotFoundException)
             {
-                ExceptionManager.Instance.PrintGenericServerDataFetchExceptionMessage();
+                if(!CoinDataManager.Instance.RepositoryInitialized)
+                {
+                    ConsoleIOManager.Instance.LogError("Coin data repository is not fully initialized yet." +
+                        " Please try again a bit later.");
+                }
+                else // unexpected exception
+                {
+                    ConsoleIOManager.Instance.LogError("An unexpected error has occurred.");
+                    ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
 
-                // log exception in error log file
-                ExceptionManager.Instance.LogException(dataRequestException);
+                    ExceptionManager.Instance.LogException(coinIdNotFoundException);
+                }
             }
-
-            // some padding
-            Console.WriteLine();
         }
 
         private static void executeViewCoinListingCommand(int coinId)
@@ -138,8 +161,8 @@ namespace CryptoBlock
             // & coin id is associated with an existing coin name / symbol
             CoinListing coinListing = CoinListingManager.Instance.GetCoinListing(coinId);
 
-            Console.WriteLine(CoinListing.GetTableColumnHeaderString());
-            Console.WriteLine(coinListing.ToTableRowString());
+            ConsoleIOManager.Instance.LogData(CoinListing.GetTableColumnHeaderString());
+            ConsoleIOManager.Instance.LogData(coinListing.ToTableRowString());
         }
     }
 }

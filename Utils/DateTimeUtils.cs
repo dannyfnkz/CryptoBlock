@@ -19,6 +19,15 @@ namespace CryptoBlock
             {
                 return DateTime.Now.ToString(@"yyyy-MM-dd HH:mm:ss");
             }
+
+            public static string GetLogMessage(string message)
+            {
+                string dateTimeHeader = GetCurrentDateTimeString();
+
+                string logMessage = string.Format("[{0}]: {1}", dateTimeHeader, message);
+
+                return logMessage;
+            }
         }
     }
 }

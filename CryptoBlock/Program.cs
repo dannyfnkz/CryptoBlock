@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CryptoBlock.CMCAPI;
 using static CryptoBlock.CMCAPI.RequestHandler;
 using CryptoBlock.Utils;
+using System.Threading;
 
 namespace CryptoBlock
 {
@@ -13,9 +14,7 @@ namespace CryptoBlock
     {
         static void Main(string[] args)
         {
-
-            ProgramManager programManager = new ProgramManager();
-            programManager.StartProgram();
+            new ProgramManager().StartProgram();
 
         }
     }

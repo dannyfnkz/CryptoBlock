@@ -60,9 +60,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CoinDataManager.cs" />
     <Compile Include="Command.cs" />
     <Compile Include="CommandExecutor.cs" />
     <Compile Include="CommandParser.cs" />
+    <Compile Include="ConsoleIOManager.cs" />
     <Compile Include="ExceptionManager.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ProgramManager.cs" />

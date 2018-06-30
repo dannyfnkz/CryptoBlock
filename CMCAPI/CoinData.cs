@@ -76,7 +76,7 @@ namespace CryptoBlock
                 this.unixTimestamp = unixTimestamp;
             }
 
-            public int ID
+            public int Id
             {
                 get { return id; }
             }
@@ -155,13 +155,12 @@ namespace CryptoBlock
                     assertNoErrorSpecifiedInResponse(coinTickerArrayMetadataJToken, coinIndex);
 
                     AssertExist(coinTickerArrayJToken, "data");
-                    JToken coinTickerArrayDataJToken = coinTickerArrayJToken["data"];
+                    JArray coinTickerDataJArray = (JArray)coinTickerArrayJToken["data"];
 
                     fillCoinDataList(
                         coinDataList,
-                        coinTickerArrayDataJToken,
-                        unixTimestamp,
-                        coinDataArrayMaxSize);
+                        coinTickerDataJArray,
+                        unixTimestamp);
 
                     return coinDataList.ToArray();
                 }
@@ -233,9 +232,9 @@ namespace CryptoBlock
                 string name = GetPropertyValue<string>(coinTickerDataJToken, "name");
                 string symbol = GetPropertyValue<string>(coinTickerDataJToken, "symbol");
                 int rank = GetPropertyValue<int>(coinTickerDataJToken, "rank");
-                double? circulatingSupply = GetPropertyValue<double>(coinTickerDataJToken, "circulating_supply");
-                double? totalSupply = GetPropertyValue<double>(coinTickerDataJToken, "total_supply");
-                double? maxSupply = GetPropertyValue<double>(coinTickerDataJToken, "max_supply");
+                double? circulatingSupply = GetPropertyValue<double?>(coinTickerDataJToken, "circulating_supply");
+                double? totalSupply = GetPropertyValue<double?>(coinTickerDataJToken, "total_supply");
+                double? maxSupply = GetPropertyValue<double?>(coinTickerDataJToken, "max_supply");
 
                 AssertExist(coinTickerDataJToken, "quotes");
                 JToken coinDataDataQuotesJToken = coinTickerDataJToken["quotes"];
@@ -246,8 +245,8 @@ namespace CryptoBlock
                 AssertExist(coinDataDataQuotesUsdJToken, "price", "volume_24h", "market_cap", "percent_change_24h");
 
                 double priceUsd = GetPropertyValue<double>(coinDataDataQuotesUsdJToken, "price");
-                double? volume24hUsd = GetPropertyValue<double>(coinDataDataQuotesUsdJToken, "volume_24h");
-                double? marketCapUsd = GetPropertyValue<double>(coinDataDataQuotesUsdJToken, "market_cap");
+                double? volume24hUsd = GetPropertyValue<double?>(coinDataDataQuotesUsdJToken, "volume_24h");
+                double? marketCapUsd = GetPropertyValue<double?>(coinDataDataQuotesUsdJToken, "market_cap");
                 double percentChange24hUsd = GetPropertyValue<double>(
                     coinDataDataQuotesUsdJToken,
                     "percent_change_24h");
@@ -271,14 +270,13 @@ namespace CryptoBlock
 
             private static void fillCoinDataList(
                 List<CoinData> coinDataList,
-                JToken coinTickerArrayDataJToken,
-                long unixTimestamp,
-                int coinDataArrayMaxSize)
+                JArray coinTickerDataJArray,
+                long unixTimestamp)
             {
-                for (int i = 0; i < coinDataArrayMaxSize; i++)
+                for (int i = 0; i < coinTickerDataJArray.Count; i++)
                 {
-                    AssertExist(coinTickerArrayDataJToken, i);
-                    JToken currentCoinDataJToken = coinTickerArrayDataJToken[i];
+                    AssertExist(coinTickerDataJArray, i);
+                    JToken currentCoinDataJToken = coinTickerDataJArray[i];
 
                     CoinData currentCoinData = parseCoinData(currentCoinDataJToken, unixTimestamp);
                     coinDataList.Add(currentCoinData);

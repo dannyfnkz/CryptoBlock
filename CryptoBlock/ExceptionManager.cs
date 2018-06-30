@@ -1,17 +1,11 @@
 ﻿using CryptoBlock.Utils;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CryptoBlock
 {
     internal class ExceptionManager
     {
-        private const string REFER_TO_LOG_FILE_MESSAGE = "Refer to error log file for detailed information.";
-
         private const string LOG_FILE_PATH = @"error_log.txt";
         private static readonly string LOG_FILE_HEADER = string.Format(
             @"CryptoBlock Error Log File{0}{1}",
@@ -20,16 +14,9 @@ namespace CryptoBlock
 
         public static readonly ExceptionManager Instance = new ExceptionManager();
 
-        internal void PrintGenericServerDataFetchExceptionMessage()
+        internal void ConsoleLogReferToErrorLogFileMessage()
         {
-            ConsoleUtils.LogLine("An error occurred while trying to fetch data from server."
-                + " " + REFER_TO_LOG_FILE_MESSAGE);
-        }
-
-        internal void PrintGenericCoinLisitingRepositoryInitializationExceptionMessage()
-        {
-            ConsoleUtils.LogLine("An error occurred while trying to initialize coin listing repository."
-                + " " + REFER_TO_LOG_FILE_MESSAGE);
+            ConsoleIOManager.Instance.LogError("Refer to error log file for more information.");
         }
 
         internal void LogException(Exception exception)

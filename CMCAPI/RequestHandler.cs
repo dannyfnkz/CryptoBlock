@@ -172,6 +172,11 @@ namespace CryptoBlock
                 sortTypeToString[eSortType.Volume24h] = "volume_24h";
             }
 
+            public static int CoinDataRequestMaxNumberOfCoins
+            {
+                get { return COIN_DATA_REQUEST_MAX_NUMBER_OF_COINS; }
+            }
+
             public static CoinData[] RequestCoinData(
                 int startIndex,
                 int numberOfCoins,
@@ -296,8 +301,6 @@ namespace CryptoBlock
             /// </summary>
             /// <exception cref="DataRequestFailedException">thrown if trying to send data request to server 
             /// failed.</exception>
-            /// <exception cref="DataRequestUnsuccessfulStatusCodeException">thrown if response received from server
-            /// had an unsuccessful status code.</exception>
             /// <param name="uri"></param>
             /// <returns>
             /// server response string.

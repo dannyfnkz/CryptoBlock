@@ -9,7 +9,7 @@ namespace CryptoBlock
     namespace CMCAPI
     {
         /// <summary>
-        /// handles a single asynchronous HTTP GET request.
+        /// handles a single synchronous HTTP GET request.
         /// <remarks>
         /// each <see cref="HttpGetRequestHandler"/>is intended for a single HTTP request. 
         /// to send an additional request, instantiate a new <see cref="HttpGetRequestHandler"/>object.
