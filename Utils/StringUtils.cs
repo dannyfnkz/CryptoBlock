@@ -90,7 +90,8 @@ namespace CryptoBlock
             }
 
             /// <summary>
-            /// returns a string representation of <paramref name="obj"/>, including all properties and their corrosponding values.
+            /// returns a string representation of <paramref name="obj"/>, including all properties and their
+            /// corrosponding values.
             /// </summary>
             /// <remarks>
             /// uses <see cref="System.Reflection"/>.

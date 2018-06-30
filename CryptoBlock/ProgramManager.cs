@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using CryptoBlock.Utils;
+﻿using System.Threading;
 
 namespace CryptoBlock
 {
@@ -14,19 +8,19 @@ namespace CryptoBlock
 
         internal void StartProgram()
         {
-            ConsoleIOManager.Instance.InputEnabled = false;
+            ConsoleIOManager.Instance.RegisterInput = false;
 
             initializeCoinListingManager();
 
             initializeCoinDataManager(CoinListingManager.Instance.RepositoryCount);
 
-            ConsoleIOManager.Instance.InputEnabled = true;
+            ConsoleIOManager.Instance.RegisterInput = true;
             ListenForUserCommands();
         }
 
         internal void ListenForUserCommands()
         {
-            ConsoleIOManager.Instance.EndOfInputKeyRead += consoleIOManager_LineRead;
+            ConsoleIOManager.Instance.EndOfInputKeyRegistered += consoleIOManager_EndOfInputKeyRegistered;
 
             while (true)
             {
@@ -48,7 +42,7 @@ namespace CryptoBlock
             }
         }
 
-        private void consoleIOManager_LineRead(string inputLine)
+        private void consoleIOManager_EndOfInputKeyRegistered(string inputLine)
         {
             inputAvailable = true;
 

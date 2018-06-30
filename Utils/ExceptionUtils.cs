@@ -76,8 +76,7 @@ namespace CryptoBlock
             /// appended to the exception message of its inner exception.
             /// </summary>
             /// <remarks>
-            /// exception message of <paramref name="exception"/>'s inner exception is constructed recursively
-            /// so that it contains the messages of all exceptions in the inner exception chain.
+            /// uses <see cref="appendExceptionMessageString(Exception, StringBuilder, int)"/>.
             /// </remarks>
             /// <param name="exception"></param>
             /// <returns>
@@ -93,6 +92,19 @@ namespace CryptoBlock
                 return exceptionMessageStringBuilder.ToString();
             }
 
+            /// <summary>
+            /// appends exception message of <paramref name="exception"/>to specified exception message
+            /// string builder, indentated by a number of TABs specified by <paramref name="exceptionInnerLevel"/>.
+            /// in addition, if <paramref name="exception"/>has an inner exception, appends its exception message as
+            /// well.
+            /// </summary>
+            /// <remarks>
+            /// exception message of <paramref name="exception"/>'s inner exception is constructed recursively
+            /// so that it contains the messages of all exceptions in the inner exception chain.
+            /// </remarks>
+            /// <param name="exception"></param>
+            /// <param name="exceptionMessageStringBuilder"></param>
+            /// <param name="exceptionInnerLevel"></param>
             private static void appendExceptionMessageString(
                 Exception exception,
                 StringBuilder exceptionMessageStringBuilder,
