@@ -19,11 +19,11 @@ namespace CryptoBlock
         /// </remarks>
         public class ConsoleIOHandler : IDisposable
         {
+            // when pressed EndOfInputKeyRegistered event is raised
+            private const ConsoleKey END_OF_INPUT_CONSOLE_KEY = ConsoleKey.Enter;
+
             // sleep time for input & output listen threads
             private const int LISTEN_THREAD_SLEEP_TIME_MILLIS = 10;
-
-            // when registered, cause EndOfInputKeyRead event to fire
-            private List<ConsoleKey> endOfInputConsoleKeys = new List<ConsoleKey>();
 
             // input
             private StringBuilder inputBuffer = new StringBuilder();
@@ -48,15 +48,11 @@ namespace CryptoBlock
             // object was disposed
             private bool disposed = false;
 
-            public const ConsoleKey DEFAULT_END_OF_INPUT_CONSOLE_KEY = ConsoleKey.Enter;
-
-            // fired after an end-of-input console key was registered
+            // raised after an end-of-input console key was registered
             public event Action<string> EndOfInputKeyRegistered;
 
             public ConsoleIOHandler()
-            {
-                endOfInputConsoleKeys.Add(DEFAULT_END_OF_INPUT_CONSOLE_KEY);
-
+            {         
                 // start listening to console input
                 startConsoleInputListenThread();
 
@@ -69,22 +65,9 @@ namespace CryptoBlock
                 Dispose();
             }
 
-            /// <summary>
-            /// list of end-of-input <see cref="ConsoleKey"/>s.
-            /// when a key in the list is intercepted by Console input 
-            /// and subsequently registered in ConsoleIOHandler,
-            /// EndOfInputKeyRegistered event is raised. 
-            /// </summary>
-            public List<ConsoleKey> EndOfInputConsoleKeys
+            public ConsoleKey EndOfInputConsoleKey
             {
-                /// <exception cref="ObjectDisposedException"><see cref="assertNotDisposed()"/></exception>
-                [MethodImpl(MethodImplOptions.Synchronized)]
-                get
-                {
-                    assertNotDisposed();
-
-                    return endOfInputConsoleKeys;
-                }
+                get { return END_OF_INPUT_CONSOLE_KEY; }
             }
 
             /// <summary>
@@ -216,62 +199,6 @@ namespace CryptoBlock
                 outputFlushThreadRunning = false;
 
                 disposed = true;
-            }
-
-            /// <summary>
-            /// adds <paramref name="consoleKey"/>to list of end-of-input console keys.
-            /// </summary>
-            /// <exception cref="ObjectDisposedException"><see cref="assertNotDisposed()"/></exception>
-            /// <seealso cref="EndOfInputConsoleKeys"/>
-            /// <param name="consoleKey"></param>
-            [MethodImpl(MethodImplOptions.Synchronized)]
-            public void AddEndOfInputConsoleKey(ConsoleKey consoleKey)
-            {
-                assertNotDisposed();
-
-                endOfInputConsoleKeys.Add(consoleKey);
-            }
-
-            /// <summary>
-            /// adds all ConsoleKeys in <paramref name="consoleKeys"/>to end-of-input <see cref="ConsoleKey"/>list.
-            /// </summary>
-            /// <exception cref="ObjectDisposedException"><see cref="assertNotDisposed()"/></exception>
-            /// <seealso cref="EndOfInputConsoleKeys"/>
-            /// <param name="consoleKeys"></param>
-            [MethodImpl(MethodImplOptions.Synchronized)]
-            public void AddEndOfInputConsoleKeyRange(IEnumerable<ConsoleKey> consoleKeys)
-            {
-                assertNotDisposed();
-
-                endOfInputConsoleKeys.AddRange(consoleKeys);
-            }
-
-            /// <summary>
-            /// removes <paramref name="consoleKey"/>from end-of-input <see cref="ConsoleKey"/>list.
-            /// </summary>
-            /// <exception cref="ObjectDisposedException"><see cref="assertNotDisposed()"/></exception>
-            /// <seealso cref="EndOfInputConsoleKeys"/>
-            /// <param name="consoleKey"></param>
-            /// <returns></returns>
-            [MethodImpl(MethodImplOptions.Synchronized)]
-            public bool RemoveEndOfInputConsoleKey(ConsoleKey consoleKey)
-            {
-                assertNotDisposed();
-
-                return endOfInputConsoleKeys.Remove(consoleKey);
-            }
-
-            /// <summary>
-            /// clears end-of-input <see cref="ConsoleKey"/> list.
-            /// </summary>
-            /// <exception cref="ObjectDisposedException"><see cref="assertNotDisposed()"/></exception>
-            /// <seealso cref="EndOfInputConsoleKeys"/> 
-            [MethodImpl(MethodImplOptions.Synchronized)]
-            public void ClearEndOfInputConsoleKey()
-            {
-                assertNotDisposed();
-
-                endOfInputConsoleKeys.Clear();
             }
 
             /// <summary>
@@ -502,7 +429,7 @@ namespace CryptoBlock
                 if (consoleKeyInfo != default(ConsoleKeyInfo))
                 {
                     // key represents end-of-input
-                    if (endOfInputConsoleKeys.Contains(consoleKeyInfo.Key))
+                    if (consoleKeyInfo.Key == END_OF_INPUT_CONSOLE_KEY)
                     {
                         handleEndOfInputKey();
                     }
@@ -613,3 +540,89 @@ namespace CryptoBlock
         }
     } 
 }
+
+/*
+ 
+    
+            // when registered, cause EndOfInputKeyRead event to fire
+            private List<ConsoleKey> endOfInputConsoleKeys = new List<ConsoleKey>();
+
+            in ctor
+            //       endOfInputConsoleKeys.Add(DEFAULT_END_OF_INPUT_CONSOLE_KEY);
+
+            
+                        /// <summary>
+            /// list of end-of-input <see cref="ConsoleKey"/>s.
+            /// when a key in the list is intercepted by Console input 
+            /// and subsequently registered in ConsoleIOHandler,
+            /// EndOfInputKeyRegistered event is raised. 
+            /// </summary>
+            public List<ConsoleKey> EndOfInputConsoleKeys
+            {
+                /// <exception cref="ObjectDisposedException"><see cref="assertNotDisposed()"/></exception>
+                [MethodImpl(MethodImplOptions.Synchronized)]
+                get
+                {
+                    assertNotDisposed();
+
+                    return endOfInputConsoleKeys;
+                }
+            }
+
+                /// <summary>
+            /// adds <paramref name="consoleKey"/>to list of end-of-input console keys.
+            /// </summary>
+            /// <exception cref="ObjectDisposedException"><see cref="assertNotDisposed()"/></exception>
+            /// <seealso cref="EndOfInputConsoleKeys"/>
+            /// <param name="consoleKey"></param>
+            [MethodImpl(MethodImplOptions.Synchronized)]
+            public void AddEndOfInputConsoleKey(ConsoleKey consoleKey)
+            {
+                assertNotDisposed();
+
+                endOfInputConsoleKeys.Add(consoleKey);
+            }
+
+            /// <summary>
+            /// adds all ConsoleKeys in <paramref name="consoleKeys"/>to end-of-input <see cref="ConsoleKey"/>list.
+            /// </summary>
+            /// <exception cref="ObjectDisposedException"><see cref="assertNotDisposed()"/></exception>
+            /// <seealso cref="EndOfInputConsoleKeys"/>
+            /// <param name="consoleKeys"></param>
+            [MethodImpl(MethodImplOptions.Synchronized)]
+            public void AddEndOfInputConsoleKeyRange(IEnumerable<ConsoleKey> consoleKeys)
+            {
+                assertNotDisposed();
+
+                endOfInputConsoleKeys.AddRange(consoleKeys);
+            }
+
+            /// <summary>
+            /// removes <paramref name="consoleKey"/>from end-of-input <see cref="ConsoleKey"/>list.
+            /// </summary>
+            /// <exception cref="ObjectDisposedException"><see cref="assertNotDisposed()"/></exception>
+            /// <seealso cref="EndOfInputConsoleKeys"/>
+            /// <param name="consoleKey"></param>
+            /// <returns></returns>
+            [MethodImpl(MethodImplOptions.Synchronized)]
+            public bool RemoveEndOfInputConsoleKey(ConsoleKey consoleKey)
+            {
+                assertNotDisposed();
+
+                return endOfInputConsoleKeys.Remove(consoleKey);
+            }
+
+            /// <summary>
+            /// clears end-of-input <see cref="ConsoleKey"/> list.
+            /// </summary>
+            /// <exception cref="ObjectDisposedException"><see cref="assertNotDisposed()"/></exception>
+            /// <seealso cref="EndOfInputConsoleKeys"/> 
+            [MethodImpl(MethodImplOptions.Synchronized)]
+            public void ClearEndOfInputConsoleKey()
+            {
+                assertNotDisposed();
+
+                endOfInputConsoleKeys.Clear();
+            }
+
+*/
