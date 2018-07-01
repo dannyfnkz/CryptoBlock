@@ -60,12 +60,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CoinDataManager.cs" />
+    <Compile Include="CoinTickerManager.cs" />
     <Compile Include="Command.cs" />
     <Compile Include="CommandExecutor.cs" />
     <Compile Include="CommandParser.cs" />
     <Compile Include="ConsoleIOManager.cs" />
     <Compile Include="ExceptionManager.cs" />
+    <Compile Include="PortfolioEntry.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ProgramManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

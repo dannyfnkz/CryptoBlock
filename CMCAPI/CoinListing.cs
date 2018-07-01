@@ -7,7 +7,7 @@ namespace CryptoBlock
 {
     namespace CMCAPI
     {
-        public class CoinListing : Data
+        public class CoinListing : CoinData
         {
             private static readonly eDisplayProperty[] TABLE_DISPLAY_PROPERTIES
                 = new eDisplayProperty[]
@@ -50,9 +50,9 @@ namespace CryptoBlock
                 get { return unixTimestamp; }
             }
 
-            // throws DataParseException.NullMetadataFieldException if metadata field was null
-            // throws DataParseException.NullDataFieldException if data field was null
-            // throws DataParseException if an inner data / metadata field was null
+            // throws CoinDataParseException.NullMetadataFieldException if metadata field was null
+            // throws CoinDataParseException.NullDataFieldException if CoinData field was null
+            // throws CoinDataParseException if an inner CoinData / metadata field was null
             internal static CoinListing[] ParseStaticCoinDataArray(string ListingJSONString)
             {
                 try
@@ -71,7 +71,7 @@ namespace CryptoBlock
 
                     if (coinListingArrayLength <= 0)
                     {
-                        throw new DataPropertyParseException("data.num_cryptocurrencies");
+                        throw new CoinDataPropertyParseException("data.num_cryptocurrencies");
                     }
 
                     coinListingArray = new CoinListing[coinListingArrayLength];
@@ -85,7 +85,7 @@ namespace CryptoBlock
                 {
                     if (exception is JsonReaderException || exception is InvalidCastException)
                     {
-                        throw new DataParseException("Invalid JSON string.");
+                        throw new CoinDataParseException("Invalid JSON string.");
                     }
                     else
                     {
@@ -119,13 +119,13 @@ namespace CryptoBlock
 
                 catch (ArgumentOutOfRangeException) // listing array size specified in JSON string was incorrect
                 {
-                    throw new DataPropertyParseException("metadata.num_cryptocurrencies");
+                    throw new CoinDataPropertyParseException("metadata.num_cryptocurrencies");
                 }
             }
 
             public static string GetTableColumnHeaderString()
             {
-                return Data.GetTableColumnHeaderString(TABLE_DISPLAY_PROPERTIES);
+                return CoinData.GetTableColumnHeaderString(TABLE_DISPLAY_PROPERTIES);
             }
 
             public string ToTableRowString()

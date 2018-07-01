@@ -1,340 +1,313 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Text;
 using CryptoBlock.Utils;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace CryptoBlock
 {
     namespace CMCAPI
     {
-        public class CoinData : Data
+        public class CoinData
         {
-            public class InvalidCoinIndexException : Exception
+            public class CoinDataParseException : Exception
             {
-                private int coinIndex;
-
-                public InvalidCoinIndexException(int coinIndex)
-                    : base(formatExceptionMessage(coinIndex))
+                public CoinDataParseException(string message)
+                    : base(message)
                 {
-                    this.coinIndex = coinIndex;
+
                 }
 
-                public int CoinIndex
+                public CoinDataParseException(string message, Exception innerException)
+                    : base(message, innerException)
                 {
-                    get { return coinIndex; }
-                }
 
-                private static string formatExceptionMessage(int coinIndex)
-                {
-                    return string.Format("Coin index not found: {0}.", coinIndex);
                 }
-
             }
 
-            private const string RESPONSE_COIN_ID_NOT_FOUND_ERROR_FIELD_VALUE = "id not found";
-
-            private static readonly eDisplayProperty[] DEFAULT_TABLE_DISPLAY_PROPERTIES
-                = new eDisplayProperty[]
+            public class CoinDataPropertyParseException : CoinDataParseException
+            {
+                public CoinDataPropertyParseException(string propertyName)
+                    : base(formatExceptionMessage(propertyName))
                 {
-                    eDisplayProperty.Name,
-                    eDisplayProperty.Symbol,
-                    eDisplayProperty.CirculatingSupply,
-                    eDisplayProperty.PriceUsd,
-                    eDisplayProperty.Volume24hUsd,
-                    eDisplayProperty.PercentChange24hUsd
+
+                }
+
+                public CoinDataPropertyParseException(string propertyName, Exception innerException)
+                    : base(formatExceptionMessage(propertyName), innerException)
+                {
+
+                }
+
+                private static string formatExceptionMessage(string propertyName)
+                {
+                    return string.Format("Property does not exist in JToken or is invalid: {0}.", propertyName);
+                }
+            }
+
+            public enum eDisplayProperty
+            {
+                Id,
+                Name,
+                Symbol,
+                Rank,
+                CirculatingSupply,
+                TotalSupply,
+                MaxSupply,
+                PriceUsd,
+                Volume24hUsd,
+                MarketCapUsd,
+                PercentChange24hUsd
+            }
+
+            private static Dictionary<eDisplayProperty, int> displayPropertyToColumnWidth =
+                new Dictionary<eDisplayProperty, int>
+                {
+                    { eDisplayProperty.Id, 8},
+                    { eDisplayProperty.Name, 13},
+                    { eDisplayProperty.Symbol, 8},
+                    { eDisplayProperty.Rank, 8},
+                    { eDisplayProperty.CirculatingSupply, 15},
+                    { eDisplayProperty.TotalSupply, 15},
+                    { eDisplayProperty.MaxSupply, 15},
+                    { eDisplayProperty.PriceUsd, 14},
+                    { eDisplayProperty.Volume24hUsd, 18},
+                    { eDisplayProperty.MarketCapUsd, 15},
+                    { eDisplayProperty.PercentChange24hUsd, 11}
                 };
 
-            private int id;
-            private string name;
-            private string symbol;
-            private int rank;
-            private double? circulatingSupply;
-            private double? totalSupply;
-            private double? maxSupply;
-            private double? priceUsd;
-            private double? volume24hUsd;
-            private double? marketCapUsd;
-            private double? percentChange24hUsd;
-            private long unixTimestamp;
+            private static Dictionary<eDisplayProperty, string> displayPropertyToPropertyName =
+                new Dictionary<eDisplayProperty, string>
+                {
+                    { eDisplayProperty.Id, "Id" },
+                    { eDisplayProperty.Name, "Name" },
+                    { eDisplayProperty.Symbol, "Symbol" },
+                    { eDisplayProperty.Rank, "Rank" },
+                    { eDisplayProperty.CirculatingSupply, "CirculatingSupply" },
+                    { eDisplayProperty.TotalSupply, "TotalSupply" },
+                    { eDisplayProperty.MaxSupply, "MaxSupply" },
+                    { eDisplayProperty.PriceUsd, "PriceUsd" },
+                    { eDisplayProperty.Volume24hUsd, "Volume24hUsd" },
+                    { eDisplayProperty.MarketCapUsd, "MarketCapUsd" },
+                    { eDisplayProperty.PercentChange24hUsd, "PercentChange24hUsd" }
+                };
 
-            public CoinData(
-                int id,
-                string name,
-                string symbol,
-                int rank,
-                double? circulatingSupply,
-                double? totalSupply,
-                double? maxSupply,
-                double? priceUsd,
-                double? volume24hUsd,
-                double? marketCapUsd,
-                double? percentChange24hUsd,
-                long unixTimestamp)
+            private static Dictionary<eDisplayProperty, string> displayPropertyToColumnHeaderDisplayString =
+                new Dictionary<eDisplayProperty, string>
+                {
+                    {
+                        eDisplayProperty.Id,
+                        getPaddedString("ID", eDisplayProperty.Id)
+                    },
+                    {
+                        eDisplayProperty.Name,
+                        getPaddedString("Name", eDisplayProperty.Name)
+                    },
+                    {
+                        eDisplayProperty.Symbol,
+                        getPaddedString("Symbol", eDisplayProperty.Symbol)
+                    },
+                    {   eDisplayProperty.Rank,
+                        getPaddedString("Rank", eDisplayProperty.Rank)
+                    },
+                    {
+                        eDisplayProperty.CirculatingSupply,
+                        getPaddedString("Circ. Supply", eDisplayProperty.CirculatingSupply)
+                    },
+                    {
+                        eDisplayProperty.TotalSupply,
+                        getPaddedString("Total Supply", eDisplayProperty.TotalSupply)
+                    },
+                    {
+                        eDisplayProperty.MaxSupply,
+                        getPaddedString("Max Supply", eDisplayProperty.MaxSupply)
+                    },
+                    {
+                        eDisplayProperty.PriceUsd,
+                        getPaddedString("Price USD", eDisplayProperty.PriceUsd)
+                    },
+                    {
+                        eDisplayProperty.Volume24hUsd,
+                        getPaddedString("Volume 24h (USD)", eDisplayProperty.Volume24hUsd)
+                    },
+                    {
+                        eDisplayProperty.MarketCapUsd,
+                        getPaddedString("Market Cap (USD)", eDisplayProperty.MarketCapUsd)
+                    },
+                    {
+                        eDisplayProperty.PercentChange24hUsd,
+                        getPaddedString("% chg 24h", eDisplayProperty.PercentChange24hUsd)
+                    }
+                };
+
+            public static string GetTableColumnHeaderString(params eDisplayProperty[] displayProperties)
             {
-                this.id = id;
-                this.name = name;
-                this.symbol = symbol;
-                this.rank = rank;
-                this.circulatingSupply = circulatingSupply;
-                this.totalSupply = totalSupply;
-                this.maxSupply = maxSupply;
-                this.priceUsd = priceUsd;
-                this.volume24hUsd = volume24hUsd;
-                this.marketCapUsd = marketCapUsd;
-                this.percentChange24hUsd = percentChange24hUsd;
-                this.unixTimestamp = unixTimestamp;
+                StringBuilder stringBuilder = new StringBuilder();
+
+                foreach (eDisplayProperty displayProperty in displayProperties)
+                {
+                    string columnHeaderDisplayString = displayPropertyToColumnHeaderDisplayString[displayProperty];
+                    stringBuilder.Append(columnHeaderDisplayString);
+                }
+
+                return stringBuilder.ToString();
             }
 
-            public int Id
+            protected string GetTableRowString(params eDisplayProperty[] displayProperties)
             {
-                get { return id; }
+                StringBuilder stringBuilder = new StringBuilder();
+
+                foreach (eDisplayProperty displayProperty in displayProperties)
+                {
+                    string propertyName = displayPropertyToPropertyName[displayProperty];
+                    object propertyValue = ReflectionUtils.GetPropertyValue(this, propertyName);
+
+                    string propertyValueString = GetTableDisplayString(propertyValue);
+                    string paddedPropertyValueString = getPaddedString(propertyValueString, displayProperty);
+
+                    stringBuilder.Append(paddedPropertyValueString);
+                }
+
+                return stringBuilder.ToString();
             }
 
-            public string Name
+            private static string getPaddedString(string str, eDisplayProperty displayProperty)
             {
-                get { return name; }
+                int paddedStringWidth = displayPropertyToColumnWidth[displayProperty];
+
+                return str.PadRight(paddedStringWidth);
             }
 
-            public string Symbol
-            {
-                get { return symbol; }
-            }
+            // table row value display strings
+            protected const string NULL_VALUE_TABLE_DISPLAY_STRING = "N/A";
 
-            public int Rank
-            {
-                get { return rank; }
-            }
-
-            public double? CirculatingSupply
-            {
-                get { return circulatingSupply; }
-            }
-
-            public double? TotalSupply
-            {
-                get { return totalSupply; }
-            }
-
-            public double? MaxSupply
-            {
-                get { return maxSupply; }
-            }
-
-            public double? PriceUsd
-            {
-                get { return priceUsd; }
-            }
-
-            public double? Volume24hUsd
-            {
-                get { return volume24hUsd; }
-            }
-
-            public double? MarketCapUsd
-            {
-                get { return marketCapUsd; }
-            }
-
-            public double? PercentChange24hUsd
-            {
-                get { return percentChange24hUsd; }
-            }
-
-            public long UnixTimestamp
-            {
-                get { return unixTimestamp; }
-            }
-
-            public static CoinData[] ParseArray(
-                string tickerArrayJSONString,
-                int coinIndex,
-                int coinDataArrayMaxSize)
+            // returns null if property with specified name does not exist in jToken
+            protected static T GetPropertyValue<T>(JToken jToken, string propertyName)
             {
                 try
                 {
-                    List<CoinData> coinDataList = new List<CoinData>();
+                    // propertyName field exists in jToken, but its value is null
+                    if (IsNull(jToken, propertyName))
+                    {
+                        return default(T);
+                    }
 
-                    JToken coinTickerArrayJToken = (JToken)JsonConvert.DeserializeObject(tickerArrayJSONString);
+                    T propertyValue = jToken.Value<T>(propertyName);
 
-                    // handle metadata fields
-                    AssertExist(coinTickerArrayJToken, "metadata");
-                    JToken coinTickerArrayMetadataJToken = coinTickerArrayJToken["metadata"];
-                    long unixTimestamp = parseUnixTimestamp(coinTickerArrayMetadataJToken);
-
-                    assertNoErrorSpecifiedInResponse(coinTickerArrayMetadataJToken, coinIndex);
-
-                    AssertExist(coinTickerArrayJToken, "data");
-                    JArray coinTickerDataJArray = (JArray)coinTickerArrayJToken["data"];
-
-                    fillCoinDataList(
-                        coinDataList,
-                        coinTickerDataJArray,
-                        unixTimestamp);
-
-                    return coinDataList.ToArray();
+                    return propertyValue;
                 }
                 catch (Exception exception)
                 {
-                    if (exception is JsonReaderException || exception is InvalidCastException)
+                    // type of T is wrong (e.g jToken[propertyName] is string but T was int)
+                    if (exception is FormatException || exception is InvalidCastException
+                        || exception is NullReferenceException) // propertyName does not exist in jToken
                     {
-                        throw new DataParseException("Invalid JSON string.");
+                        throw new CoinDataPropertyParseException(propertyName, exception);
                     }
-                    else
-                    {
-                        throw exception;
-                    }
+
+                    throw exception;
                 }
             }
 
-            public static CoinData Parse(string tickerJSONString, int coinId)
+            protected static bool CheckExist(JToken jToken, params object[] properties)
             {
-                try
+                foreach (object property in properties)
                 {
-                    JToken coinTickerJToken = (JToken)JsonConvert.DeserializeObject(tickerJSONString);
-
-                    // handle metadata fields
-                    AssertExist(coinTickerJToken, "metadata");
-                    JToken coinTickerMetadataJToken = coinTickerJToken["metadata"];
-                    long unixTimestamp = parseUnixTimestamp(coinTickerMetadataJToken);
-
-                    assertNoErrorSpecifiedInResponse(coinTickerMetadataJToken, coinId);
-
-                    // handle data fields
-                    AssertExist(coinTickerJToken, "data");
-                    JToken coinTickerDataJToken = coinTickerJToken["data"];
-
-                    CoinData CoinData = parseCoinData(coinTickerDataJToken, unixTimestamp);
-
-                    return CoinData;
+                    if (jToken[property] == null)
+                    {
+                        return false;
+                    }
                 }
 
-                catch (Exception exception)
+                return true;
+            }
+
+            protected static void AssertExist(JToken jToken, params object[] properties)
+            {
+                foreach (object property in properties)
                 {
-                    if (
-                        exception is JsonReaderException
-                        || exception is InvalidCastException
-                        || exception is InvalidOperationException)
+                    if (jToken[property] == null)
                     {
-                        throw new DataParseException("Invalid JSON string.", exception);
-                    }
-                    else
-                    {
-                        throw exception;
+                        throw new CoinDataPropertyParseException(property.ToString());
                     }
                 }
             }
 
-            private static CoinData parseCoinData(JToken coinTickerDataJToken, long unixTimestamp)
+            protected static bool IsNull(JToken jToken, string propertyName)
             {
-                // handle data fields
-                AssertExist(
-                    coinTickerDataJToken,
-                    "id",
-                    "name",
-                    "symbol",
-                    "rank",
-                    "circulating_supply",
-                    "total_supply",
-                    "max_supply");
-
-                int id = GetPropertyValue<int>(coinTickerDataJToken, "id");
-                string name = GetPropertyValue<string>(coinTickerDataJToken, "name");
-                string symbol = GetPropertyValue<string>(coinTickerDataJToken, "symbol");
-                int rank = GetPropertyValue<int>(coinTickerDataJToken, "rank");
-                double? circulatingSupply = GetPropertyValue<double?>(coinTickerDataJToken, "circulating_supply");
-                double? totalSupply = GetPropertyValue<double?>(coinTickerDataJToken, "total_supply");
-                double? maxSupply = GetPropertyValue<double?>(coinTickerDataJToken, "max_supply");
-
-                AssertExist(coinTickerDataJToken, "quotes");
-                JToken coinDataDataQuotesJToken = coinTickerDataJToken["quotes"];
-                AssertExist(coinDataDataQuotesJToken, "USD");
-                JToken coinDataDataQuotesUsdJToken = coinDataDataQuotesJToken["USD"];
-
-                // handle data.quotes.USD fields
-                AssertExist(coinDataDataQuotesUsdJToken, "price", "volume_24h", "market_cap", "percent_change_24h");
-
-                double priceUsd = GetPropertyValue<double>(coinDataDataQuotesUsdJToken, "price");
-                double? volume24hUsd = GetPropertyValue<double?>(coinDataDataQuotesUsdJToken, "volume_24h");
-                double? marketCapUsd = GetPropertyValue<double?>(coinDataDataQuotesUsdJToken, "market_cap");
-                double percentChange24hUsd = GetPropertyValue<double>(
-                    coinDataDataQuotesUsdJToken,
-                    "percent_change_24h");
-
-                CoinData coinData = new CoinData(
-                    id,
-                    name,
-                    symbol,
-                    rank,
-                    circulatingSupply,
-                    totalSupply,
-                    maxSupply,
-                    priceUsd,
-                    volume24hUsd,
-                    marketCapUsd,
-                    percentChange24hUsd,
-                    unixTimestamp);
-
-                return coinData;
+                return jToken[propertyName].Type == JTokenType.Null;
             }
 
-            private static void fillCoinDataList(
-                List<CoinData> coinDataList,
-                JArray coinTickerDataJArray,
-                long unixTimestamp)
+            protected static string GetTableDisplayString<T>(T? propertyValue) where T : struct
             {
-                for (int i = 0; i < coinTickerDataJArray.Count; i++)
-                {
-                    AssertExist(coinTickerDataJArray, i);
-                    JToken currentCoinDataJToken = coinTickerDataJArray[i];
-
-                    CoinData currentCoinData = parseCoinData(currentCoinDataJToken, unixTimestamp);
-                    coinDataList.Add(currentCoinData);
-                }
+                return StringUtils.ToString(propertyValue, NULL_VALUE_TABLE_DISPLAY_STRING);
             }
 
-            private static long parseUnixTimestamp(JToken metadataJToken)
+            protected static string GetTableDisplayString(object propertyValue)
             {
-                AssertExist(metadataJToken, "timestamp");
-                long unixTimestamp = GetPropertyValue<int>(metadataJToken, "timestamp");
-
-                return unixTimestamp;
+                return StringUtils.ToString(propertyValue, NULL_VALUE_TABLE_DISPLAY_STRING);
             }
 
-            public static string GetTableColumnHeaderString()
-            {
-                return Data.GetTableColumnHeaderString(DEFAULT_TABLE_DISPLAY_PROPERTIES);
-            }
+            //protected static int GetIntProperty(object obj, string propertyName)
+            //{
+            //    object propertyValue = GetProperty(obj, propertyName);
 
-            public string GetTableRowString()
-            {
-                return base.GetTableRowString(DEFAULT_TABLE_DISPLAY_PROPERTIES);
-            }
+            //    try
+            //    {
+            //        int intPropertyValue = (int)propertyValue;
+            //        return intPropertyValue;
+            //    }
+            //    catch(Exception exception)
+            //    {
+            //        if(exception is FormatException || exception is InvalidCastException)
+            //        {
+            //            throw new DataParseException(propertyName);
+            //        }
 
-            public override string ToString()
-            {
-                return StringUtils.ToString(this);
-            }
+            //        throw exception;
+            //    }      
+            //}
 
-            private static void assertNoErrorSpecifiedInResponse(JToken metadataJToken, int coinIndex)
-            {
-                AssertExist(metadataJToken, "error");
+            //protected static double GetDoubleProperty(object obj, string propertyName)
+            //{
+            //    object propertyValue = GetProperty(obj, propertyName);
 
-                if (!IsNull(metadataJToken, "error")) // error in response
-                {
-                    string errorMessage = GetPropertyValue<string>(metadataJToken, "error");
+            //    try
+            //    {
+            //        double doublePropertyValue = (double)propertyValue;
+            //        return doublePropertyValue;
+            //    }
+            //    catch (Exception exception)
+            //    {
+            //        if (exception is FormatException || exception is InvalidCastException)
+            //        {
+            //            throw new DataParseException(propertyName);
+            //        }
 
-                    if (errorMessage == RESPONSE_COIN_ID_NOT_FOUND_ERROR_FIELD_VALUE)
-                    {
-                        throw new InvalidCoinIndexException(coinIndex);
-                    }
-                    else // unhandled error 
-                    {
-                        throw new DataParseException(errorMessage);
-                    }
-                }
-            }
+            //        throw exception;
+            //    }
+            //}
+
+            //protected static string GetStringProperty(object obj, string propertyName)
+            //{
+            //    object propertyValue = GetProperty(obj, propertyName);
+
+            //    try
+            //    {
+            //        string stringPropertyValue = (string)propertyValue;
+            //        return stringPropertyValue;
+            //    }
+            //    catch (Exception exception)
+            //    {
+            //        if (exception is FormatException || exception is InvalidCastException)
+            //        {
+            //            throw new DataParseException(propertyName);
+            //        }
+
+            //        throw exception;
+            //    }
+            //}
         }
     }
 }

@@ -52,14 +52,14 @@ namespace CryptoBlock
 
         private void initializeCoinDataManager(int numberOfCoins)
         {
-            CoinDataManager.Initialize(numberOfCoins);
-            CoinDataManager.Instance.RepositoryInitializedEvent += coinDataManager_RepositoryInitialized;
-            CoinDataManager.Instance.StartCoinDataUpdateThread();
+            CoinTickerManager.Initialize(numberOfCoins);
+            CoinTickerManager.Instance.RepositoryInitializedEvent += coinDataManager_RepositoryInitialized;
+            CoinTickerManager.Instance.StartCoinTickerUpdateThread();
         }
 
-        private void coinDataManager_RepositoryInitialized(CoinDataManager coinDataManager)
+        private void coinDataManager_RepositoryInitialized(CoinTickerManager coinDataManager)
         {
-            ConsoleIOManager.Instance.LogNotice("Coin data repository initialized successfully.");
+            ConsoleIOManager.Instance.LogNotice("Coin ticker repository initialized successfully.");
 
             // some padding
   ////          ConsoleIOManager.Instance.PrintNewLine();

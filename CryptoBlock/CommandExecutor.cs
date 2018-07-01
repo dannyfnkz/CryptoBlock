@@ -117,10 +117,10 @@ namespace CryptoBlock
         {
             //try
             //{
-            //    CoinData coinData = RequestHandler.RequestCoinData(coinId);
+            //    CoinTicker coinTicker = RequestHandler.RequestCoinData(coinId);
 
-            //    Console.WriteLine(CoinData.GetTableColumnHeaderString());
-            //    Console.WriteLine(coinData.ToTableRowString());
+            //    Console.WriteLine(CoinTicker.GetTableColumnHeaderString());
+            //    Console.WriteLine(coinTicker.ToTableRowString());
             //}
             //catch(RequestHandler.DataRequestException dataRequestException)
             //{
@@ -133,15 +133,15 @@ namespace CryptoBlock
 
             try
             {
-                CoinData coinData = CoinDataManager.Instance.GetCoinData(coinId);
+                CoinTicker coinTicker = CoinTickerManager.Instance.GetCoinData(coinId);
 
-                ConsoleIOManager.Instance.LogData(CoinData.GetTableColumnHeaderString());
-                ConsoleIOManager.Instance.LogData(coinData.GetTableRowString());
+                ConsoleIOManager.Instance.LogData(CoinTicker.GetTableColumnHeaderString());
+                ConsoleIOManager.Instance.LogData(coinTicker.GetTableRowString());
             }
-            // CoinData of specified coinId does not exist in coin data repository
-            catch (CoinDataManager.CoinIdNotFoundException coinIdNotFoundException)
+            // CoinTicker of specified coinId does not exist in coin data repository
+            catch (CoinTickerManager.CoinIdNotFoundException coinIdNotFoundException)
             {
-                if (!CoinDataManager.Instance.RepositoryInitialized)
+                if (!CoinTickerManager.Instance.RepositoryInitialized)
                 {
                     ConsoleIOManager.Instance.LogError("Coin data repository is not fully initialized yet." +
                         " Please try again a bit later.");

@@ -7,30 +7,30 @@ using System.Threading.Tasks;
 
 namespace CryptoBlock
 {
-    internal class CoinDataManager
+    internal class CoinTickerManager
     {
-        internal class CoinDataManagerException : Exception
+        internal class CoinTickerManagerException : Exception
         {
-            internal CoinDataManagerException()
+            internal CoinTickerManagerException()
                 : base()
             {
 
             }
 
-            internal CoinDataManagerException(string exceptionMessage)
+            internal CoinTickerManagerException(string exceptionMessage)
                 : base(exceptionMessage)
             {
 
             }
 
-            internal CoinDataManagerException(string exceptionMessage, Exception innerException)
+            internal CoinTickerManagerException(string exceptionMessage, Exception innerException)
                 : base(exceptionMessage, innerException)
             {
 
             }
         }
 
-        internal class InvalidNumberOfCoinsException : CoinDataManagerException
+        internal class InvalidNumberOfCoinsException : CoinTickerManagerException
         {
             int numberOfCoins;
 
@@ -51,12 +51,12 @@ namespace CryptoBlock
             }
         }
 
-        internal class ManagerNotInitializedException : CoinDataManagerException
+        internal class ManagerNotInitializedException : CoinTickerManagerException
         {
 
         }
 
-        internal class ManagerAlreadyInitializedException : CoinDataManagerException
+        internal class ManagerAlreadyInitializedException : CoinTickerManagerException
         {
             internal ManagerAlreadyInitializedException()
                 : base(formatExceptionMessage())
@@ -66,11 +66,11 @@ namespace CryptoBlock
 
             private static string formatExceptionMessage()
             {
-                return "Coin data manager was already initialized.";
+                return "Coin ticker manager was already initialized.";
             }
         }
 
-        internal class CoinIdNotFoundException : CoinDataManagerException
+        internal class CoinIdNotFoundException : CoinTickerManagerException
         {
             private int coinId;
 
@@ -88,32 +88,32 @@ namespace CryptoBlock
             private static string formatExceptionMessage(int coinId)
             {
                 return string.Format(
-                    "Coin with id {0} does not exist in repository. Note that it might not have been intialized yet.",
+                    "Coin with id {0} does not exist in repository." +
+                    " Note that it might not have been intialized yet.",
                     coinId);
             }
         }
 
-        internal event Action<CoinDataManager> RepositoryInitializedEvent;
+        internal event Action<CoinTickerManager> RepositoryInitializedEvent;
 
-        private const int COIN_DATA_UPDATE_THREAD_SLEEP_TIME = 1000 * 120; // in millis
+        private const int COIN_TICKER_UPDATE_THREAD_SLEEP_TIME = 1000 * 120; // in millis
 
-        private static CoinDataManager instance;
+        private static CoinTickerManager instance;
 
 
-        private Dictionary<int, CoinData> coinIdToCoinData = new Dictionary<int, CoinData>();
-        //   private CoinData[] coinDataArray;
+        private Dictionary<int, CoinTicker> coinIdToCoinTicker = new Dictionary<int, CoinTicker>();
+        //   private CoinTicker[] coinDataArray;
         private int numberOfCoinsInRepository;
         private int leastRecentlyUpdatedCoinIndex = 0;
         
-        private Task coinDataUpdateTask;
-        private bool coinDataUpdateThreadRunning;
+        private Task coinTickerUpdateTask;
+        private bool coinTickerUpdateThreadRunning;
         private bool repositoryInitialized;
 
-        internal CoinDataManager(int numberOfCoinsInRepository)
+        internal CoinTickerManager(int numberOfCoinsInRepository)
         {
-            //     coinDataArray = new CoinData[numberOfCoins];
             this.numberOfCoinsInRepository = numberOfCoinsInRepository;
-            coinDataUpdateTask = new Task(new Action(updateCoinDataRepository));
+            coinTickerUpdateTask = new Task(new Action(updateCoinTickerRepository));
         }
 
         internal int NumberOfCoinsInRepository
@@ -126,18 +126,18 @@ namespace CryptoBlock
             get { return repositoryInitialized; }
         }
 
-        internal static CoinDataManager Initialize(int numberOfCoins)
+        internal static CoinTickerManager Initialize(int numberOfCoins)
         {
             assertManagerNotInitialized();
 
             assertValidNumberOfCoins(numberOfCoins);
 
-            instance = new CoinDataManager(numberOfCoins);
+            instance = new CoinTickerManager(numberOfCoins);
 
             return instance;
         }
 
-        internal static CoinDataManager Instance
+        internal static CoinTickerManager Instance
         {
             get
             {
@@ -148,24 +148,24 @@ namespace CryptoBlock
 
         internal bool CoinIdExists(int coinId)
         {
-            return coinIdToCoinData.ContainsKey(coinId);
+            return coinIdToCoinTicker.ContainsKey(coinId);
         }
 
-        internal CoinData GetCoinData(int coinId)
+        internal CoinTicker GetCoinData(int coinId)
         {
             assertCoinIdExists(coinId);
-            return coinIdToCoinData[coinId];
+            return coinIdToCoinTicker[coinId];
         }
 
-        internal void StartCoinDataUpdateThread()
+        internal void StartCoinTickerUpdateThread()
         {
-            coinDataUpdateThreadRunning = true;
-            coinDataUpdateTask.Start();
+            coinTickerUpdateThreadRunning = true;
+            coinTickerUpdateTask.Start();
         }
         
-        internal void StopCoinDataUpdateThread()
+        internal void StopCoinTickerUpdateThread()
         {
-            coinDataUpdateThreadRunning = false;
+            coinTickerUpdateThreadRunning = false;
         }
 
         private static void assertValidNumberOfCoins(int numberOfCoins)
@@ -194,31 +194,31 @@ namespace CryptoBlock
 
         private void assertCoinIdExists(int coinId)
         {
-            if(!coinIdToCoinData.ContainsKey(coinId))
+            if(!coinIdToCoinTicker.ContainsKey(coinId))
             {
                 throw new CoinIdNotFoundException(coinId);
             }
         }
 
-        private void updateCoinDataRepository()
+        private void updateCoinTickerRepository()
         {
-            while(coinDataUpdateThreadRunning)
+            while(coinTickerUpdateThreadRunning)
             {
                 try
                 {
                     // fetch data of current coin section
-                    CoinData[] currentCoinDataSection = RequestHandler.RequestCoinData(
+                    CoinTicker[] currentCoinTickerSection = RequestHandler.RequestCoinTicker(
                         leastRecentlyUpdatedCoinIndex,
                         RequestHandler.CoinDataRequestMaxNumberOfCoins);
 
                     // update appropriate section in coin data array with newly fetched data
                     int currentCoinDataSectionSize = Math.Min(
                         NumberOfCoinsInRepository - leastRecentlyUpdatedCoinIndex,
-                        currentCoinDataSection.Length);
+                        currentCoinTickerSection.Length);
 
-                    foreach(CoinData coinData in currentCoinDataSection)
+                    foreach(CoinTicker coinTicker in currentCoinTickerSection)
                     {
-                        coinIdToCoinData[coinData.Id] = coinData;
+                        coinIdToCoinTicker[coinTicker.Id] = coinTicker;
                     }
                     //Array.Copy(
                     //    currentCoinDataSection,
@@ -227,7 +227,7 @@ namespace CryptoBlock
                     //    currentCoinDataSectionSize);
 
                     // set start index of next coin section (0 if current update run is complete)
-                    leastRecentlyUpdatedCoinIndex += currentCoinDataSection.Length;
+                    leastRecentlyUpdatedCoinIndex += currentCoinTickerSection.Length;
 
                     if (leastRecentlyUpdatedCoinIndex > NumberOfCoinsInRepository - 1)
                     {
@@ -245,17 +245,17 @@ namespace CryptoBlock
                             }     
                         }
 
-                        Thread.Sleep(COIN_DATA_UPDATE_THREAD_SLEEP_TIME);
+                        Thread.Sleep(COIN_TICKER_UPDATE_THREAD_SLEEP_TIME);
                     }
                 }
                 catch(RequestHandler.DataRequestException dataRequestException)
                 {
-                    handleCoinDataUpdateException(dataRequestException);
+                    handleCoinTickerUpdateException(dataRequestException);
                 }
             }
         }
 
-        private void handleCoinDataUpdateException(Exception exception)
+        private void handleCoinTickerUpdateException(Exception exception)
         {
             ConsoleIOManager.Instance.LogError("An exception occurred while trying to update coin data repository.");
             ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
