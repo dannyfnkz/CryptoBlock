@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -92,11 +93,11 @@ namespace CryptoBlock
                     coinId = CoinListingManager.Instance.GetCoinIdBySymbol(coinNameOrSymbol);
                 }
 
-                if(command.Type == Command.eCommandType.ViewCoinData)
+                if (command.Type == Command.eCommandType.ViewCoinData)
                 {
                     executeViewCoinDataCommand(coinId);
                 }
-                else if(command.Type == Command.eCommandType.ViewCoinListing)
+                else if (command.Type == Command.eCommandType.ViewCoinListing)
                 {
                     executeViewCoinListingCommand(coinId);
                 }
@@ -135,12 +136,12 @@ namespace CryptoBlock
                 CoinData coinData = CoinDataManager.Instance.GetCoinData(coinId);
 
                 ConsoleIOManager.Instance.LogData(CoinData.GetTableColumnHeaderString());
-                ConsoleIOManager.Instance.LogData(coinData.ToTableRowString());
+                ConsoleIOManager.Instance.LogData(coinData.GetTableRowString());
             }
             // CoinData of specified coinId does not exist in coin data repository
             catch (CoinDataManager.CoinIdNotFoundException coinIdNotFoundException)
             {
-                if(!CoinDataManager.Instance.RepositoryInitialized)
+                if (!CoinDataManager.Instance.RepositoryInitialized)
                 {
                     ConsoleIOManager.Instance.LogError("Coin data repository is not fully initialized yet." +
                         " Please try again a bit later.");

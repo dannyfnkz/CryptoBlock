@@ -1,4 +1,7 @@
-﻿using System;
+﻿
+using System;
+using System.Collections.Generic;
+using System.Text;
 using CryptoBlock.Utils;
 using Newtonsoft.Json.Linq;
 
@@ -8,7 +11,7 @@ namespace CryptoBlock
     {
         public class Data
         {
-            internal class DataParseException : Exception
+            public class DataParseException : Exception
             {
                 public DataParseException(string message)
                     : base(message)
@@ -16,14 +19,14 @@ namespace CryptoBlock
 
                 }
 
-                public DataParseException(string message, Exception innerException) 
+                public DataParseException(string message, Exception innerException)
                     : base(message, innerException)
                 {
 
                 }
             }
 
-            internal class DataPropertyParseException : DataParseException
+            public class DataPropertyParseException : DataParseException
             {
                 public DataPropertyParseException(string propertyName)
                     : base(formatExceptionMessage(propertyName))
@@ -43,14 +46,138 @@ namespace CryptoBlock
                 }
             }
 
-            // column widths for table display
-            protected const int ID_COLUMN_WIDTH = 8;
-            protected const int NAME_COLUMN_WIDTH = 13;
-            protected const int SYMBOL_COLUMN_WIDTH = 8;
-            protected const int CIRCULATING_SUPPLY_COLUMN_WIDTH = 15;
-            protected const int PRICE_USD_COLUMN_WIDTH = 14;
-            protected const int VOLUME_COLUMN_WIDTH = 18;
-            protected const int PERCENT_CHANGE_WIDTH = 11;
+            public enum eDisplayProperty
+            {
+                Id,
+                Name,
+                Symbol,
+                Rank,
+                CirculatingSupply,
+                TotalSupply,
+                MaxSupply,
+                PriceUsd,
+                Volume24hUsd,
+                MarketCapUsd,
+                PercentChange24hUsd
+            }
+
+            private static Dictionary<eDisplayProperty, int> displayPropertyToColumnWidth =
+                new Dictionary<eDisplayProperty, int>
+                {
+                    { eDisplayProperty.Id, 8},
+                    { eDisplayProperty.Name, 13},
+                    { eDisplayProperty.Symbol, 8},
+                    { eDisplayProperty.Rank, 8},
+                    { eDisplayProperty.CirculatingSupply, 15},
+                    { eDisplayProperty.TotalSupply, 15},
+                    { eDisplayProperty.MaxSupply, 15},
+                    { eDisplayProperty.PriceUsd, 14},
+                    { eDisplayProperty.Volume24hUsd, 18},
+                    { eDisplayProperty.MarketCapUsd, 15},
+                    { eDisplayProperty.PercentChange24hUsd, 11}
+                };
+
+            private static Dictionary<eDisplayProperty, string> displayPropertyToPropertyName =
+                new Dictionary<eDisplayProperty, string>
+                {
+                    { eDisplayProperty.Id, "Id" },
+                    { eDisplayProperty.Name, "Name" },
+                    { eDisplayProperty.Symbol, "Symbol" },
+                    { eDisplayProperty.Rank, "Rank" },
+                    { eDisplayProperty.CirculatingSupply, "CirculatingSupply" },
+                    { eDisplayProperty.TotalSupply, "TotalSupply" },
+                    { eDisplayProperty.MaxSupply, "MaxSupply" },
+                    { eDisplayProperty.PriceUsd, "PriceUsd" },
+                    { eDisplayProperty.Volume24hUsd, "Volume24hUsd" },
+                    { eDisplayProperty.MarketCapUsd, "MarketCapUsd" },
+                    { eDisplayProperty.PercentChange24hUsd, "PercentChange24hUsd" }
+                };
+
+            private static Dictionary<eDisplayProperty, string> displayPropertyToColumnHeaderDisplayString =
+                new Dictionary<eDisplayProperty, string>
+                {
+                    {
+                        eDisplayProperty.Id,
+                        getPaddedString("ID", eDisplayProperty.Id)
+                    },
+                    {
+                        eDisplayProperty.Name,
+                        getPaddedString("Name", eDisplayProperty.Name)
+                    },
+                    {
+                        eDisplayProperty.Symbol,
+                        getPaddedString("Symbol", eDisplayProperty.Symbol)
+                    },
+                    {   eDisplayProperty.Rank,
+                        getPaddedString("Rank", eDisplayProperty.Rank)
+                    },
+                    {
+                        eDisplayProperty.CirculatingSupply,
+                        getPaddedString("Circ. Supply", eDisplayProperty.CirculatingSupply)
+                    },
+                    {
+                        eDisplayProperty.TotalSupply,
+                        getPaddedString("Total Supply", eDisplayProperty.TotalSupply)
+                    },
+                    {
+                        eDisplayProperty.MaxSupply,
+                        getPaddedString("Max Supply", eDisplayProperty.MaxSupply)
+                    },
+                    {
+                        eDisplayProperty.PriceUsd,
+                        getPaddedString("Price USD", eDisplayProperty.PriceUsd)
+                    },
+                    {
+                        eDisplayProperty.Volume24hUsd,
+                        getPaddedString("Volume 24h (USD)", eDisplayProperty.Volume24hUsd)
+                    },
+                    {
+                        eDisplayProperty.MarketCapUsd,
+                        getPaddedString("Market Cap (USD)", eDisplayProperty.MarketCapUsd)
+                    },
+                    {
+                        eDisplayProperty.PercentChange24hUsd,
+                        getPaddedString("% chg 24h", eDisplayProperty.PercentChange24hUsd)
+                    }
+                };
+
+            public static string GetTableColumnHeaderString(params eDisplayProperty[] displayProperties)
+            {
+                StringBuilder stringBuilder = new StringBuilder();
+
+                foreach (eDisplayProperty displayProperty in displayProperties)
+                {
+                    string columnHeaderDisplayString = displayPropertyToColumnHeaderDisplayString[displayProperty];
+                    stringBuilder.Append(columnHeaderDisplayString);
+                }
+
+                return stringBuilder.ToString();
+            }
+
+            protected string GetTableRowString(params eDisplayProperty[] displayProperties)
+            {
+                StringBuilder stringBuilder = new StringBuilder();
+
+                foreach (eDisplayProperty displayProperty in displayProperties)
+                {
+                    string propertyName = displayPropertyToPropertyName[displayProperty];
+                    object propertyValue = ReflectionUtils.GetPropertyValue(this, propertyName);
+
+                    string propertyValueString = GetTableDisplayString(propertyValue);
+                    string paddedPropertyValueString = getPaddedString(propertyValueString, displayProperty);
+
+                    stringBuilder.Append(paddedPropertyValueString);
+                }
+
+                return stringBuilder.ToString();
+            }
+
+            private static string getPaddedString(string str, eDisplayProperty displayProperty)
+            {
+                int paddedStringWidth = displayPropertyToColumnWidth[displayProperty];
+
+                return str.PadRight(paddedStringWidth);
+            }
 
             // table row value display strings
             protected const string NULL_VALUE_TABLE_DISPLAY_STRING = "N/A";
@@ -61,7 +188,7 @@ namespace CryptoBlock
                 try
                 {
                     // propertyName field exists in jToken, but its value is null
-                    if(IsNull(jToken, propertyName))
+                    if (IsNull(jToken, propertyName))
                     {
                         return default(T);
                     }
@@ -112,7 +239,12 @@ namespace CryptoBlock
                 return jToken[propertyName].Type == JTokenType.Null;
             }
 
-            protected string GetTableDisplayString<T>(T? propertyValue) where T : struct
+            protected static string GetTableDisplayString<T>(T? propertyValue) where T : struct
+            {
+                return StringUtils.ToString(propertyValue, NULL_VALUE_TABLE_DISPLAY_STRING);
+            }
+
+            protected static string GetTableDisplayString(object propertyValue)
             {
                 return StringUtils.ToString(propertyValue, NULL_VALUE_TABLE_DISPLAY_STRING);
             }

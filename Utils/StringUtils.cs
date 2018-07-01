@@ -19,6 +19,11 @@ namespace CryptoBlock
                 return nullable.HasValue ? nullable.Value.ToString() : defaultStringValue;
             }
 
+            public static string ToString(object obj, string defaultStringValue)
+            {
+                return obj != null ? obj.ToString() : defaultStringValue;
+            }
+
             /// <summary>
             /// appends <paramref name="appendant"/>to <paramref name="stringBuilder"/>
             /// <paramref name="numberOfTimes"/> times.
@@ -32,7 +37,7 @@ namespace CryptoBlock
             /// <param name="numberOfTimes">default value is 1.</param>
             public static void Append(StringBuilder stringBuilder, string appendant, int numberOfTimes = 1)
             {
-                for(int i = 0; i < numberOfTimes; i++)
+                for (int i = 0; i < numberOfTimes; i++)
                 {
                     stringBuilder.Append(appendant);
                 }

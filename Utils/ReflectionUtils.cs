@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 
 namespace CryptoBlock
 {
@@ -23,16 +24,16 @@ namespace CryptoBlock
             /// </returns>
             public static object GetPropertyValue(object obj, string propertyName)
             {
-                var site = 
-                    System.Runtime.CompilerServices.CallSite<Func<System.Runtime.CompilerServices.CallSite, object, object>>.Create
-                    (Microsoft.CSharp.RuntimeBinder.Binder.GetMember(
-                        0,
-                        propertyName,
-                        obj.GetType(), 
-                        new[] { Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo.Create(0, null) }));
-                return site.Target(site, obj);
+                //var site = 
+                //    System.Runtime.CompilerServices.CallSite<Func<System.Runtime.CompilerServices.CallSite, object, object>>.Create
+                //    (Microsoft.CSharp.RuntimeBinder.Binder.GetMember(
+                //        0,
+                //        propertyName,
+                //        obj.GetType(), 
+                //        new[] { Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo.Create(0, null) }));
+                //return site.Target(site, obj);
+                return obj.GetType().GetProperty(propertyName).GetValue(obj);
             }
         }
     }
 }
-

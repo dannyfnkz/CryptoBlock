@@ -35,6 +35,17 @@ namespace CryptoBlock
 
             private const string RESPONSE_COIN_ID_NOT_FOUND_ERROR_FIELD_VALUE = "id not found";
 
+            private static readonly eDisplayProperty[] DEFAULT_TABLE_DISPLAY_PROPERTIES
+                = new eDisplayProperty[]
+                {
+                    eDisplayProperty.Name,
+                    eDisplayProperty.Symbol,
+                    eDisplayProperty.CirculatingSupply,
+                    eDisplayProperty.PriceUsd,
+                    eDisplayProperty.Volume24hUsd,
+                    eDisplayProperty.PercentChange24hUsd
+                };
+
             private int id;
             private string name;
             private string symbol;
@@ -189,7 +200,7 @@ namespace CryptoBlock
                     long unixTimestamp = parseUnixTimestamp(coinTickerMetadataJToken);
 
                     assertNoErrorSpecifiedInResponse(coinTickerMetadataJToken, coinId);
-                    
+
                     // handle data fields
                     AssertExist(coinTickerJToken, "data");
                     JToken coinTickerDataJToken = coinTickerJToken["data"];
@@ -202,7 +213,7 @@ namespace CryptoBlock
                 catch (Exception exception)
                 {
                     if (
-                        exception is JsonReaderException 
+                        exception is JsonReaderException
                         || exception is InvalidCastException
                         || exception is InvalidOperationException)
                     {
@@ -293,38 +304,12 @@ namespace CryptoBlock
 
             public static string GetTableColumnHeaderString()
             {
-                StringBuilder stringBuilder = new StringBuilder();
-
-                stringBuilder.Append("Name".PadRight(NAME_COLUMN_WIDTH));
-                stringBuilder.Append("Symbol".PadRight(SYMBOL_COLUMN_WIDTH));
-                stringBuilder.Append("Circ. Supply".PadRight(CIRCULATING_SUPPLY_COLUMN_WIDTH));
-                stringBuilder.Append("Price USD".PadRight(PRICE_USD_COLUMN_WIDTH));
-                stringBuilder.Append("Volume 24h (USD)".PadRight(VOLUME_COLUMN_WIDTH));
-                stringBuilder.Append("% chg 24h".PadRight(PERCENT_CHANGE_WIDTH));
-
-                return stringBuilder.ToString();
+                return Data.GetTableColumnHeaderString(DEFAULT_TABLE_DISPLAY_PROPERTIES);
             }
 
-            public string ToTableRowString()
+            public string GetTableRowString()
             {
-                StringBuilder stringBuilder = new StringBuilder();
-
-                stringBuilder.Append(name.PadRight(NAME_COLUMN_WIDTH));
-                stringBuilder.Append(symbol.PadRight(SYMBOL_COLUMN_WIDTH));
-
-                string circulatingSupplyString = GetTableDisplayString(circulatingSupply);
-                stringBuilder.Append(circulatingSupplyString.PadRight(CIRCULATING_SUPPLY_COLUMN_WIDTH));
-
-                string priceUsdString = GetTableDisplayString(priceUsd);
-                stringBuilder.Append(priceUsdString.PadRight(PRICE_USD_COLUMN_WIDTH));
-
-                string volume24hUsdString = GetTableDisplayString(volume24hUsd);
-                stringBuilder.Append(volume24hUsdString.PadRight(VOLUME_COLUMN_WIDTH));
-
-                string percentChange24hUsdString = GetTableDisplayString(percentChange24hUsd);
-                stringBuilder.Append(percentChange24hUsdString.PadRight(PERCENT_CHANGE_WIDTH));
-
-                return stringBuilder.ToString();
+                return base.GetTableRowString(DEFAULT_TABLE_DISPLAY_PROPERTIES);
             }
 
             public override string ToString()
