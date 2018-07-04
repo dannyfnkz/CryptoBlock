@@ -35,17 +35,6 @@ namespace CryptoBlock
 
             private const string RESPONSE_COIN_ID_NOT_FOUND_ERROR_FIELD_VALUE = "id not found";
 
-            private static readonly eDisplayProperty[] DEFAULT_TABLE_DISPLAY_PROPERTIES
-                = new eDisplayProperty[]
-                {
-                    eDisplayProperty.Name,
-                    eDisplayProperty.Symbol,
-                    eDisplayProperty.CirculatingSupply,
-                    eDisplayProperty.PriceUsd,
-                    eDisplayProperty.Volume24hUsd,
-                    eDisplayProperty.PercentChange24hUsd
-                };
-
             private int rank;
             private double? circulatingSupply;
             private double? totalSupply;
@@ -274,16 +263,6 @@ namespace CryptoBlock
                 long unixTimestamp = GetPropertyValue<int>(metadataJToken, "timestamp");
 
                 return unixTimestamp;
-            }
-
-            public static string GetTableColumnHeaderString()
-            {
-                return CoinData.GetTableColumnHeaderString(DEFAULT_TABLE_DISPLAY_PROPERTIES);
-            }
-
-            public string GetTableRowString()
-            {
-                return base.GetTableRowString(DEFAULT_TABLE_DISPLAY_PROPERTIES);
             }
 
             public override string ToString()

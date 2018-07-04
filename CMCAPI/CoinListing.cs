@@ -9,14 +9,6 @@ namespace CryptoBlock
     {
         public class CoinListing : CoinData
         {
-            private static readonly eDisplayProperty[] TABLE_DISPLAY_PROPERTIES
-                = new eDisplayProperty[]
-                {
-                    eDisplayProperty.Id,
-                    eDisplayProperty.Name,
-                    eDisplayProperty.Symbol
-                };
-
             public CoinListing(int id, string name, string symbol, long unixTimestamp)
                 : base(id, name, symbol, unixTimestamp)
             {
@@ -94,16 +86,6 @@ namespace CryptoBlock
                 {
                     throw new CoinDataPropertyParseException("metadata.num_cryptocurrencies");
                 }
-            }
-
-            public static string GetTableColumnHeaderString()
-            {
-                return CoinData.GetTableColumnHeaderString(TABLE_DISPLAY_PROPERTIES);
-            }
-
-            public string GetTableRowString()
-            {
-                return base.GetTableRowString(TABLE_DISPLAY_PROPERTIES);
             }
 
             public override string ToString()
