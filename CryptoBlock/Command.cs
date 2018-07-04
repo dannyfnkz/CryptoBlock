@@ -50,26 +50,26 @@ namespace CryptoBlock
 
         internal enum eCommandType
         {
-            ViewCoinData,
+            ViewCoinTicker,
             ViewCoinListing
         }
 
         private static readonly Dictionary<eCommandType, string> commandTypeToString =
             new Dictionary<eCommandType, string>
             {
-                { eCommandType.ViewCoinData, "view coin data" },
+                { eCommandType.ViewCoinTicker, "view coin ticker" },
                 { eCommandType.ViewCoinListing, "view coin listing" }
             };
         private static readonly Dictionary<eCommandType, int> commandTypeToMinNumberOfArguments =
             new Dictionary<eCommandType, int>
             {
-                { eCommandType.ViewCoinData, 1 },
+                { eCommandType.ViewCoinTicker, 1 },
                 { eCommandType.ViewCoinListing, 1 }
             };
         private static readonly Dictionary<eCommandType, int> commandTypeToMaxNumberOfArguments =
             new Dictionary<eCommandType, int>
             {
-                { eCommandType.ViewCoinData, 1 },
+                { eCommandType.ViewCoinTicker, 1 },
                 { eCommandType.ViewCoinListing, 1 }
             };
 

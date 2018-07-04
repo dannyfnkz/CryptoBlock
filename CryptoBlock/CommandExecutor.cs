@@ -1,12 +1,7 @@
 ﻿
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using CryptoBlock.CMCAPI;
 using CryptoBlock.TableDisplay;
-using CryptoBlock.Utils;
 
 namespace CryptoBlock
 {
@@ -67,7 +62,7 @@ namespace CryptoBlock
         internal static void ExecuteCommand(Command command)
         {
             // call method corresponding to command type
-            if (command.Type == Command.eCommandType.ViewCoinData
+            if (command.Type == Command.eCommandType.ViewCoinTicker
                 || command.Type == Command.eCommandType.ViewCoinListing)
             {
                 executeViewCoinCommand(command);
@@ -94,7 +89,7 @@ namespace CryptoBlock
                     coinId = CoinListingManager.Instance.GetCoinIdBySymbol(coinNameOrSymbol);
                 }
 
-                if (command.Type == Command.eCommandType.ViewCoinData)
+                if (command.Type == Command.eCommandType.ViewCoinTicker)
                 {
                     executeViewCoinDataCommand(coinId);
                 }
