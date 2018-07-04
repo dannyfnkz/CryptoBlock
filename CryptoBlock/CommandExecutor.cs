@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CryptoBlock.CMCAPI;
+using CryptoBlock.TableDisplay;
 using CryptoBlock.Utils;
 
 namespace CryptoBlock
@@ -115,28 +116,17 @@ namespace CryptoBlock
         // assumes coinId is valid (exists in coin listing repository)
         private static void executeViewCoinDataCommand(int coinId)
         {
-            //try
-            //{
-            //    CoinTicker coinTicker = RequestHandler.RequestCoinData(coinId);
-
-            //    Console.WriteLine(CoinTicker.GetTableColumnHeaderString());
-            //    Console.WriteLine(coinTicker.ToTableRowString());
-            //}
-            //catch(RequestHandler.DataRequestException dataRequestException)
-            //{
-            //    ConsoleUtils.LogLine("An error occurred while trying to fetch coin data from server.");
-            //    ExceptionManager.Instance.LogReferToErrorLogFileMessage();
-
-            //    // log exception in error log file
-            //    ExceptionManager.Instance.LogException(dataRequestException);
-            //}
-
             try
             {
                 CoinTicker coinTicker = CoinTickerManager.Instance.GetCoinData(coinId);
 
-                ConsoleIOManager.Instance.LogData(CoinTicker.GetTableColumnHeaderString());
-                ConsoleIOManager.Instance.LogData(coinTicker.GetTableRowString());
+                // init coin ticker table
+                CoinTickerTable coinTickerTable = new CoinTickerTable();
+                coinTickerTable.AddCoinTickerRow(coinTicker);
+
+                // display table
+                string coinTickerTableString = coinTickerTable.GetTableString();
+                ConsoleIOManager.Instance.LogData(coinTickerTableString);
             }
             // CoinTicker of specified coinId does not exist in coin data repository
             catch (CoinTickerManager.CoinIdNotFoundException coinIdNotFoundException)
@@ -162,8 +152,13 @@ namespace CryptoBlock
             // & coin id is associated with an existing coin name / symbol
             CoinListing coinListing = CoinListingManager.Instance.GetCoinListing(coinId);
 
-            ConsoleIOManager.Instance.LogData(CoinListing.GetTableColumnHeaderString());
-            ConsoleIOManager.Instance.LogData(coinListing.ToTableRowString());
+            // init coin listing table
+            CoinListingTable coinListingTable = new CoinListingTable();
+            coinListingTable.AddCoinListingRow(coinListing);
+
+            // display table
+            string coinListingTableString = coinListingTable.GetTableString();
+            ConsoleIOManager.Instance.LogData(coinListingTableString);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Reflection;
 
 namespace CryptoBlock
 {
@@ -24,15 +25,72 @@ namespace CryptoBlock
             /// </returns>
             public static object GetPropertyValue(object obj, string propertyName)
             {
-                //var site = 
-                //    System.Runtime.CompilerServices.CallSite<Func<System.Runtime.CompilerServices.CallSite, object, object>>.Create
-                //    (Microsoft.CSharp.RuntimeBinder.Binder.GetMember(
-                //        0,
-                //        propertyName,
-                //        obj.GetType(), 
-                //        new[] { Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo.Create(0, null) }));
-                //return site.Target(site, obj);
-                return obj.GetType().GetProperty(propertyName).GetValue(obj);
+                if(HasProperty(obj, propertyName))
+                {
+                    return obj.GetType().GetProperty(propertyName).GetValue(obj);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+
+            public static bool HasProperty(object obj, string propertyName)
+            {
+                return HasProperty(obj.GetType(), propertyName);
+            }
+
+            public static bool HasProperty(Type type, string propertyName)
+            {
+                return type.GetProperty(propertyName) != null;
+            }
+
+          //  // if derivedClassObject is a subclass of T,
+          //  // converts derivedClassObject into an object of type T.
+          //  // else, returns null
+          //  public static T ForceType<T>(object derivedClassObject) where T : class
+          //  {
+          //      if(!(derivedClassObject is T))
+          //      {
+          //          return null;
+          //      }
+
+          //      T baseClassObject;
+
+          //      // creates a new object of type T without calling a constructor
+          //      baseClassObject = (T)System.Runtime.Serialization.FormatterServices
+          //.GetUninitializedObject(typeof(T));
+
+          //      Type derivedClassType = derivedClassObject.GetType();
+          //      Type baseClassType = baseClassObject.GetType();
+
+          //      FieldInfo[] baseClassTypeFieldInfos = GetInstanceFieldInfo(baseClassType);
+
+          //      foreach (FieldInfo baseClassTypeFieldInfo in baseClassTypeFieldInfos)
+          //      {
+          //          FieldInfo derivedClassTypeFieldInfo = derivedClassType.GetField(baseClassTypeFieldInfo.Name);
+
+          //          if (derivedClassTypeFieldInfo != null)
+          //          {
+          //              baseClassTypeFieldInfo.SetValue(
+          //                  baseClassObject,
+          //                  derivedClassTypeFieldInfo.GetValue(derivedClassObject));
+          //          }
+          //      }
+
+          //      return baseClassObject;
+          //  }
+
+            // returns all instance FieldInfo[] of type. this does not include fields of base class,
+            // in case type derives from another class.
+            public static FieldInfo[] GetInstanceFieldInfo(Type type)
+            {
+                FieldInfo[] instanceFields = type.GetFields(
+                     BindingFlags.Public |
+                     BindingFlags.NonPublic |
+                     BindingFlags.Instance);
+
+                return instanceFields;
             }
         }
     }

@@ -4,28 +4,13 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{3CF77A46-06F1-49A8-AE1D-564CCFDF9EB2}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>CryptoBlock</RootNamespace>
-    <AssemblyName>CryptoBlock</AssemblyName>
+    <ProjectGuid>{576249A0-F9EE-456D-A64F-67032C86AAE9}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>TableDisplay</RootNamespace>
+    <AssemblyName>TableDisplay</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <PublishUrl>publish\</PublishUrl>
-    <Install>true</Install>
-    <InstallFrom>Disk</InstallFrom>
-    <UpdateEnabled>false</UpdateEnabled>
-    <UpdateMode>Foreground</UpdateMode>
-    <UpdateInterval>7</UpdateInterval>
-    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
-    <UpdatePeriodically>false</UpdatePeriodically>
-    <UpdateRequired>false</UpdateRequired>
-    <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
-    <UseApplicationTrust>false</UseApplicationTrust>
-    <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -60,17 +45,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CoinTickerManager.cs" />
-    <Compile Include="Command.cs" />
-    <Compile Include="CommandExecutor.cs" />
-    <Compile Include="CommandParser.cs" />
-    <Compile Include="ConsoleIOManager.cs" />
-    <Compile Include="ExceptionManager.cs" />
-    <Compile Include="PortfolioEntry.cs" />
-    <Compile Include="Program.cs" />
-    <Compile Include="ProgramManager.cs" />
+    <Compile Include="CoinListingTable.cs" />
+    <Compile Include="CoinDataDisplay.cs" />
+    <Compile Include="CoinTickerTable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="CoinListingManager.cs" />
+    <Compile Include="PropertyTable.cs" />
+    <Compile Include="Table.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -80,26 +60,10 @@
       <Project>{e0987f07-cfde-4cf1-ba7b-23f1a53a7d34}</Project>
       <Name>CMCAPI</Name>
     </ProjectReference>
-    <ProjectReference Include="..\DisplayTable\TableDisplay.csproj">
-      <Project>{576249a0-f9ee-456d-a64f-67032c86aae9}</Project>
-      <Name>TableDisplay</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Utils\Utils.csproj">
       <Project>{6f6a790c-b7fd-4be0-bc50-d9405654eb6b}</Project>
       <Name>Utils</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <BootstrapperPackage Include=".NETFramework,Version=v4.6.1">
-      <Visible>False</Visible>
-      <ProductName>Microsoft .NET Framework 4.6.1 %28x86 and x64%29</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

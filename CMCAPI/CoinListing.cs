@@ -17,37 +17,10 @@ namespace CryptoBlock
                     eDisplayProperty.Symbol
                 };
 
-            private int id;
-            private string name;
-            private string symbol;
-            private long unixTimestamp;
-
             public CoinListing(int id, string name, string symbol, long unixTimestamp)
+                : base(id, name, symbol, unixTimestamp)
             {
-                this.id = id;
-                this.name = name;
-                this.symbol = symbol;
-                this.unixTimestamp = unixTimestamp;
-            }
 
-            public int Id
-            {
-                get { return id; }
-            }
-
-            public string Name
-            {
-                get { return name; }
-            }
-
-            public string Symbol
-            {
-                get { return symbol; }
-            }
-
-            public long UnixTimestamp
-            {
-                get { return unixTimestamp; }
             }
 
             // throws CoinDataParseException.NullMetadataFieldException if metadata field was null
@@ -128,7 +101,7 @@ namespace CryptoBlock
                 return CoinData.GetTableColumnHeaderString(TABLE_DISPLAY_PROPERTIES);
             }
 
-            public string ToTableRowString()
+            public string GetTableRowString()
             {
                 return base.GetTableRowString(TABLE_DISPLAY_PROPERTIES);
             }

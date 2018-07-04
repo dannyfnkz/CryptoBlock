@@ -46,9 +46,6 @@ namespace CryptoBlock
                     eDisplayProperty.PercentChange24hUsd
                 };
 
-            private int id;
-            private string name;
-            private string symbol;
             private int rank;
             private double? circulatingSupply;
             private double? totalSupply;
@@ -57,7 +54,6 @@ namespace CryptoBlock
             private double? volume24hUsd;
             private double? marketCapUsd;
             private double? percentChange24hUsd;
-            private long unixTimestamp;
 
             public CoinTicker(
                 int id,
@@ -72,10 +68,8 @@ namespace CryptoBlock
                 double? marketCapUsd,
                 double? percentChange24hUsd,
                 long unixTimestamp)
+                : base(id, name, symbol, unixTimestamp)
             {
-                this.id = id;
-                this.name = name;
-                this.symbol = symbol;
                 this.rank = rank;
                 this.circulatingSupply = circulatingSupply;
                 this.totalSupply = totalSupply;
@@ -84,22 +78,6 @@ namespace CryptoBlock
                 this.volume24hUsd = volume24hUsd;
                 this.marketCapUsd = marketCapUsd;
                 this.percentChange24hUsd = percentChange24hUsd;
-                this.unixTimestamp = unixTimestamp;
-            }
-
-            public int Id
-            {
-                get { return id; }
-            }
-
-            public string Name
-            {
-                get { return name; }
-            }
-
-            public string Symbol
-            {
-                get { return symbol; }
             }
 
             public int Rank
@@ -140,11 +118,6 @@ namespace CryptoBlock
             public double? PercentChange24hUsd
             {
                 get { return percentChange24hUsd; }
-            }
-
-            public long UnixTimestamp
-            {
-                get { return unixTimestamp; }
             }
 
             public static CoinTicker[] ParseArray(

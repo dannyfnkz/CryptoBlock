@@ -61,6 +61,8 @@ namespace CryptoBlock
                 PercentChange24hUsd
             }
 
+         //   public static readonly string ASSEMBLY_QUALIFIED_NAME = typeof(CoinData)
+
             private static Dictionary<eDisplayProperty, int> displayPropertyToColumnWidth =
                 new Dictionary<eDisplayProperty, int>
                 {
@@ -98,48 +100,93 @@ namespace CryptoBlock
                 {
                     {
                         eDisplayProperty.Id,
-                        getPaddedString("ID", eDisplayProperty.Id)
+                        getPaddedDisplayPropertyString("ID", eDisplayProperty.Id)
                     },
                     {
                         eDisplayProperty.Name,
-                        getPaddedString("Name", eDisplayProperty.Name)
+                        getPaddedDisplayPropertyString("Name", eDisplayProperty.Name)
                     },
                     {
                         eDisplayProperty.Symbol,
-                        getPaddedString("Symbol", eDisplayProperty.Symbol)
+                        getPaddedDisplayPropertyString("Symbol", eDisplayProperty.Symbol)
                     },
                     {   eDisplayProperty.Rank,
-                        getPaddedString("Rank", eDisplayProperty.Rank)
+                        getPaddedDisplayPropertyString("Rank", eDisplayProperty.Rank)
                     },
                     {
                         eDisplayProperty.CirculatingSupply,
-                        getPaddedString("Circ. Supply", eDisplayProperty.CirculatingSupply)
+                        getPaddedDisplayPropertyString("Circ. Supply", eDisplayProperty.CirculatingSupply)
                     },
                     {
                         eDisplayProperty.TotalSupply,
-                        getPaddedString("Total Supply", eDisplayProperty.TotalSupply)
+                        getPaddedDisplayPropertyString("Total Supply", eDisplayProperty.TotalSupply)
                     },
                     {
                         eDisplayProperty.MaxSupply,
-                        getPaddedString("Max Supply", eDisplayProperty.MaxSupply)
+                        getPaddedDisplayPropertyString("Max Supply", eDisplayProperty.MaxSupply)
                     },
                     {
                         eDisplayProperty.PriceUsd,
-                        getPaddedString("Price USD", eDisplayProperty.PriceUsd)
+                        getPaddedDisplayPropertyString("Price USD", eDisplayProperty.PriceUsd)
                     },
                     {
                         eDisplayProperty.Volume24hUsd,
-                        getPaddedString("Volume 24h (USD)", eDisplayProperty.Volume24hUsd)
+                        getPaddedDisplayPropertyString("Volume 24h (USD)", eDisplayProperty.Volume24hUsd)
                     },
                     {
                         eDisplayProperty.MarketCapUsd,
-                        getPaddedString("Market Cap (USD)", eDisplayProperty.MarketCapUsd)
+                        getPaddedDisplayPropertyString("Market Cap (USD)", eDisplayProperty.MarketCapUsd)
                     },
                     {
                         eDisplayProperty.PercentChange24hUsd,
-                        getPaddedString("% chg 24h", eDisplayProperty.PercentChange24hUsd)
+                        getPaddedDisplayPropertyString("% chg 24h", eDisplayProperty.PercentChange24hUsd)
                     }
                 };
+
+            protected int id;
+            protected string name;
+            protected string symbol;
+            protected long unixTimestamp;
+
+            public CoinData(CoinTicker coinTicker)
+                : this(coinTicker.id, coinTicker.name, coinTicker.symbol, coinTicker.unixTimestamp)
+            {
+
+            }
+
+            public CoinData(CoinListing coinListing)
+                : this(coinListing.id, coinListing.name, coinListing.symbol, coinListing.unixTimestamp)
+            {
+
+            }
+
+            public CoinData(int id, string name, string symbol, long unixTimestamp)
+            {
+                this.id = id;
+                this.name = name;
+                this.symbol = symbol;
+                this.unixTimestamp = unixTimestamp;
+            }
+
+            public int Id
+            {
+                get { return id; }
+            }
+
+            public string Name
+            {
+                get { return name; }
+            }
+
+            public string Symbol
+            {
+                get { return symbol; }
+            }
+
+            public long UnixTimestamp
+            {
+                get { return unixTimestamp; }
+            }
 
             public static string GetTableColumnHeaderString(params eDisplayProperty[] displayProperties)
             {
@@ -164,7 +211,9 @@ namespace CryptoBlock
                     object propertyValue = ReflectionUtils.GetPropertyValue(this, propertyName);
 
                     string propertyValueString = GetTableDisplayString(propertyValue);
-                    string paddedPropertyValueString = getPaddedString(propertyValueString, displayProperty);
+                    string paddedPropertyValueString = getPaddedDisplayPropertyString(
+                        propertyValueString,
+                        displayProperty);
 
                     stringBuilder.Append(paddedPropertyValueString);
                 }
@@ -172,7 +221,9 @@ namespace CryptoBlock
                 return stringBuilder.ToString();
             }
 
-            private static string getPaddedString(string str, eDisplayProperty displayProperty)
+            private static string getPaddedDisplayPropertyString(
+                string str,
+                eDisplayProperty displayProperty)
             {
                 int paddedStringWidth = displayPropertyToColumnWidth[displayProperty];
 
