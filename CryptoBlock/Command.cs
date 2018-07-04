@@ -55,25 +55,23 @@ namespace CryptoBlock
         }
 
         private static readonly Dictionary<eCommandType, string> commandTypeToString =
-            new Dictionary<eCommandType, string>();
+            new Dictionary<eCommandType, string>
+            {
+                { eCommandType.ViewCoinData, "view coin data" },
+                { eCommandType.ViewCoinListing, "view coin listing" }
+            };
         private static readonly Dictionary<eCommandType, int> commandTypeToMinNumberOfArguments =
-            new Dictionary<eCommandType, int>();
+            new Dictionary<eCommandType, int>
+            {
+                { eCommandType.ViewCoinData, 1 },
+                { eCommandType.ViewCoinListing, 1 }
+            };
         private static readonly Dictionary<eCommandType, int> commandTypeToMaxNumberOfArguments =
-            new Dictionary<eCommandType, int>();
-
-        static Command()
-        {
-            // init commandTypeToString dictionary
-            commandTypeToString[eCommandType.ViewCoinData] = "view coin data";
-            commandTypeToString[eCommandType.ViewCoinListing] = "view coin listing";
-
-            // init commandTypeToMinNumberOfArguments, commandTypeToMaxNumberOfArguments dictionaries
-            commandTypeToMinNumberOfArguments[eCommandType.ViewCoinData] = 1;
-            commandTypeToMaxNumberOfArguments[eCommandType.ViewCoinData] = 1;
-
-            commandTypeToMinNumberOfArguments[eCommandType.ViewCoinListing] = 1;
-            commandTypeToMaxNumberOfArguments[eCommandType.ViewCoinListing] = 1;
-        }
+            new Dictionary<eCommandType, int>
+            {
+                { eCommandType.ViewCoinData, 1 },
+                { eCommandType.ViewCoinListing, 1 }
+            };
 
         private readonly eCommandType type;
         private string[] arguments;

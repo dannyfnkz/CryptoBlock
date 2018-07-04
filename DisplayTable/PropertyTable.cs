@@ -2,35 +2,33 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CryptoBlock
 {
     namespace TableDisplay
     {
-        public class PropertyTable
+        internal class PropertyTable
         {
-            public class Property
+            internal class Property
             {
-                public class PropertyNameNotInTypeException : Exception
+                internal class PropertyNameNotInTypeException : Exception
                 {
                     private Type classType;
                     private string propertyName;
 
-                    public PropertyNameNotInTypeException(Type classType, string propertyName)
+                    internal PropertyNameNotInTypeException(Type classType, string propertyName)
                         : base(formatExceptionMessage(classType, propertyName))
                     {
                         this.classType = classType;
                         this.propertyName = propertyName;
                     }
 
-                    public Type ClassType
+                    internal Type ClassType
                     {
                         get { return classType; }
                     }
 
-                    public string PropertyName
+                    internal string PropertyName
                     {
                         get
                         { return propertyName; }
@@ -48,7 +46,7 @@ namespace CryptoBlock
                 private Type classType;
                 private string propertyName;
 
-                public Property(Type classType, string propertyName)
+                internal Property(Type classType, string propertyName)
                 {
                     assertHasProperty(classType, propertyName);
 
@@ -56,12 +54,12 @@ namespace CryptoBlock
                     this.propertyName = propertyName;
                 }
 
-                public Type ClassType
+                internal Type ClassType
                 {
                     get { return classType; }
                 }
 
-                public string PropertyName
+                internal string PropertyName
                 {
                     get { return propertyName; }
                 }
@@ -103,11 +101,11 @@ namespace CryptoBlock
                 }
             }
 
-            public class PropertyColumn : Table.Column
+            internal class PropertyColumn : Table.Column
             {
-                public class HeadersAndPropertiesCountMismatchException : MismatchException
+                internal class HeadersAndPropertiesCountMismatchException : MismatchException
                 {
-                    public HeadersAndPropertiesCountMismatchException()
+                    internal HeadersAndPropertiesCountMismatchException()
                         : base("propertyNames.Length", "headers.Length")
                     {
 
@@ -116,24 +114,24 @@ namespace CryptoBlock
 
                 private Property property;
 
-                public PropertyColumn(string header, int width, Property property)
+                internal PropertyColumn(string header, int width, Property property)
                     : base(header, width)
                 {
                     this.property = property;
                 }
 
-                public PropertyColumn(Table.Column column, Property property)
+                internal PropertyColumn(Table.Column column, Property property)
                     : base(column)
                 {
                     this.property = property;
                 }
 
-                public Property Property
+                internal Property Property
                 {
                     get { return property; }
                 }
 
-                public static PropertyColumn[] ParseArray(
+                internal static PropertyColumn[] ParseArray(
                     IList<string>headers,
                     IList<int> widths, IList<Property> properties)
                 {
@@ -195,20 +193,20 @@ namespace CryptoBlock
                 }
             }
 
-            public class PropertyRow : Table.Row
+            internal class PropertyRow : Table.Row
             {
-                public class PropertyTypeMismatchException : MismatchException
+                internal class PropertyTypeMismatchException : MismatchException
                 {
-                    public PropertyTypeMismatchException() 
+                    internal PropertyTypeMismatchException() 
                         : base("obj.GetType()", "property.Type")
                     {
 
                     }
                 }
 
-                public class ObjectsAndPropertiesCountMismatchException : MismatchException
+                internal class ObjectsAndPropertiesCountMismatchException : MismatchException
                 {
-                    public ObjectsAndPropertiesCountMismatchException() 
+                    internal ObjectsAndPropertiesCountMismatchException() 
                         : base("objects.Count()", "properties.Count()")
                     {
 
@@ -217,14 +215,14 @@ namespace CryptoBlock
 
                 private readonly Property[] properties;
 
-                public PropertyRow(object obj, IList<Property> properties)
+                internal PropertyRow(object obj, IList<Property> properties)
                     : this(CollectionUtils.DuplicateToArray(obj, properties.Count), properties)
 
                 {
 
                 }
 
-                public PropertyRow(
+                internal PropertyRow(
                     IList<object> objects,
                     IList<Property> properties) 
                     : base(getProperyValueArray(objects, properties))
@@ -233,7 +231,7 @@ namespace CryptoBlock
                     this.properties = CollectionUtils.ConvertToArray(properties);
                 }
 
-                public Property[] Properties
+                internal Property[] Properties
                 {
                     get { return properties; }
                 }
@@ -320,9 +318,9 @@ namespace CryptoBlock
                 }
             }
 
-            public class RowAndColumnPropertyMismatchException : MismatchException
+            internal class RowAndColumnPropertyMismatchException : MismatchException
             {
-                public RowAndColumnPropertyMismatchException(int index)
+                internal RowAndColumnPropertyMismatchException(int index)
                     : base("propertyRow.Properties[i]", "columnProperties[i]")
                 {
 
@@ -333,7 +331,7 @@ namespace CryptoBlock
 
             private List<Property> columnProperties = new List<Property>();
             
-            public PropertyTable(
+            internal PropertyTable(
                 IList<PropertyColumn> propertyColumns = null,
                 IList<PropertyRow> propertyRows = null)
             {
@@ -347,22 +345,22 @@ namespace CryptoBlock
                 }
             }
 
-            public int ColumnCount
+            internal int ColumnCount
             {
                 get { return table.ColumnCount; }
             }
 
-            public int RowCount
+            internal int RowCount
             {
                 get { return table.RowCount; }
             }
 
-            public bool EmptyOfRows
+            internal bool EmptyOfRows
             {
                 get { return table.EmptyOfRows; }
             }
 
-            public void AddRow(PropertyRow propertyRow)
+            internal void AddRow(PropertyRow propertyRow)
             {
                 table.AddRow(propertyRow);
 
@@ -370,7 +368,7 @@ namespace CryptoBlock
                 assertRowPropertiesMatchColumns(propertyRow);
             }
 
-            public void AddRowRange(IList<PropertyRow> propertyRows)
+            internal void AddRowRange(IList<PropertyRow> propertyRows)
             {
                 table.AddRowRange(propertyRows);
 
@@ -394,28 +392,28 @@ namespace CryptoBlock
             }
 
             // false if remove was unsuccessful / item not found in row list
-            public bool RemoveRow(PropertyRow propertyRow)
+            internal bool RemoveRow(PropertyRow propertyRow)
             {
                 return table.RemoveRow(propertyRow);
             }
 
-            public bool[] RemoveRowRange(IList<PropertyRow> rows)
+            internal bool[] RemoveRowRange(IList<PropertyRow> rows)
             {
                 return table.RemoveRowRange(rows);
             }
 
-            public void ClearRows()
+            internal void ClearRows()
             {
                 table.ClearRows();
             }
 
-            public void AddColumn(PropertyColumn propertyColumn)
+            internal void AddColumn(PropertyColumn propertyColumn)
             {
                 table.AddColumn(propertyColumn);
                 columnProperties.Add(propertyColumn.Property);
             }
 
-            public void AddColumnRange(IList<PropertyColumn> propertyColumns)
+            internal void AddColumnRange(IList<PropertyColumn> propertyColumns)
             {
                 table.AddColumnRange(propertyColumns);
 
@@ -426,7 +424,7 @@ namespace CryptoBlock
             }
 
             // false if remove was unsuccessful / item not found in row list
-            public bool RemoveColumn(PropertyColumn propertyColumn)
+            internal bool RemoveColumn(PropertyColumn propertyColumn)
             {
                 // remove from column list
                 bool removalResult = table.RemoveColumn(propertyColumn);
@@ -443,7 +441,7 @@ namespace CryptoBlock
                 }
             }
 
-            public bool[] RemoveColumnRange(IList<PropertyColumn> propertyColumns)
+            internal bool[] RemoveColumnRange(IList<PropertyColumn> propertyColumns)
             {
                 // remove from column list
                 bool[] removalResult = table.RemoveColumnRange(propertyColumns);
@@ -464,23 +462,23 @@ namespace CryptoBlock
                 return removalResult;
             }
 
-            public void ClearColumns()
+            internal void ClearColumns()
             {
                 table.ClearColumns();
                 columnProperties.Clear();
             }
 
-            public string GetColumnHeaderString()
+            internal string GetColumnHeaderString()
             {
                 return table.GetColumnHeaderString();
             }
 
-            public string GetRowString(int rowIndex)
+            internal string GetRowString(int rowIndex)
             {
                 return table.GetRowString(rowIndex);
             }
 
-            public string GetTableString()
+            internal string GetTableString()
             {
                 return table.GetTableString();
             }
