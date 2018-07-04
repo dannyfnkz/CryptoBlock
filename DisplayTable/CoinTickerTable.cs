@@ -126,6 +126,17 @@ namespace CryptoBlock
                 return propertyTable.GetTableString();
             }
 
+            internal static PropertyTable.Property GetProperty(eDisplayProperty displayProperty)
+            {
+                return displayPropertyToProperty[displayProperty];
+            }
+
+
+            internal static PropertyTable.PropertyColumn GetPropertyColumn(eDisplayProperty displayProperty)
+            {
+                return displayPropertyToPropertyColumn[displayProperty];
+            }
+
             private void initTableColumns()
             {
                 // add columns shared with CoinData

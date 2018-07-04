@@ -91,13 +91,14 @@ namespace CryptoBlock
                 private static string formatExceptionMessage(int coinId)
                 {
                     return string.Format(
-                        "Coin with id {0} does not exist in repository." +
+                        "Coin with id {0} does not exist in coin ticker repository." +
                         " Note that it might not have been intialized yet.",
                         coinId);
                 }
             }
 
             public event Action<CoinTickerManager> RepositoryInitializedEvent;
+            public event Action<Range> RepositoryUpdatedEvent;
 
             private const int COIN_TICKER_UPDATE_THREAD_SLEEP_TIME = 1000 * 120; // in millis
 
@@ -154,9 +155,10 @@ namespace CryptoBlock
                 return coinIdToCoinTicker.ContainsKey(coinId);
             }
 
-            public CoinTicker GetCoinData(int coinId)
+            public CoinTicker GetCoinTicker(int coinId)
             {
                 assertCoinIdExists(coinId);
+
                 return coinIdToCoinTicker[coinId];
             }
 
@@ -223,11 +225,14 @@ namespace CryptoBlock
                         {
                             coinIdToCoinTicker[coinTicker.Id] = coinTicker;
                         }
-                        //Array.Copy(
-                        //    currentCoinDataSection,
-                        //    0, coinDataArray,
-                        //    leastRecentlyUpdatedCoinIndex,
-                        //    currentCoinDataSectionSize);
+
+                        // calculate range of updated coin IDs
+                        int lowerBound = leastRecentlyUpdatedCoinIndex;
+                        int upperBound = leastRecentlyUpdatedCoinIndex + currentCoinDataSectionSize - 1;
+                        Range updatedCoinIdRange = new Range(lowerBound, upperBound);
+
+                        // raise repository update event
+                        onRepositoryUpdated(updatedCoinIdRange);
 
                         // set start index of next coin section (0 if current update run is complete)
                         leastRecentlyUpdatedCoinIndex += currentCoinTickerSection.Length;
@@ -239,13 +244,11 @@ namespace CryptoBlock
 
                         if (leastRecentlyUpdatedCoinIndex == 0) // current update run is complete
                         {
+                            // if repository was not yet initialized, raise repository initialized event
                             if (!repositoryInitialized)
                             {
                                 repositoryInitialized = true;
-                                if (RepositoryInitializedEvent != null)
-                                {
-                                    RepositoryInitializedEvent.Invoke(this);
-                                }
+                                onRepositoryInitialized();
                             }
 
                             Thread.Sleep(COIN_TICKER_UPDATE_THREAD_SLEEP_TIME);
@@ -255,6 +258,22 @@ namespace CryptoBlock
                     {
                         handleCoinTickerUpdateException(dataRequestException);
                     }
+                }
+            }
+
+            private void onRepositoryUpdated(Range updateCoinIdRange)
+            {
+                if(RepositoryUpdatedEvent != null)
+                {
+                    RepositoryUpdatedEvent.Invoke(updateCoinIdRange);
+                }
+            }
+
+            private void onRepositoryInitialized()
+            {
+                if (RepositoryInitializedEvent != null)
+                {
+                    RepositoryInitializedEvent.Invoke(this);
                 }
             }
 

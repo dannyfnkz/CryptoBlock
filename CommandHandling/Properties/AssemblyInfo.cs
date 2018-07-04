@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("ServerDataManagement")]
+[assembly: AssemblyTitle("CommandHandling")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("ServerDataManagement")]
+[assembly: AssemblyProduct("CommandHandling")]
 [assembly: AssemblyCopyright("Copyright ©  2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("19bf4193-56d2-45bd-88e0-f0e22e4f4726")]
+[assembly: Guid("9808d72e-9760-4e7a-84fb-1f3f8bde222b")]
 
 // Version information for an assembly consists of the following four values:
 //
