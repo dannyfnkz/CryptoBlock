@@ -1,6 +1,9 @@
 ﻿
 using System;
 using CryptoBlock.CMCAPI;
+using CryptoBlock.ExceptionManagement;
+using CryptoBlock.IOManagement;
+using CryptoBlock.ServerDataManagement;
 using CryptoBlock.TableDisplay;
 
 namespace CryptoBlock
