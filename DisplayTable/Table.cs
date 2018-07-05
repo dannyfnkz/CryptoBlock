@@ -8,13 +8,13 @@ namespace CryptoBlock
 {
     namespace TableDisplay
     {
-        internal class Table
+        public class Table
         {
-            internal class Column
+            public class Column
             {
-                internal class WidthOutOfRangeException : ArgumentOutOfRangeException
+                public class WidthOutOfRangeException : ArgumentOutOfRangeException
                 {
-                    internal WidthOutOfRangeException(int givenWidth)
+                    public WidthOutOfRangeException(int givenWidth)
                         : base("width", givenWidth, formatExceptionMessage())
                     {
 
@@ -26,9 +26,9 @@ namespace CryptoBlock
                     }
                 }
 
-                internal class WidhtsAndHeadersCountMismatchException : MismatchException
+                public class WidhtsAndHeadersCountMismatchException : MismatchException
                 {
-                    internal WidhtsAndHeadersCountMismatchException()
+                    public WidhtsAndHeadersCountMismatchException()
                         : base("widths.Length", "headers.Length")
                     {
 
@@ -38,7 +38,7 @@ namespace CryptoBlock
                 private string header;
                 private int width;
 
-                internal Column(string header, int width)
+                public Column(string header, int width)
                 {
                     assertValidWidth(width, header);
 
@@ -46,23 +46,23 @@ namespace CryptoBlock
                     this.width = width;
                 }
 
-                internal Column(Column column) 
+                public Column(Column column) 
                     : this(column.header, column.width)
                 {
                     
                 }
 
-                internal string Header
+                public string Header
                 {
                     get { return header; }
                 }
 
-                internal int Width
+                public int Width
                 {
                     get { return width; }
                 }
 
-                internal static Column[] ParseArray(IList<string> headers, IList<int> widths)
+                public static Column[] ParseArray(IList<string> headers, IList<int> widths)
                 {
                     // assert headers.Length and widths.Length match
                     assertMatchingWidthsAndHeadersCount(headers, widths);
@@ -131,26 +131,26 @@ namespace CryptoBlock
                 }
             }
 
-            internal class Row
+            public class Row
             {
                 private readonly string[] columnValues;
 
-                internal Row(IEnumerable<string> columnValues)
+                public Row(IEnumerable<string> columnValues)
                 {
                     this.columnValues = CollectionUtils.ConvertToArray(columnValues);
                 }
 
-                internal int ColumnCount
+                public int ColumnCount
                 {
                     get { return columnValues.Length; }
                 }
 
-                internal string[] ColumnValues
+                public string[] ColumnValues
                 {
                     get { return columnValues; }
                 }
 
-                internal string GetColumnValue(int columnIndex)
+                public string GetColumnValue(int columnIndex)
                 {
                     return columnValues[columnIndex];
                 }
@@ -184,7 +184,7 @@ namespace CryptoBlock
                 }
 
                 // if columnWidth is zero (less than actual width) padRight retuns the original string.
-                internal string ToString(IList<Column> columns)
+                public string ToString(IList<Column> columns)
                 {
                     StringBuilder rowStringBuilder = new StringBuilder();
 
@@ -200,18 +200,18 @@ namespace CryptoBlock
                 }
             }
 
-            internal class TableException : Exception
+            public class TableException : Exception
             {
-                internal TableException(string exceptionMessage)
+                public TableException(string exceptionMessage)
                     : base(exceptionMessage)
                 {
 
                 }
             }
 
-            internal class RowColumnCountMismatchException : Exception
+            public class RowColumnCountMismatchException : Exception
             {
-                internal RowColumnCountMismatchException()
+                public RowColumnCountMismatchException()
                     : base(formatExceptionMessage())
                 {
 
@@ -223,17 +223,17 @@ namespace CryptoBlock
                 }
             }
 
-            internal class OperationRequiresEmptyTableException : Exception
+            public class OperationRequiresEmptyTableException : Exception
             {
                 private string operationName;
 
-                internal OperationRequiresEmptyTableException(string operationName)
+                public OperationRequiresEmptyTableException(string operationName)
                     : base(formatExceptionMessage(operationName))
                 {
                     this.operationName = operationName;
                 }
 
-                internal string OperationName
+                public string OperationName
                 {
                     get { return operationName; }
                 }
@@ -249,7 +249,7 @@ namespace CryptoBlock
             private List<Column> columns = new List<Column>();
             private List<Row> rows = new List<Row>();
 
-            internal Table(IList<Column> tableColumns = null, IList<Row> tableRows = null)
+            public Table(IList<Column> tableColumns = null, IList<Row> tableRows = null)
             {
                 if(tableColumns != null)
                 {
@@ -262,34 +262,34 @@ namespace CryptoBlock
                 }               
             }
 
-            internal int ColumnCount
+            public int ColumnCount
             {
                 get { return columns.Count; }
             }
 
-            internal int RowCount
+            public int RowCount
             {
                 get { return rows.Count; }
             }
 
-            internal bool EmptyOfRows
+            public bool EmptyOfRows
             {
                 get { return rows.Count == 0; }
             }
 
-            internal Row GetRow(int rowIndex)
+            public Row GetRow(int rowIndex)
             {
                 return rows[rowIndex];
             }
 
-            internal void AddRow(Row tableRow)
+            public void AddRow(Row tableRow)
             {
                 assertColumnCountMatchesTable(tableRow);
 
                 rows.Add(tableRow);
             }
 
-            internal void AddRowRange<T>(IList<T> rows) where T : Row
+            public void AddRowRange<T>(IList<T> rows) where T : Row
             {
                 foreach(Row row in rows)
                 {
@@ -300,12 +300,12 @@ namespace CryptoBlock
             }
 
             // false if remove was unsuccessful / item not found in row list
-            internal bool RemoveRow(Row row)
+            public bool RemoveRow(Row row)
             {
                 return rows.Remove(row);
             }
 
-            internal bool[] RemoveRowRange<T>(IList<T> rows) where T : Row
+            public bool[] RemoveRowRange<T>(IList<T> rows) where T : Row
             {
                 bool[] rowsRemoved = new bool[rows.Count];
 
@@ -318,19 +318,19 @@ namespace CryptoBlock
                 return rowsRemoved;
             }
 
-            internal void ClearRows()
+            public void ClearRows()
             {
                 rows.Clear();
             }
             
-            internal void AddColumn(Column column)
+            public void AddColumn(Column column)
             {
                 assertTableEmptyOfRows("AddColumn");
 
                 columns.Add(column);
             }
 
-            internal void AddColumnRange<T>(IList<T> columns) where T : Column
+            public void AddColumnRange<T>(IList<T> columns) where T : Column
             {
                 assertTableEmptyOfRows("AddColumnRange");
 
@@ -338,14 +338,14 @@ namespace CryptoBlock
             }
 
             // false if remove was unsuccessful / item not found in row list
-            internal bool RemoveColumn(Column column)
+            public bool RemoveColumn(Column column)
             {
                 assertTableEmptyOfRows("RemoveColumn");
 
                 return columns.Remove(column);
             }
 
-            internal bool[] RemoveColumnRange<T>(IList<T> columns) where T : Column
+            public bool[] RemoveColumnRange<T>(IList<T> columns) where T : Column
             {
                 bool[] columnsRemoved = new bool[columns.Count];
 
@@ -358,14 +358,14 @@ namespace CryptoBlock
                 return columnsRemoved;
             }
 
-            internal void ClearColumns()
+            public void ClearColumns()
             {
                 assertTableEmptyOfRows("RemoveColumn");
 
                 columns.Clear();
             }
 
-            internal string GetColumnHeaderString()
+            public string GetColumnHeaderString()
             {
                 StringBuilder columnHeaderStringBuilder = new StringBuilder();
 
@@ -377,12 +377,12 @@ namespace CryptoBlock
                 return columnHeaderStringBuilder.ToString();
             }
             
-            internal string GetRowString(int rowIndex)
+            public string GetRowString(int rowIndex)
             {
                 return rows[rowIndex].ToString(columns);
             }
 
-            internal string GetTableString()
+            public string GetTableString()
             {
                 StringBuilder tableStringBuilder = new StringBuilder();
 

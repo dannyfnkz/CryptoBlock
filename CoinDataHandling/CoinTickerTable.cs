@@ -1,4 +1,5 @@
 ﻿using CryptoBlock.CMCAPI;
+using CryptoBlock.TableDisplay;
 using CryptoBlock.Utils;
 using System;
 using System.Collections.Generic;
@@ -6,7 +7,7 @@ using System.Linq;
 
 namespace CryptoBlock
 {
-    namespace TableDisplay
+    namespace ServerDataManagement
     {
         public class CoinTickerTable
         {
@@ -126,13 +127,12 @@ namespace CryptoBlock
                 return propertyTable.GetTableString();
             }
 
-            internal static PropertyTable.Property GetProperty(eDisplayProperty displayProperty)
+            public static PropertyTable.Property GetProperty(eDisplayProperty displayProperty)
             {
                 return displayPropertyToProperty[displayProperty];
             }
 
-
-            internal static PropertyTable.PropertyColumn GetPropertyColumn(eDisplayProperty displayProperty)
+            public static PropertyTable.PropertyColumn GetPropertyColumn(eDisplayProperty displayProperty)
             {
                 return displayPropertyToPropertyColumn[displayProperty];
             }

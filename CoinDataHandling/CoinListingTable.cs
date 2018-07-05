@@ -1,8 +1,9 @@
 ﻿using CryptoBlock.CMCAPI;
+using CryptoBlock.TableDisplay;
 
 namespace CryptoBlock
 {
-    namespace TableDisplay
+    namespace ServerDataManagement
     {
         public class CoinListingTable
         {

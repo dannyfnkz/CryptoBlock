@@ -138,6 +138,34 @@ namespace CryptoBlock
 
                 return stringBuilder.ToString();
             }
+
+            public static bool StartsWith(string str, params string[] prefixes)
+            {
+                foreach (string prefix in prefixes)
+                {
+                    if (str.StartsWith(prefix))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            // if str starts with one of the prefixes in in params array, returns that prefix
+            // else, returns null
+            public static string GetPrefixIfStartsWith(string str, params string[] prefixes)
+            {
+                foreach (string prefix in prefixes)
+                {
+                    if (str.StartsWith(prefix))
+                    {
+                        return prefix;
+                    }
+                }
+
+                return null;
+            }
         }
     }
 }

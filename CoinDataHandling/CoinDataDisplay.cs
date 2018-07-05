@@ -1,13 +1,14 @@
 ﻿using CryptoBlock.CMCAPI;
+using CryptoBlock.TableDisplay;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace CryptoBlock
 {
-    namespace TableDisplay
+    namespace ServerDataManagement
     {
-        internal static class CoinDataDisplay
+        public static class CoinDataDisplay
         {
             public enum eDisplayProperty
             {
@@ -16,7 +17,7 @@ namespace CryptoBlock
                 Symbol
             }
 
-            internal static readonly Type COLUMN_PROPERTY_TYPE = typeof(CoinData);
+            public static readonly Type COLUMN_PROPERTY_TYPE = typeof(CoinData);
 
             private static readonly Dictionary<eDisplayProperty, PropertyTable.Property>
                 displayPropertyToProperty = new Dictionary<eDisplayProperty, PropertyTable.Property>
@@ -70,18 +71,18 @@ namespace CryptoBlock
                     }
                 };
 
-            internal static PropertyTable.Property[] Properties
+            public static PropertyTable.Property[] Properties
             {
                 get { return properties; }
             }
 
-            internal static PropertyTable.Property GetProperty(eDisplayProperty displayProperty)
+            public static PropertyTable.Property GetProperty(eDisplayProperty displayProperty)
             {
                 return displayPropertyToProperty[displayProperty];
             }
 
 
-            internal static PropertyTable.PropertyColumn GetPropertyColumn(eDisplayProperty displayProperty)
+            public static PropertyTable.PropertyColumn GetPropertyColumn(eDisplayProperty displayProperty)
             {
                 return displayPropertyToPropertyColumn[displayProperty];
             }

@@ -45,10 +45,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CoinListingTable.cs" />
-    <Compile Include="CoinDataDisplay.cs" />
-    <Compile Include="CoinTickerTable.cs" />
-    <Compile Include="PortfolioEntryTable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PropertyTable.cs" />
     <Compile Include="Table.cs" />
@@ -57,14 +53,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CMCAPI\CMCAPI.csproj">
-      <Project>{e0987f07-cfde-4cf1-ba7b-23f1a53a7d34}</Project>
-      <Name>CMCAPI</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Portfolio\PortfolioManagement.csproj">
-      <Project>{22928362-4d96-41e2-835a-e0e01f8867c0}</Project>
-      <Name>PortfolioManagement</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Utils\Utils.csproj">
       <Project>{6f6a790c-b7fd-4be0-bc50-d9405654eb6b}</Project>
       <Name>Utils</Name>

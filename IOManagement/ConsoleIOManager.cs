@@ -49,6 +49,12 @@ namespace CryptoBlock
                 QueueOutput(outputString, flushOutputBuffer);
             }
 
+            public void LogErrorFormat(string str, bool flushOutputBuffer, params object[] args)
+            {
+                string message = string.Format(str, args);
+                LogError(message, flushOutputBuffer);
+            }
+
             /// <summary>
             /// logs a data message to console.
             /// </summary>
