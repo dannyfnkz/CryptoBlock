@@ -288,6 +288,20 @@ namespace CryptoBlock
                 return coinListingTableString;
             }
 
+            public int[] FetchCoinIds(string[] coinNameOrSymbolArray)
+            {
+                int[] coinIds = new int[coinNameOrSymbolArray.Length];
+
+                for (int i = 0; i < coinNameOrSymbolArray.Length; i++)
+                {
+                    // try fetching coin id corresponding to i'th coin name / symbol
+                    string coinNameOrSymbol = coinNameOrSymbolArray[i];
+                    coinIds[i] = CoinListingManager.Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
+                }
+
+                return coinIds;
+            }
+
             public void UpdateRepository()
             {
                 try

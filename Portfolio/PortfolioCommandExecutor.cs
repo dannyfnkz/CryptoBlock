@@ -36,7 +36,7 @@ namespace CryptoBlock
             private class PortfolioViewCommand : PortfolioCommand
             {
                 private const int MIN_NUMBER_OF_ARGUMENTS = 1;
-                private const int MAX_NUMBER_OF_ARGUMENTS = 1;
+                private const int MAX_NUMBER_OF_ARGUMENTS = 20;
                 private const string PREFIX = "view";
 
                 internal PortfolioViewCommand()
@@ -55,33 +55,54 @@ namespace CryptoBlock
                         return;
                     }
 
-                    string coinNameOrSymbol = commandArguments[0];
-
                     try
                     {
-                        // get coin id by name or symbol
-                        int coinId = CoinListingManager.Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
+                        // fetch coin ids corresponding to coin names / symbols
+                        int[] coinIds = CoinListingManager.Instance.FetchCoinIds(commandArguments);
 
-                        // print portfolio entry display table string
-                        string portfolioEntryDisplayTableString =
-                            PortfolioManager.Instance.GetPortfolioEntryDisplayTableString(coinId);
-                        ConsoleIOManager.Instance.PrintData(portfolioEntryDisplayTableString);
+                        // only coin ids which have a corresponding portfolio entry are displayed
+                        List<int> coinIdsWithPortfolioEntry = new List<int>();
+                        List<string> coinNamesWithoutPortfolioEntry = new List<string>();
+
+                        // get coin ids with initialized ticker data
+                        foreach (int coinId in coinIds)
+                        {
+                            if (PortfolioManager.Instance.IsInPortfolio(coinId))
+                            {
+                                coinIdsWithPortfolioEntry.Add(coinId);
+                            }
+                            else
+                            {
+                                string coinName = CoinListingManager.Instance.GetCoinNameById(coinId);
+                                coinNamesWithoutPortfolioEntry.Add(coinName);
+                            }
+                        }
+
+                        if (coinIdsWithPortfolioEntry.Count > 0)
+                        {
+                            // print coin portfolio entry display table containing portfolio entries corresponding
+                            // to fetched coin ids
+                            string portfolioEntryDisplayTableString =
+                                PortfolioManager.Instance.GetPortfolioEntryDisplayTableString(
+                                    coinIdsWithPortfolioEntry.ToArray());
+                            ConsoleIOManager.Instance.PrintData(portfolioEntryDisplayTableString);
+                        }
+
+                        // if data for coin ids which don't have corresponding porfolio entries was requested, 
+                        // display an appropriate message to user
+                        if (coinNamesWithoutPortfolioEntry.Count > 0)
+                        {
+                            string errorMessage = StringUtils.Append(
+                                "Following coin(s) are not in portfolio: ",
+                                ", ",
+                                coinNamesWithoutPortfolioEntry.ToArray())
+                                + ".";
+                            ConsoleIOManager.Instance.LogError(errorMessage);
+                        }
                     }
-                    catch (NoSuchCoinNameOrSymbolException noSuchCoinNameOrSymbolException)
+                    catch (CoinListingManager.NoSuchCoinNameOrSymbolException noSuchCoinNameOrSymbolException)
                     {
-                        // coin with specified name / symbol not found in listing repository
                         ConsoleIOManager.Instance.LogError(noSuchCoinNameOrSymbolException.Message);
-                    }
-                    catch (CoinIdNotInPortfolioException coinIdNotInPortfolioManagerException)
-                    {
-                        // coin id corresponding to given name / symbol does not exist in portfolio manager
-                        int coinId = coinIdNotInPortfolioManagerException.CoinId;
-                        string coinName = CoinListingManager.Instance.GetCoinNameById(coinId);
-
-                        ConsoleIOManager.Instance.LogErrorFormat(
-                            false,
-                            "There's no entry in portfolio manager for '{0}'.",                           
-                            coinName);
                     }
                 }
             }
