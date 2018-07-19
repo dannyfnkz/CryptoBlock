@@ -1,6 +1,4 @@
-﻿using CryptoBlock.CMCAPI;
-using CryptoBlock.CommandHandling;
-using CryptoBlock.ExceptionManagement;
+﻿using CryptoBlock.CommandHandling;
 using CryptoBlock.IOManagement;
 using CryptoBlock.Utils;
 using System.Collections.Generic;
@@ -15,12 +13,39 @@ namespace CryptoBlock
             private abstract class ServerDataCommand : Command
             {
                 private const int MIN_NUMBER_OF_ARGUMENTS = 1;
-                private const int MAX_NUMBER_OF_ARGUMENTS = 1;
+                private const int MAX_NUMBER_OF_ARGUMENTS = 20;
 
                 internal ServerDataCommand(string prefix)
                     : base(prefix, MIN_NUMBER_OF_ARGUMENTS, MAX_NUMBER_OF_ARGUMENTS)
                 {
 
+                }
+
+                protected int[] FetchCoinIds(string[] coinNameOrSymbolArray, out bool fetchSuccessful)
+                {
+                    int[] coinIds = new int[coinNameOrSymbolArray.Length];
+
+                    try
+                    {                       
+                        for(int i = 0; i < coinNameOrSymbolArray.Length; i++)
+                        {
+                            // try fetching coin id corresponding to i'th coin name / symbol
+                            string coinNameOrSymbol = coinNameOrSymbolArray[i];
+                            coinIds[i] = CoinListingManager.Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
+                        }
+
+                        // all coin ids fetched successfully
+                        fetchSuccessful = true;
+                    }
+                    catch(CoinListingManager.NoSuchCoinNameOrSymbolException noSuchCoinNameOrSymbolException)
+                    {
+                        // coin with specified name / symbol not found
+                        ConsoleIOManager.Instance.LogError(noSuchCoinNameOrSymbolException.Message);
+
+                        fetchSuccessful = false;
+                    }
+            
+                    return coinIds;
                 }
             }
 
@@ -44,22 +69,19 @@ namespace CryptoBlock
                         return;
                     }
 
-                    string coinNameOrSymbol = commandArguments[0];
+                    // try fetching coin ids corresponding to coin names / symbols
+                    int[] coinIds = base.FetchCoinIds(commandArguments, out bool fetchSuccessful);
 
-                    try
+                    if(!fetchSuccessful)
                     {
-                        int coinId = CoinListingManager.Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
+                        return;
+                    }
 
-                        // print coin listing display table
-                        string coinListingTableString =
-                            CoinListingManager.Instance.GetCoinListingDisplayTableString(coinId);
-                        ConsoleIOManager.Instance.PrintData(coinListingTableString);
-                    }
-                    catch (CoinListingManager.NoSuchCoinNameOrSymbolException noSuchCoinNameOrSymbolException)
-                    {
-                        // coin with specified name / symbol not found
-                        ConsoleIOManager.Instance.LogError(noSuchCoinNameOrSymbolException.Message);
-                    }
+                    // print coin listing display table containing coin listings corresponding
+                    // to fetched coin ids
+                    string coinListingTableString =
+                        CoinListingManager.Instance.GetCoinListingDisplayTableString(coinIds);
+                    ConsoleIOManager.Instance.PrintData(coinListingTableString);
                 }
             }
 
@@ -83,55 +105,80 @@ namespace CryptoBlock
                         return;
                     }
 
-                    string coinNameOrSymbol = commandArguments[0];
+                    // try fetching coin ids corresponding to coin names / symbols
+                    int[] coinIds = base.FetchCoinIds(commandArguments, out bool fetchSuccessful);
 
-                    try
+                    if (!fetchSuccessful)
                     {
-                        int coinId = CoinListingManager.Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
-
-                        // fetching coinTicker from repository might return null in case 
-                        CoinTicker coinTicker = CoinTickerManager.Instance.GetCoinTicker(coinId);
-
-                        // init coin listing table
-                        CoinTickerTable coinTickerTable = new CoinTickerTable();
-                        coinTickerTable.AddCoinTickerRow(coinTicker);
-
-                        // display table
-                        string coinTickerTableString = coinTickerTable.GetTableDisplayString();
-                        ConsoleIOManager.Instance.PrintData(coinTickerTableString);
-                    }
-                    catch (CoinListingManager.NoSuchCoinNameOrSymbolException noSuchCoinNameOrSymbolException)
-                    {
-                        // coin with specified name / symbol not found
-                        ConsoleIOManager.Instance.LogError(noSuchCoinNameOrSymbolException.Message);
+                        return;
                     }
 
-                    // coin id associated with given coin name / symbol does not exist in ticker repository
-                    catch (CoinTickerManager.CoinIdNotFoundException coinIdNotFoundException)
+                    // only coin ids which corresponding ticker entry in ticker manager
+                    // has been initialized are displayed
+                    List<int> coinIdsWithInitalizedTicker = new List<int>();
+                    List<string> coinNamesWithoutInitalizedTicker = new List<string>();
+
+                    // get coin ids with initialized ticker data
+                    foreach (int coinId in coinIds)
                     {
-                        // coin ticker repository not initialized yet
-                        if (!CoinTickerManager.Instance.RepositoryInitialized)
+                        if (CoinTickerManager.Instance.CoinIdExists(coinId))
                         {
-                            ConsoleIOManager.Instance.LogError("Coin ticker repository is not fully" +
-                                " initialized yet. Please try again a bit later.");
+                            coinIdsWithInitalizedTicker.Add(coinId);
                         }
                         else
                         {
-                            // coin ticker repository initialized and coin id not found - 
-                            // this means an error occurred during ticker repository update thread run
-                            // while trying to fetch ticker data for the coin id associated with the specified
-                            // name / symbol
-                            ConsoleIOManager.Instance.LogError("An unexpected error has occurred.");
-                            ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
-
-                            ExceptionManager.Instance.LogException(coinIdNotFoundException);
+                            string coinName = CoinListingManager.Instance.GetCoinNameById(coinId);
+                            coinNamesWithoutInitalizedTicker.Add(coinName);
                         }
                     }
+
+                    if(coinIdsWithInitalizedTicker.Count > 0)
+                    {
+                        // print coin listing display table containing coin listings corresponding
+                        // to fetched coin ids
+                        string coinTickerTableString =
+                            CoinTickerManager.Instance.GetCoinTickerDisplayTableString(
+                                coinIdsWithInitalizedTicker.ToArray());
+                        ConsoleIOManager.Instance.PrintData(coinTickerTableString);
+                    }
+
+                    // if data for coin ids with uninitialized tickers was requested, 
+                    // display an appropriate message to user
+                    if(coinNamesWithoutInitalizedTicker.Count > 0)
+                    {
+                        string errorMessage = StringUtils.Append(
+                            "Ticker Data for the following coin(s) was not yet initialized: ",
+                            ", ",
+                            coinNamesWithoutInitalizedTicker.ToArray())
+                            + ".";
+                        ConsoleIOManager.Instance.LogError(errorMessage);
+                    }
+
+                    //// coin id associated with given coin name / symbol does not exist in ticker repository
+                    //catch (CoinTickerManager.CoinIdNotFoundException coinIdNotFoundException)
+                    //{
+                    //    // coin ticker repository not initialized yet
+                    //    if (!CoinTickerManager.Instance.RepositoryInitialized)
+                    //    {
+                    //        ConsoleIOManager.Instance.LogError("Coin ticker repository is not fully" +
+                    //            " initialized yet. Please try again a bit later.");
+                    //    }
+                    //    else
+                    //    {
+                    //        // coin ticker repository initialized and coin id not found - 
+                    //        // this means an error occurred during ticker repository update thread run
+                    //        // while trying to fetch ticker data for the coin id associated with the specified
+                    //        // name / symbol
+                    //        ConsoleIOManager.Instance.LogError("An unexpected error has occurred.");
+                    //        ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
+
+                    //        ExceptionManager.Instance.LogException(coinIdNotFoundException);
+                    //    }
+                    //}
                 }
             }
 
             private const string COMMAND_TYPE = "ServerData";
-
 
             public ServerDataCommandExecutor()
             {

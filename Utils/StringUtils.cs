@@ -43,6 +43,23 @@ namespace CryptoBlock
                 }
             }
 
+            public static string Append(string str, string seperator, params string[] appendants)
+            {
+                StringBuilder stringBuilder = new StringBuilder(str);
+
+                for(int i = 0; i < appendants.Length; i++)
+                {
+                    stringBuilder.Append(appendants[i]);
+
+                    if(i < appendants.Length - 1)
+                    {
+                        stringBuilder.Append(seperator);
+                    }      
+                }
+
+                return stringBuilder.ToString();
+            }
+
             /// <summary>
             /// splits <paramref name="str"/> into multiple strings, according to parameter list 
             /// <paramref name="parameters"/>.

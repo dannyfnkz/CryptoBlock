@@ -69,7 +69,7 @@ namespace CryptoBlock
 
                     ConsoleIOManager.Instance.LogErrorFormat(
                         false,
-                        "Invalid number of arguments: should be between {0} and {1}.",                        
+                        "Invalid number of arguments for command: should be between {0} and {1}.",                        
                         minNumberOfArguments,
                         maxNumberOfArguments);
                 }

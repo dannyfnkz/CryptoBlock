@@ -162,6 +162,24 @@ namespace CryptoBlock
                 return coinIdToCoinTicker[coinId];
             }
 
+            public string GetCoinTickerDisplayTableString(params int[] coinIds)
+            {
+                // init coin ticker table
+                CoinTickerTable coinTickerTable = new CoinTickerTable();
+
+                foreach (int coinId in coinIds)
+                {
+                    // add row corresponding to each coin ticker associated with specified id
+                    CoinTicker coinTicker = GetCoinTicker(coinId);
+                    coinTickerTable.AddCoinTickerRow(coinTicker);
+                }
+
+                // return table display string
+                string coinTickerTableString = coinTickerTable.GetTableDisplayString();
+
+                return coinTickerTableString;
+            }
+
             public void StartCoinTickerUpdateThread()
             {
                 coinTickerUpdateThreadRunning = true;
