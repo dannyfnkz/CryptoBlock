@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static CryptoBlock.PortfolioManagement.PortfolioManager;
 using static CryptoBlock.ServerDataManagement.CoinListingManager;
+using static CryptoBlock.ServerDataManagement.CoinTickerManager;
 
 namespace CryptoBlock
 {
@@ -35,7 +36,7 @@ namespace CryptoBlock
 
             private class PortfolioViewCommand : PortfolioCommand
             {
-                private const int MIN_NUMBER_OF_ARGUMENTS = 1;
+                private const int MIN_NUMBER_OF_ARGUMENTS = 0;
                 private const int MAX_NUMBER_OF_ARGUMENTS = 20;
                 private const string PREFIX = "view";
 
@@ -57,24 +58,33 @@ namespace CryptoBlock
 
                     try
                     {
-                        // fetch coin ids corresponding to coin names / symbols
-                        int[] coinIds = CoinListingManager.Instance.FetchCoinIds(commandArguments);
-
                         // only coin ids which have a corresponding portfolio entry are displayed
                         List<int> coinIdsWithPortfolioEntry = new List<int>();
                         List<string> coinNamesWithoutPortfolioEntry = new List<string>();
 
-                        // get coin ids with initialized ticker data
-                        foreach (int coinId in coinIds)
+                        if(commandArguments.Length == 0) 
                         {
-                            if (PortfolioManager.Instance.IsInPortfolio(coinId))
+                            // if no command args are provided, display all entries in portfolio
+                            int[] allCoinIdsInPortfolio = PortfolioManager.Instance.CoinIds;
+                            coinIdsWithPortfolioEntry.AddRange(allCoinIdsInPortfolio);
+                        }
+                        else // command args are provided
+                        {
+                            // fetch coin ids corresponding to coin names / symbols
+                            int[] coinIds = CoinListingManager.Instance.FetchCoinIds(commandArguments);
+
+                            // get coin ids with initialized ticker data
+                            foreach (int coinId in coinIds)
                             {
-                                coinIdsWithPortfolioEntry.Add(coinId);
-                            }
-                            else
-                            {
-                                string coinName = CoinListingManager.Instance.GetCoinNameById(coinId);
-                                coinNamesWithoutPortfolioEntry.Add(coinName);
+                                if (PortfolioManager.Instance.IsInPortfolio(coinId))
+                                {
+                                    coinIdsWithPortfolioEntry.Add(coinId);
+                                }
+                                else
+                                {
+                                    string coinName = CoinListingManager.Instance.GetCoinNameById(coinId);
+                                    coinNamesWithoutPortfolioEntry.Add(coinName);
+                                }
                             }
                         }
 

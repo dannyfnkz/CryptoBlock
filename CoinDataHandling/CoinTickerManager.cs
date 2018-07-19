@@ -150,7 +150,7 @@ namespace CryptoBlock
                 }
             }
 
-            public bool CoinIdExists(int coinId)
+            public bool HasCoinId(int coinId)
             {
                 return coinIdToCoinTicker.ContainsKey(coinId);
             }

@@ -88,6 +88,11 @@ namespace CryptoBlock
                 get { return instance; }
             }
 
+            public int[] CoinIds
+            {
+                get { return coinIdToPortfolioEntry.Keys.ToArray(); }
+            }
+
             //public PortfolioEntry GetPortfolioEntry(int coinId)
             //{
             //    assertCoinIdInPortfolio(coinId);
@@ -105,8 +110,10 @@ namespace CryptoBlock
             {
                 assertCoinIdNotAlreadyInPortfolio(coinId);
 
-                // get CoinTicker corresponding to coinId (null if not available in ticker repository)
-                CoinTicker coinTicker = CoinTickerManager.Instance.GetCoinTicker(coinId);
+                // get CoinTicker corresponding to coinId, if exists
+                CoinTicker coinTicker = CoinTickerManager.Instance.HasCoinId(coinId) ?
+                    CoinTickerManager.Instance.GetCoinTicker(coinId)
+                    : null;
 
                 // create a new portfolio entry and update dictionary
                 PortfolioEntry portfolioEntry = new PortfolioEntry(coinId, coinTicker);

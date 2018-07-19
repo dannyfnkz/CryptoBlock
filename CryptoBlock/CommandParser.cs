@@ -48,18 +48,28 @@ namespace CryptoBlock
             // look for a command executor which recognizes user input as a command
             foreach (CommandExecutor commandExecutor in commandExecutors)
             {
-                if (commandExecutor.IsValidCommand(userInputLowercase)) // command regonized
+                if (commandExecutor.IsValidCommand(userInputLowercase)) // command recognized
                 {
                     string prefix = commandExecutor.GetCommandPrefix(userInputLowercase);
 
-                    // if there's a space directly after prefix, split by prfix + space
+                    // if there's a space directly after prefix, split by prefix + space
                     // else split by prefix
                     string splitPrefix = userInputLowercase.Contains(prefix + " ") ? prefix + " " : prefix;
-
                     string commandArgumentString = StringUtils.Substring(
                         userInputLowercase,
                         splitPrefix);
-                    string[] commandArguments = StringUtils.Split(commandArgumentString, " ");
+
+                    // get command arguments array
+                    string[] commandArguments;
+
+                    if(commandArgumentString == string.Empty) // empty command args string
+                    {
+                        commandArguments = new string[0];
+                    }
+                    else // non-empty command args string
+                    {
+                        commandArguments = StringUtils.Split(commandArgumentString, " ");
+                    }
 
                     commandExecutor.ExecuteCommand(prefix, commandArguments);
 
