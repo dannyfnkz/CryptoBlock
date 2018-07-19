@@ -490,9 +490,9 @@ namespace CryptoBlock
                 return table.GetRowString(rowIndex);
             }
 
-            public string GetTableString()
+            public string GetTableDisplayString()
             {
-                return table.GetTableString();
+                return table.GetTableDisplayString();
             }
 
             private void assertRowPropertiesMatchColumns(PropertyRow propertyRow)

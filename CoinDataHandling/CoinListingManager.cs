@@ -270,6 +270,24 @@ namespace CryptoBlock
                 }
             }
 
+            public string GetCoinListingDisplayTableString(params int[] coinIds)
+            {              
+                // init coin listing table
+                CoinListingTable coinListingTable = new CoinListingTable();
+
+                foreach (int coinId in coinIds)
+                {
+                    // add row corresponding to each coin listing associated with specified id
+                    CoinListing coinListing = GetCoinListing(coinId);
+                    coinListingTable.AddCoinListingRow(coinListing);
+                }
+
+                // return table display string
+                string coinListingTableString = coinListingTable.GetTableDisplayString();
+
+                return coinListingTableString;
+            }
+
             public void UpdateRepository()
             {
                 try

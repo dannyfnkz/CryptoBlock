@@ -111,7 +111,7 @@ namespace CryptoBlock
 
             public string GetTableDisplayString()
             {
-                return propertyTable.GetTableString();
+                return propertyTable.GetTableDisplayString();
             }
 
             private void initTableColumns()

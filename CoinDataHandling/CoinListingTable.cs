@@ -41,9 +41,9 @@ namespace CryptoBlock
                 return propertyTable.RemoveRow(propertyRow);
             }
 
-            public string GetTableString()
+            public string GetTableDisplayString()
             {
-                return propertyTable.GetTableString();
+                return propertyTable.GetTableDisplayString();
             }
 
             private void initTableColumns()

@@ -382,7 +382,7 @@ namespace CryptoBlock
                 return rows[rowIndex].ToString(columns);
             }
 
-            public string GetTableString()
+            public string GetTableDisplayString()
             {
                 StringBuilder tableStringBuilder = new StringBuilder();
 

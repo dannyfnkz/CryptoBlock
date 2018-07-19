@@ -64,7 +64,7 @@ namespace CryptoBlock
 
                         // print portfolio entry display table string
                         string portfolioEntryDisplayTableString =
-                            PortfolioManager.Instance.GetPortfolioEntryDisplayTable(coinId);
+                            PortfolioManager.Instance.GetPortfolioEntryDisplayTableString(coinId);
                         ConsoleIOManager.Instance.PrintData(portfolioEntryDisplayTableString);
                     }
                     catch (NoSuchCoinNameOrSymbolException noSuchCoinNameOrSymbolException)

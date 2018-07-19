@@ -139,17 +139,14 @@ namespace CryptoBlock
                 return portfolioEntry.Holdings;
             }
 
-            public string GetPortfolioEntryDisplayTable(params int[] coinIds)
+            public string GetPortfolioEntryDisplayTableString(params int[] coinIds)
             {
                 // init portfolio entry table
                 PortfolioEntryTable portfolioEntryTable = new PortfolioEntryTable();
 
-                // add row corresponding to each portfolio entry associated with specified id
                 foreach(int coinId in coinIds)
                 {
-                    assertCoinIdInPortfolio(coinId);
-
-                    // get portfolio entry corresponding to coin id
+                    // add row corresponding to each portfolio entry associated with specified id
                     PortfolioEntry portfolioEntry = getPortfolioEntry(coinId);
                     portfolioEntryTable.AddPortfolioEntryRow(portfolioEntry);
                 }

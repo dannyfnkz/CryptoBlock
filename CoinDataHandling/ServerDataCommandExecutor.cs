@@ -50,16 +50,9 @@ namespace CryptoBlock
                     {
                         int coinId = CoinListingManager.Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
 
-                        // fetching CoinListing guaranteed to be successful as repository is initialized
-                        // & coin id is associated with an existing coin name / symbol
-                        CoinListing coinListing = CoinListingManager.Instance.GetCoinListing(coinId);
-
-                        // init coin listing table
-                        CoinListingTable coinListingTable = new CoinListingTable();
-                        coinListingTable.AddCoinListingRow(coinListing);
-
-                        // display table
-                        string coinListingTableString = coinListingTable.GetTableString();
+                        // print coin listing display table
+                        string coinListingTableString =
+                            CoinListingManager.Instance.GetCoinListingDisplayTableString(coinId);
                         ConsoleIOManager.Instance.PrintData(coinListingTableString);
                     }
                     catch (CoinListingManager.NoSuchCoinNameOrSymbolException noSuchCoinNameOrSymbolException)
@@ -104,7 +97,7 @@ namespace CryptoBlock
                         coinTickerTable.AddCoinTickerRow(coinTicker);
 
                         // display table
-                        string coinTickerTableString = coinTickerTable.GetTableString();
+                        string coinTickerTableString = coinTickerTable.GetTableDisplayString();
                         ConsoleIOManager.Instance.PrintData(coinTickerTableString);
                     }
                     catch (CoinListingManager.NoSuchCoinNameOrSymbolException noSuchCoinNameOrSymbolException)
