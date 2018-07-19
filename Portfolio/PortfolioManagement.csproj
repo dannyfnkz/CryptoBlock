@@ -4,16 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{6F6A790C-B7FD-4BE0-BC50-D9405654EB6B}</ProjectGuid>
+    <ProjectGuid>{22928362-4D96-41E2-835A-E0E01F8867C0}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Utils</RootNamespace>
-    <AssemblyName>Utils</AssemblyName>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>PortfolioManagement</RootNamespace>
+    <AssemblyName>PortfolioManagement</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -23,7 +22,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -31,13 +29,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject />
-  </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -48,21 +40,38 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CollectionUtils.cs" />
-    <Compile Include="ConsoleIOHandler.cs" />
-    <Compile Include="ConsoleUtils.cs" />
-    <Compile Include="DateTimeUtils.cs" />
-    <Compile Include="ExceptionUtils.cs" />
-    <Compile Include="JsonUtils.cs" />
-    <Compile Include="MismatchException.cs" />
-    <Compile Include="NumberUtils.cs" />
+    <Compile Include="PortfolioCommandExecutor.cs" />
+    <Compile Include="PortfolioEntry.cs" />
+    <Compile Include="PortfolioEntryTable.cs" />
+    <Compile Include="PortfolioManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ReflectionUtils.cs" />
-    <Compile Include="StringUtils.cs" />
+    <Compile Include="Transaction.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
-    <None Include="packages.config" />
+    <ProjectReference Include="..\CMCAPI\CMCAPI.csproj">
+      <Project>{e0987f07-cfde-4cf1-ba7b-23f1a53a7d34}</Project>
+      <Name>CMCAPI</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CoinDataHandling\ServerDataManagement.csproj">
+      <Project>{19bf4193-56d2-45bd-88e0-f0e22e4f4726}</Project>
+      <Name>ServerDataManagement</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CommandHandling\CommandHandling.csproj">
+      <Project>{9808d72e-9760-4e7a-84fb-1f3f8bde222b}</Project>
+      <Name>CommandHandling</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\DisplayTable\TableDisplay.csproj">
+      <Project>{576249a0-f9ee-456d-a64f-67032c86aae9}</Project>
+      <Name>TableDisplay</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\IOManagement\IOManagement.csproj">
+      <Project>{9eb0f624-9a4c-4999-96b0-0aa192427b43}</Project>
+      <Name>IOManagement</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Utils\Utils.csproj">
+      <Project>{6f6a790c-b7fd-4be0-bc50-d9405654eb6b}</Project>
+      <Name>Utils</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

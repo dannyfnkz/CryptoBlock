@@ -14,22 +14,6 @@ namespace CryptoBlock
         {
             private abstract class ServerDataCommand : Command
             {
-                protected class CoinNameOrSymbolNotFoundException : CommandExecutionException
-                {
-                    internal CoinNameOrSymbolNotFoundException(string coinNameOrSymbol)
-                        : base(formatExceptionMessage(coinNameOrSymbol))
-                    {
-
-                    }
-
-                    private static string formatExceptionMessage(string coinNameOrSymbol)
-                    {
-                        return string.Format(
-                            "Coin with specified name or symbol not found: {0}.",
-                            coinNameOrSymbol);
-                    }
-                }
-
                 private const int MIN_NUMBER_OF_ARGUMENTS = 1;
                 private const int MAX_NUMBER_OF_ARGUMENTS = 1;
 
@@ -38,48 +22,24 @@ namespace CryptoBlock
                 {
 
                 }
-
-                protected int GetCoinIdByNameOrSymbol(string coinNameOrSymbol)
-                {
-                    int coinId;
-
-                    if (CoinListingManager.Instance.CoinNameExists(coinNameOrSymbol)
-                        || CoinListingManager.Instance.CoinSymbolExists(coinNameOrSymbol))
-                    {
-                        // coin id found
-                        // coin name provided as argument
-                        if (CoinListingManager.Instance.CoinNameExists(coinNameOrSymbol))
-                        {
-                            coinId = CoinListingManager.Instance.GetCoinIdByName(coinNameOrSymbol);
-                        }
-                        else // coin symbol provided as argument
-                        {
-                            coinId = CoinListingManager.Instance.GetCoinIdBySymbol(coinNameOrSymbol);
-                        }
-
-                        return coinId;
-                    }
-                    else // coin id corresponding to name or symbol not found
-                    {
-                        throw new CoinNameOrSymbolNotFoundException(coinNameOrSymbol);
-                    }
-                }
             }
 
             private class CoinListingCommand : ServerDataCommand
             {
+                private const string PREFIX = "listing";
+
                 internal CoinListingCommand()
-                    : base("listing")
+                    : base(PREFIX)
                 {
 
                 }
 
                 public override void ExecuteCommand(string[] commandArguments)
                 {
-                    // handle where number of arguments is invalid
+                    // handle case where number of arguments is invalid
                     HandleInvalidNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
 
-                    if(invalidNumberOfArguments)
+                    if (invalidNumberOfArguments)
                     {
                         return;
                     }
@@ -88,7 +48,7 @@ namespace CryptoBlock
 
                     try
                     {
-                        int coinId = GetCoinIdByNameOrSymbol(coinNameOrSymbol);
+                        int coinId = CoinListingManager.Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
 
                         // fetching CoinListing guaranteed to be successful as repository is initialized
                         // & coin id is associated with an existing coin name / symbol
@@ -100,20 +60,22 @@ namespace CryptoBlock
 
                         // display table
                         string coinListingTableString = coinListingTable.GetTableString();
-                        ConsoleIOManager.Instance.LogData(coinListingTableString);
+                        ConsoleIOManager.Instance.PrintData(coinListingTableString);
                     }
-                    catch (CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
+                    catch (CoinListingManager.NoSuchCoinNameOrSymbolException noSuchCoinNameOrSymbolException)
                     {
                         // coin with specified name / symbol not found
-                        ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
+                        ConsoleIOManager.Instance.LogError(noSuchCoinNameOrSymbolException.Message);
                     }
                 }
             }
 
             private class CoinTickerCommmand : ServerDataCommand
             {
+                private const string PREFIX = "ticker";
+
                 internal CoinTickerCommmand()
-                    : base("ticker")
+                    : base(PREFIX)
                 {
 
                 }
@@ -132,7 +94,7 @@ namespace CryptoBlock
 
                     try
                     {
-                        int coinId = GetCoinIdByNameOrSymbol(coinNameOrSymbol);
+                        int coinId = CoinListingManager.Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
 
                         // fetching coinTicker from repository might return null in case 
                         CoinTicker coinTicker = CoinTickerManager.Instance.GetCoinTicker(coinId);
@@ -143,15 +105,15 @@ namespace CryptoBlock
 
                         // display table
                         string coinTickerTableString = coinTickerTable.GetTableString();
-                        ConsoleIOManager.Instance.LogData(coinTickerTableString);
+                        ConsoleIOManager.Instance.PrintData(coinTickerTableString);
                     }
-                    catch(CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
+                    catch (CoinListingManager.NoSuchCoinNameOrSymbolException noSuchCoinNameOrSymbolException)
                     {
                         // coin with specified name / symbol not found
-                        ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
+                        ConsoleIOManager.Instance.LogError(noSuchCoinNameOrSymbolException.Message);
                     }
 
-                    // coin id not found in ticker repository
+                    // coin id associated with given coin name / symbol does not exist in ticker repository
                     catch (CoinTickerManager.CoinIdNotFoundException coinIdNotFoundException)
                     {
                         // coin ticker repository not initialized yet
@@ -160,7 +122,7 @@ namespace CryptoBlock
                             ConsoleIOManager.Instance.LogError("Coin ticker repository is not fully" +
                                 " initialized yet. Please try again a bit later.");
                         }
-                        else 
+                        else
                         {
                             // coin ticker repository initialized and coin id not found - 
                             // this means an error occurred during ticker repository update thread run
@@ -175,65 +137,19 @@ namespace CryptoBlock
                 }
             }
 
-            public class InvalidServerDataCommandException : InvalidCommandSyntaxException
+            private const string COMMAND_TYPE = "ServerData";
+
+
+            public ServerDataCommandExecutor()
             {
-                public InvalidServerDataCommandException()
-                    : base("ServerData")
-                {
-
-                }
-
+                // populate commandPrefixToCommmand dictionary with (prefix, command) pairs
+                AddPrefixToCommandPair(new CoinTickerCommmand());
+                AddPrefixToCommandPair(new CoinListingCommand());
             }
 
-            private static readonly Dictionary<string, Command> commandPrefixToCommmand
-                = new Dictionary<string, Command>
-                {
-                { "ticker", new CoinTickerCommmand() },
-                { "listing", new CoinListingCommand() }
-                };
-
-            public override bool IsValidCommand(string userInputLowercase)
+            protected override string GetCommandType()
             {
-                // check if user input starts with a recognized command prefix
-                foreach(string commandPrefix in commandPrefixToCommmand.Keys)
-                {
-                    if(userInputLowercase.StartsWith(commandPrefix))
-                    {
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-
-            public override string GetCommandPrefix(string userInputLowercase)
-            {
-                // if user input starts with a recognized prefix, get prefix
-                string prefix = StringUtils.GetPrefixIfStartsWith(
-                    userInputLowercase,
-                    commandPrefixToCommmand.Keys.ToArray());
-
-                if (prefix != null) // valid command
-                {
-                    return prefix;
-                }
-                else // invalid command
-                {
-                    throw new InvalidServerDataCommandException();
-                }
-            }
-            
-            public override void ExecuteCommand(string commandPrefix, string[] commandArguments)
-            {
-                if(!IsValidCommand(commandPrefix))
-                {
-                    throw new InvalidServerDataCommandException();
-                }
-
-                // get matching command
-                Command command = commandPrefixToCommmand[commandPrefix];
-
-                command.ExecuteCommand(commandArguments);
+                return COMMAND_TYPE;
             }
         }
     }

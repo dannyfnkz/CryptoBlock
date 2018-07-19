@@ -1,6 +1,7 @@
 ﻿using System;
 using CryptoBlock.CommandHandling;
 using CryptoBlock.IOManagement;
+using CryptoBlock.PortfolioManagement;
 using CryptoBlock.ServerDataManagement;
 using CryptoBlock.Utils;
 
@@ -35,7 +36,8 @@ namespace CryptoBlock
 
         private static readonly CommandExecutor[] commandExecutors = new CommandExecutor[]
         {
-                new ServerDataCommandExecutor()
+                new ServerDataCommandExecutor(), 
+                new PortfolioCommandExecutor()
         };
 
         public static void ParseCommand(string userInput)
@@ -72,8 +74,8 @@ namespace CryptoBlock
         private static void logUnrecognizedCommandExecption(string userInput)
         {
             ConsoleIOManager.Instance.LogErrorFormat(
-                "Unrecognized command: '{0}'.",
                 false,
+                "Unrecognized command: '{0}'.",             
                 userInput);
         }
     }

@@ -93,6 +93,22 @@ namespace CryptoBlock
                 }
             }
 
+            public class NoSuchCoinNameOrSymbolException : ManagerException
+            {
+                public NoSuchCoinNameOrSymbolException(string coinNameOrSymbol) 
+                    : base(formatExceptionMessage(coinNameOrSymbol))
+                {
+
+                }
+
+                private static string formatExceptionMessage(string coinNameOrSymbol)
+                {
+                    return string.Format(
+                        "Coin name or symbol '{0}' does not exist in coin listing repository.",
+                        coinNameOrSymbol);
+                }
+            }
+
             public class NoSuchCoinIdException : ManagerException
             {
                 public NoSuchCoinIdException(int coinId) : base(formatExceptionMessage(coinId))
@@ -202,12 +218,42 @@ namespace CryptoBlock
 
                 if (CoinSymbolExists(lowercaseCoinSymbol))
                 {
-                    return coinSymbolToCoinListing[coinSymbol].Id;
+                    return coinSymbolToCoinListing[lowercaseCoinSymbol].Id;
                 }
                 else
                 {
                     throw new NoSuchCoinSymbolException(coinSymbol);
                 }
+            }
+
+            public int GetCoinIdByNameOrSymbol(string coinNameOrSymbol)
+            {
+                assertRepositoryInitialized("GetCoinIdByNameOrSymbol");
+
+                string lowercaseCoinNameOrSymbol = coinNameOrSymbol.ToLower();
+
+                if(CoinNameExists(lowercaseCoinNameOrSymbol)) // get id by name
+                {
+                    return coinNameToCoinListing[lowercaseCoinNameOrSymbol].Id;
+                }
+                else if(CoinSymbolExists(lowercaseCoinNameOrSymbol)) // get id by symbol
+                {
+                    return coinSymbolToCoinListing[lowercaseCoinNameOrSymbol].Id;
+                }
+                else // neither name nor symbol exist in listing repository
+                {
+                    throw new NoSuchCoinNameOrSymbolException(coinNameOrSymbol);
+                }
+            }
+
+            public string GetCoinNameById(int coinId)
+            {
+                return GetCoinListing(coinId).Name;
+            }
+
+            public string GetCoinSymbolById(int coinId)
+            {
+                return GetCoinListing(coinId).Symbol;
             }
 
             public CoinListing GetCoinListing(int coinId)

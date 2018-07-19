@@ -213,6 +213,8 @@ namespace CryptoBlock
                     }
                 }
 
+                private const string NULL_PROPERTY_VALUE_STRING = "N/A";
+
                 private readonly Property[] properties;
 
                 public PropertyRow(object obj, IList<Property> properties)
@@ -294,7 +296,17 @@ namespace CryptoBlock
 
                     object propertyValue = ReflectionUtils.GetPropertyValue(obj, property.PropertyName);
 
-                    string propertyValueString = propertyValue.ToString();
+                    string propertyValueString;
+
+                    if (propertyValue == null)
+                    {
+                        propertyValueString = NULL_PROPERTY_VALUE_STRING;
+                    }
+                    else
+                    {
+                        propertyValueString = propertyValue.ToString();
+                    }
+                    
 
                     return propertyValueString;
                 }

@@ -214,8 +214,8 @@ namespace CryptoBlock
             {
                 assertNotDisposed();
 
-                this.registerInput = registerInput;
-                this.registerOutput = registerOutput;
+                RegisterInput = registerInput;
+                RegisterOutput = registerOutput;
             }
 
             /// <summary>
@@ -319,6 +319,32 @@ namespace CryptoBlock
                 }
             }
 
+            // synchroniously reads input until user presses the return key, returns said input
+            // note that input is not registered by the input listen thread and
+            // is therefore not inserted into input buffer
+            public string ReadLine()
+            {
+                // force output flush before reading line if output auto flush is enabled
+                if(outputAutoFlush)
+                {
+                    ForceOutputBufferFlush();
+                }
+
+                // save original state of output auto flush
+                bool outputAutoFlushOriginalState = OutputAutoFlush;
+
+                // switch output auto flush off
+                OutputAutoFlush = false;
+
+                // read user input (synchroniously)
+                string userInput = Console.ReadLine();
+
+                // restore output auto flush original state
+                OutputAutoFlush = outputAutoFlushOriginalState;
+
+                return userInput;
+            }
+
             /// <summary>
             /// writes output string <paramref name="str"/> to Console.
             /// </summary>
@@ -348,6 +374,7 @@ namespace CryptoBlock
                         Thread.Sleep(LISTEN_THREAD_SLEEP_TIME_MILLIS);
                     }
                 });
+
                 consoleInputListenTask.Start();
             }
 
@@ -486,6 +513,12 @@ namespace CryptoBlock
                 {
                     inputBuffer.Remove(inputBuffer.Length - 1, 1);
                 }
+            }
+
+            // flush is done on the calling thread
+            protected void ForceOutputBufferFlush()
+            {
+                flushOutputBuffer();
             }
 
             /// <summary>

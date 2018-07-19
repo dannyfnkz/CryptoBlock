@@ -8,7 +8,7 @@ namespace CryptoBlock
 {
     internal class ProgramManager
     {
-        private bool inputAvailable;
+        private bool userHitReturnKey;
 
         internal void StartProgram()
         {
@@ -30,15 +30,15 @@ namespace CryptoBlock
             {
          //       ConsoleIOManager.Instance.ReadKeyIfAvailable();
 
-                if(inputAvailable)
+                if(userHitReturnKey)
                 {
                     // some padding
    ////                 ConsoleIOManager.Instance.PrintNewLine();
-
+                    
                     string userCommand = ConsoleIOManager.Instance.FlushInputBuffer();
                     CommandParser.ParseCommand(userCommand);
 
-                    inputAvailable = false;
+                    userHitReturnKey = false;
 
                     // some padding
        ////             ConsoleIOManager.Instance.PrintNewLine();
@@ -48,7 +48,7 @@ namespace CryptoBlock
 
         private void consoleIOManager_EndOfInputKeyRegistered(string inputLine)
         {
-            inputAvailable = true;
+            userHitReturnKey = true;
 
             // some padding after user input line
   ////          ConsoleIOManager.Instance.PrintNewLine();

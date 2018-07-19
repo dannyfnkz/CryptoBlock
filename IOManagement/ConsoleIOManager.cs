@@ -35,6 +35,12 @@ namespace CryptoBlock
                 QueueOutput(outputString, flushOutputBuffer);
             }
 
+            public void LogNoticeFormat(bool flushOutputBuffer, string str, params object[] args)
+            {
+                string message = string.Format(str, args);
+                LogNotice(message, flushOutputBuffer);
+            }
+
             /// <summary>
             /// logs an error message to console.
             /// </summary>
@@ -49,7 +55,7 @@ namespace CryptoBlock
                 QueueOutput(outputString, flushOutputBuffer);
             }
 
-            public void LogErrorFormat(string str, bool flushOutputBuffer, params object[] args)
+            public void LogErrorFormat(bool flushOutputBuffer, string str, params object[] args)
             {
                 string message = string.Format(str, args);
                 LogError(message, flushOutputBuffer);
@@ -63,7 +69,7 @@ namespace CryptoBlock
             /// <seealso cref="ConsoleIOHandler.QueueOutput(string, bool)"/> 
             /// <param name="message"></param>
             /// <param name="flushOutputBuffer"></param>
-            public void LogData(string message, bool flushOutputBuffer = false)
+            public void PrintData(string message, bool flushOutputBuffer = false)
             {
                 string outputString = message + Environment.NewLine;
                 QueueOutput(outputString, flushOutputBuffer);
@@ -80,6 +86,30 @@ namespace CryptoBlock
             {
                 string outputString = Environment.NewLine;
                 QueueOutput(outputString, flushOutputBuffer);
+            }
+
+            public bool ShowConfirmationDialog(string promptMessage)
+            {
+                bool userChoice;
+
+                // construct dialog display message
+                string dialogPromptMessage = promptMessage + " (Y/N)";
+
+                LogNotice(dialogPromptMessage);
+
+                // read user input
+                string userInput = ReadLine().ToLower();
+
+                // keep requesting input so long as it's not valid
+                while(userInput != "y" && userInput != "n")
+                {
+                    LogNotice("Invalid input, please select 'Y' or 'N'");
+                    userInput = ReadLine().ToLower();
+                }
+
+                userChoice = userInput == "y" ? true : false;
+
+                return userChoice;
             }
 
             /// <summary>

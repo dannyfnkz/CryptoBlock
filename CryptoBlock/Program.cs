@@ -9,7 +9,7 @@ using CryptoBlock.Utils;
 using System.Threading;
 using CryptoBlock.TableDisplay;
 using System.Reflection;
-
+using CryptoBlock.IOManagement;
 
 namespace CryptoBlock
 {
@@ -18,9 +18,7 @@ namespace CryptoBlock
     {
         static void Main(string[] args)
         {
-            new ProgramManager().StartProgram();
-
-
+                     new ProgramManager().StartProgram();
 
     //        PropertyTable table = new PropertyTable();
 
