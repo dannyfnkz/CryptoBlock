@@ -43,7 +43,6 @@
     <Compile Include="Command.cs" />
     <Compile Include="CommandExecutionException.cs" />
     <Compile Include="CommandExecutor.cs" />
-    <Compile Include="CommandExecutor1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
