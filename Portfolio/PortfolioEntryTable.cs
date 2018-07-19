@@ -17,7 +17,8 @@ namespace CryptoBlock
         {
             private enum eDisplayProperty
             {
-                ProfitPercentageUsd
+                ProfitPercentageUsd,
+                Holdings
             }
 
             private static readonly PropertyTable.Property[] COIN_DATA_PROPERTIES =
@@ -51,6 +52,12 @@ namespace CryptoBlock
                 displayPropertyToProperty = new Dictionary<eDisplayProperty, PropertyTable.Property>
                 {
                     {
+                        eDisplayProperty.Holdings,
+                        new PropertyTable.Property(
+                            PORTFOLIO_ENTRY_PROPERTY_TYPE,
+                            "Holdings")
+                    },
+                    {
                         eDisplayProperty.ProfitPercentageUsd,
                         new PropertyTable.Property(
                             PORTFOLIO_ENTRY_PROPERTY_TYPE,
@@ -64,6 +71,13 @@ namespace CryptoBlock
             private static readonly Dictionary<eDisplayProperty, PropertyTable.PropertyColumn>
                 displayPropertyToPropertyColumn = new Dictionary<eDisplayProperty, PropertyTable.PropertyColumn>
                 {
+                    {
+                        eDisplayProperty.Holdings,
+                        new PropertyTable.PropertyColumn(
+                            "Holdings",
+                            13,
+                            displayPropertyToProperty[eDisplayProperty.Holdings])
+                    },
                     {
                         eDisplayProperty.ProfitPercentageUsd,
                         new PropertyTable.PropertyColumn(
