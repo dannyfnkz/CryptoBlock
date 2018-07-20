@@ -169,29 +169,17 @@ namespace CryptoBlock
             {
                 if(FileIOManager.Instance.DataFileExists(DATA_FILE_NAME)) // data file available
                 {
-                    // load data from file
-                    try
-                    {
-                        ConsoleIOManager.Instance.LogNotice("Portfolio data file available.");
-                        ConsoleIOManager.Instance.LogNotice("Loading portfolio data from file ..");
-
-                        string dataFileText = FileIOManager.Instance.ReadTextFromDataFile(DATA_FILE_NAME);
-                        instance = JsonConvert.DeserializeObject<PortfolioManager>(dataFileText);
-
-                        ConsoleIOManager.Instance.LogNotice("Portfolio data loaded successfully.");
-                    }
-                    catch(Exception exception)
-                    {
-                        ConsoleIOManager.Instance.LogNotice("Could not load data. File might be corrupt.");
-                        ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
-                        ExceptionManager.Instance.LogException(exception);
-                    }
+                    loadDataFromFile();
                 }
                 else // data file not available
                 {
                     instance = new PortfolioManager();
                 }
-                
+
+                // initialize portfolio entries with corresponding coin tickers 
+                // (available in coin ticker manager)
+                initializePortfolioEntryCoinTickers();
+
                 instance.StartFileDataSaveThreadThread();
             }
 
@@ -351,6 +339,42 @@ namespace CryptoBlock
                 if (instance != null)
                 {
                     throw new ManagerAlreadyInitializedException();
+                }
+            }
+
+            private static void initializePortfolioEntryCoinTickers()
+            {
+                // update portfolio entries which have corresponding coin tickers available in
+                // coin ticker manager
+                foreach (int coinId in instance.coinIdToPortfolioEntry.Keys)
+                {
+                    if (CoinTickerManager.Instance.HasCoinTicker(coinId)) // coin ticker available
+                    {
+                        // update portfolio entry corresponding to coin id
+                        CoinTicker coinTicker = CoinTickerManager.Instance.GetCoinTicker(coinId);
+                        PortfolioEntry portfolioEntry = instance.coinIdToPortfolioEntry[coinId];
+                        portfolioEntry.Update(coinTicker);
+                    }
+                }
+            }
+
+            private static void loadDataFromFile()
+            {
+                try
+                {
+                    ConsoleIOManager.Instance.LogNotice("Portfolio data file available.");
+                    ConsoleIOManager.Instance.LogNotice("Loading portfolio data from file ..");
+
+                    string dataFileText = FileIOManager.Instance.ReadTextFromDataFile(DATA_FILE_NAME);
+                    instance = JsonConvert.DeserializeObject<PortfolioManager>(dataFileText);
+
+                    ConsoleIOManager.Instance.LogNotice("Portfolio data loaded successfully.");
+                }
+                catch (Exception exception)
+                {
+                    ConsoleIOManager.Instance.LogNotice("Could not load data. File might be corrupt.");
+                    ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
+                    ExceptionManager.Instance.LogException(exception);
                 }
             }
 

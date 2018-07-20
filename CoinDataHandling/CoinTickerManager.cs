@@ -138,6 +138,8 @@ namespace CryptoBlock
 
                 instance = new CoinTickerManager(numberOfCoins);
 
+                instance.StartUpdateThread();
+
                 return instance;
             }
 
@@ -160,6 +162,18 @@ namespace CryptoBlock
                 assertCoinIdExists(coinId);
 
                 return coinIdToCoinTicker[coinId];
+            }
+
+            public CoinTicker[] GetCoinTickers(params int[] coinIds)
+            {
+                CoinTicker[] coinTickers = new CoinTicker[coinIds.Length];
+
+                for(int i = 0; i < coinIds.Length; i++)
+                {
+                    coinTickers[i] = GetCoinTicker(coinIds[i]);
+                }
+
+                return coinTickers;
             }
 
             public string GetCoinTickerDisplayTableString(params int[] coinIds)
