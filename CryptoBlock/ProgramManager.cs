@@ -3,6 +3,7 @@ using CryptoBlock.IOManagement;
 using CryptoBlock.ServerDataManagement;
 using System.Threading;
 using CryptoBlock.CommandHandling;
+using CryptoBlock.PortfolioManagement;
 
 namespace CryptoBlock
 {
@@ -15,8 +16,8 @@ namespace CryptoBlock
             ConsoleIOManager.Instance.RegisterInput = false;
 
             initializeCoinListingManager();
-
             initializeCoinTickerManager(CoinListingManager.Instance.RepositoryCount);
+            initializePortfolioManager();
 
             ConsoleIOManager.Instance.RegisterInput = true;
             ListenForUserCommands();
@@ -52,13 +53,6 @@ namespace CryptoBlock
 
             // some padding after user input line
   ////          ConsoleIOManager.Instance.PrintNewLine();
-        }
-
-        private void initializeCoinTickerManager(int numberOfCoins)
-        {
-            CoinTickerManager.Initialize(numberOfCoins);
-            CoinTickerManager.Instance.RepositoryInitializedEvent += coinDataManager_RepositoryInitialized;
-            CoinTickerManager.Instance.StartUpdateThread();
         }
 
         private void coinDataManager_RepositoryInitialized(CoinTickerManager coinDataManager)
@@ -99,6 +93,17 @@ namespace CryptoBlock
 
             // some padding
    ////         ConsoleIOManager.Instance.PrintNewLine();
+        }
+
+        private void initializeCoinTickerManager(int numberOfCoins)
+        {
+            CoinTickerManager.Initialize(numberOfCoins);
+            CoinTickerManager.Instance.RepositoryInitializedEvent += coinDataManager_RepositoryInitialized;
+        }
+
+        private void initializePortfolioManager()
+        {
+            PortfolioManager.Initialize();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using CryptoBlock.CMCAPI;
 using CryptoBlock.Utils;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -74,14 +75,21 @@ namespace CryptoBlock
 
             private const string NULL_VALUE_TABLE_DISPLAY_STRING = "N/A";
 
+            [JsonProperty]
             private readonly int coinId;
+            [JsonIgnore]
             private CoinTicker coinTicker;
+            [JsonProperty]
             private List<Transaction> transactionHistory = new List<Transaction>();
+            [JsonProperty]
             private double holdings;
+            [JsonProperty]
             private double? averageBuyPrice;
+            [JsonIgnore]
             private double? profitPercentageUsd;
 
             // assumes coinId is valid (exists in coin listing manager)
+            [JsonConstructor]
             public PortfolioEntry(
                 int coinId,
                 CoinTicker coinTicker = null)
@@ -94,34 +102,47 @@ namespace CryptoBlock
                 }
             }
 
+            [JsonIgnore]
             public CoinTicker CoinTicker
             {
                 get { return coinTicker; }
             }
 
+            [JsonIgnore]
             public int CoinId
             {
                 get { return coinId; }
             }
 
+            [JsonIgnore]
             public double Holdings
             {
                 get { return holdings; }
             }
 
+            [JsonIgnore]
             public bool HasNoHoldings
             {
                 get { return holdings == 0.0; }
             }
 
+            [JsonIgnore]
             public double? AverageBuyPrice
             {
                 get { return averageBuyPrice; }
             }
 
+            [JsonIgnore]
             public double? ProfitPercentageUsd
             {
                 get { return profitPercentageUsd; }
+            }
+
+            public static PortfolioEntry DeserializeJSON(string JSONString)
+            {
+                PortfolioEntry portfolioEntry = JsonConvert.DeserializeObject<PortfolioEntry>(JSONString);
+
+                return portfolioEntry;
             }
 
             public void Buy(double amount, double buyPrice, long unixTimestamp)

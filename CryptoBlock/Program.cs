@@ -10,48 +10,21 @@ using System.Threading;
 using CryptoBlock.TableDisplay;
 using System.Reflection;
 using CryptoBlock.IOManagement;
+ 
+using CryptoBlock.PortfolioManagement;
+using Newtonsoft.Json;
+using CryptoBlock.ServerDataManagement;
+using System.IO;
 
 namespace CryptoBlock
 {
 
     class Program
     {
+        bool flag = false;
         static void Main(string[] args)
         {
-                     new ProgramManager().StartProgram();
-
-    //        PropertyTable table = new PropertyTable();
-
-    //        PropertyTable.PropertyColumn propertyColumn1 = new PropertyTable.PropertyColumn(
-    //            "A",
-    //            7,
-    //            new PropertyTable.Property(test1.GetType(), "A"));
-    //            PropertyTable.PropertyColumn propertyColumn2 = new PropertyTable.PropertyColumn(
-    //            "B",
-    //            7,
-    //            new PropertyTable.Property(test1.GetType(), "B"));
-
-    //        PropertyTable.PropertyRow propertyRow = new PropertyTable.PropertyRow(
-    //            new object[] { test1, test2 },
-    //            new PropertyTable.Property[]
-    //            {
-    //                new PropertyTable.Property(test1.GetType(), "A"),
-    //                new PropertyTable.Property(test2.GetType(), "B")
-    //            });
-    //        PropertyTable.PropertyRow propertyRow2 = new PropertyTable.PropertyRow(
-    //new object[] { test2, test2 },
-    //new PropertyTable.Property[]
-    //{
-    //                new PropertyTable.Property(test1.GetType(), "A"),
-    //                new PropertyTable.Property(test2.GetType(), "B")
-    //});
-
-    //        table.AddColumn(propertyColumn1);
-    //        table.AddColumn(propertyColumn2);
-
-    //        table.AddRowRange(new PropertyTable.PropertyRow[] { propertyRow, propertyRow2 });
-
-    //        Console.Write(table.GetTableString());
+                 new ProgramManager().StartProgram();
         }
     }
 }

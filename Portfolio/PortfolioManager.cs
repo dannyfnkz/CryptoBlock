@@ -1,8 +1,14 @@
 ﻿using CryptoBlock.CMCAPI;
+using CryptoBlock.ExceptionManagement;
+using CryptoBlock.IOManagement;
 using CryptoBlock.ServerDataManagement;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace CryptoBlock
 {
@@ -16,6 +22,62 @@ namespace CryptoBlock
                     : base(exceptionMessage)
                 {
 
+                }
+                public PortfolioManagerException(string exceptionMessage, Exception innerException)
+                    : base(exceptionMessage, innerException)
+                {
+
+                }
+            }
+
+            public class ManagerNotInitializedException : PortfolioManagerException
+            {
+                private readonly string operationName;
+
+                public ManagerNotInitializedException(string operationName)
+                    : base(formatExceptionMessage(operationName))
+                {
+                    this.operationName = operationName;
+                }
+
+                public string OperationName
+                {
+                    get { return operationName; }
+                }
+
+                private static string formatExceptionMessage(string operationName)
+                {
+                    return string.Format(
+                        "Portfolio manager must be initialized before performing the following operation: {0}.",
+                        operationName);
+                }
+            }
+
+            public class ManagerAlreadyInitializedException : PortfolioManagerException
+            {
+                public ManagerAlreadyInitializedException()
+                    : base(formatExceptionMessage())
+                {
+
+                }
+
+                private static string formatExceptionMessage()
+                {
+                    return "Portolio manager was already initialized.";
+                }
+            }
+
+            public class DataFileSaveException : PortfolioManagerException
+            {
+                public DataFileSaveException(Exception exception)
+                    : base(formatExceptionMessage(), exception)
+                {
+
+                }
+
+                private static string formatExceptionMessage()
+                {
+                    return "Could not save portfolio data to file";
                 }
             }
 
@@ -65,17 +127,32 @@ namespace CryptoBlock
                 }
             }
 
+            private const string DATA_FILE_NAME = "portfolio_data";
+
+            private const int FILE_DATA_SAVE_THREAD_SLEEP_TIME_MILLIS = 10 * 1000;
             private const double MAX_NUMERICAL_VALUE_ALLOWED = 1.0E15;
 
-            private static readonly PortfolioManager instance = new PortfolioManager();
+            private static PortfolioManager instance;
 
+            private Task fileDataSaveTask;
+            private bool unsavedStateChange = false;
+            private bool fileDataSaveThreadRunning;
+
+            [JsonProperty]
             private readonly Dictionary<int, PortfolioEntry> coinIdToPortfolioEntry 
                 = new Dictionary<int, PortfolioEntry>();
 
-            public PortfolioManager()
+            private PortfolioManager()
             {
                 // subscribe to coin ticker manager repository update events
                 CoinTickerManager.Instance.RepositoryUpdatedEvent += coinTickerManager_RepositoryUpdated;
+            }
+
+            [JsonConstructor]
+            private PortfolioManager(Dictionary<int, PortfolioEntry> coinIdToPortfolioEntry)
+                : this()
+            {
+                this.coinIdToPortfolioEntry = coinIdToPortfolioEntry;
             }
 
             public static double MaxNumericalValueAllowed
@@ -88,9 +165,65 @@ namespace CryptoBlock
                 get { return instance; }
             }
 
+            public static void Initialize()
+            {
+                if(FileIOManager.Instance.DataFileExists(DATA_FILE_NAME)) // data file available
+                {
+                    // load data from file
+                    try
+                    {
+                        ConsoleIOManager.Instance.LogNotice("Portfolio data file available.");
+                        ConsoleIOManager.Instance.LogNotice("Loading portfolio data from file ..");
+
+                        string dataFileText = FileIOManager.Instance.ReadTextFromDataFile(DATA_FILE_NAME);
+                        instance = JsonConvert.DeserializeObject<PortfolioManager>(dataFileText);
+
+                        ConsoleIOManager.Instance.LogNotice("Portfolio data loaded successfully.");
+                    }
+                    catch(Exception exception)
+                    {
+                        ConsoleIOManager.Instance.LogNotice("Could not load data. File might be corrupt.");
+                        ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
+                        ExceptionManager.Instance.LogException(exception);
+                    }
+                }
+                else // data file not available
+                {
+                    instance = new PortfolioManager();
+                }
+                
+                instance.StartFileDataSaveThreadThread();
+            }
+
+            [JsonIgnore]
             public int[] CoinIds
             {
                 get { return coinIdToPortfolioEntry.Keys.ToArray(); }
+            }
+
+            [JsonIgnore] 
+            private bool UnsavedStateChange
+            {
+                [MethodImpl(MethodImplOptions.Synchronized)]
+                get { return unsavedStateChange; }
+                [MethodImpl(MethodImplOptions.Synchronized)]
+                set { unsavedStateChange = value; }
+            }
+
+            [MethodImpl(MethodImplOptions.Synchronized)]
+            public void StartFileDataSaveThreadThread()
+            {
+                fileDataSaveThreadRunning = true;
+
+                // init and start file data save task
+                fileDataSaveTask = new Task(new Action(saveDataToFile));
+                fileDataSaveTask.Start();
+            }
+
+            [MethodImpl(MethodImplOptions.Synchronized)]
+            public void StopFileDataSaveThreadThread()
+            {
+                fileDataSaveThreadRunning = false;
             }
 
             //public PortfolioEntry GetPortfolioEntry(int coinId)
@@ -108,29 +241,42 @@ namespace CryptoBlock
             // assumes coinId is valid
             public void CreatePortfolioEntry(int coinId)
             {
+                assertManagerInitialized("CreatePortfolioEntry");
                 assertCoinIdNotAlreadyInPortfolio(coinId);
 
                 // get CoinTicker corresponding to coinId, if exists
-                CoinTicker coinTicker = CoinTickerManager.Instance.HasCoinId(coinId) ?
+                CoinTicker coinTicker = CoinTickerManager.Instance.HasCoinTicker(coinId) ?
                     CoinTickerManager.Instance.GetCoinTicker(coinId)
                     : null;
 
                 // create a new portfolio entry and update dictionary
                 PortfolioEntry portfolioEntry = new PortfolioEntry(coinId, coinTicker);
                 coinIdToPortfolioEntry[coinId] = portfolioEntry;
+
+                onPortfolioStateChanged();
             }
 
             public void RemovePortfolioEntry(int coinId)
             {
+                assertManagerInitialized("RemovePortfolioEntry");
                 assertCoinIdInPortfolio(coinId);
 
-                coinIdToPortfolioEntry.Remove(coinId);
+                bool portfolioEntryRemoved = coinIdToPortfolioEntry.Remove(coinId);
+
+                if(portfolioEntryRemoved)
+                {
+                    onPortfolioStateChanged();
+                }
+
+                onPortfolioStateChanged();
             }
 
             public void BuyCoin(int coinId, double buyAmount, double buyPrice, long unixTimestamp)
             {
                 PortfolioEntry portfolioEntry = getPortfolioEntry(coinId);
                 portfolioEntry.Buy(buyAmount, buyPrice, unixTimestamp);
+
+                onPortfolioStateChanged();
             }
 
             // throws PortfolioEntry.InsufficientFundsException
@@ -138,6 +284,8 @@ namespace CryptoBlock
             {
                 PortfolioEntry portfolioEntry = getPortfolioEntry(coinId);
                 portfolioEntry.Sell(sellAmount, sellPrice, unixTimestamp);
+
+                onPortfolioStateChanged();
             }
 
             public double GetCoinHoldings(int coinId)
@@ -164,8 +312,56 @@ namespace CryptoBlock
                 return portfolioEntryTableString;
             }
 
+            private void saveDataToFile()
+            {
+                while(fileDataSaveThreadRunning)
+                {
+                    if (UnsavedStateChange)
+                    {
+                        try
+                        {
+                            string jsonString = JsonConvert.SerializeObject(this);
+                            FileIOManager.Instance.WriteTextToDataFile(DATA_FILE_NAME, jsonString);
+
+                            UnsavedStateChange = false;
+                        }
+                        catch (Exception exception)
+                        {
+                            ConsoleIOManager.Instance.LogError(
+                                "An error occurred while trying to save portfolio data to file.");
+                            ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
+                            ExceptionManager.Instance.LogException(exception);
+                        }
+                    }
+
+                    Thread.Sleep(FILE_DATA_SAVE_THREAD_SLEEP_TIME_MILLIS);
+                }
+            }
+
+            private static void assertManagerInitialized(string operationName)
+            {
+                if (instance == null)
+                {
+                    throw new ManagerNotInitializedException(operationName);
+                }
+            }
+
+            private static void assertManagerNotInitialized()
+            {
+                if (instance != null)
+                {
+                    throw new ManagerAlreadyInitializedException();
+                }
+            }
+
+            private void onPortfolioStateChanged()
+            {
+                UnsavedStateChange = true;
+            }
+
             private PortfolioEntry getPortfolioEntry(int coinId)
             {
+                assertManagerInitialized("getPortfolioEntry");
                 assertCoinIdInPortfolio(coinId);
 
                 PortfolioEntry portfolioEntry = coinIdToPortfolioEntry[coinId];
