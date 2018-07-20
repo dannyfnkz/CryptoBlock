@@ -159,15 +159,24 @@ namespace CryptoBlock
 
 
                 // construct row object list
+
                 // get coin data object array
-                CoinData coinData = new CoinData(portfolioEntry.CoinTicker);
+                // get coin listing corresponding to portfolio entry coin id
+                CoinListing coinListing = CoinListingManager.Instance.GetCoinListing(portfolioEntry.CoinId);
+
+                // create a corresponding CoinData object
+                CoinData coinData = new CoinData(coinListing);
                 CoinData[] coinDataObjectArray = CollectionUtils.DuplicateToArray(
                     coinData,
                     COIN_DATA_PROPERTIES.Length);
 
                 // get coin ticker object array
+                // if coin ticker is not available, its properties are displaye as 'N\A'
+                CoinTicker coinTicker = CoinTickerManager.Instance.HasCoinTicker(portfolioEntry.CoinId)
+                    ? CoinTickerManager.Instance.GetCoinTicker(portfolioEntry.CoinId)
+                    : null;
                 CoinTicker[] coinTickerObjectArray = CollectionUtils.DuplicateToArray(
-                    portfolioEntry.CoinTicker,
+                    coinTicker,
                     COIN_TICKER_PROPERTIES.Length);
 
                 // get portfolio entry object array

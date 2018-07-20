@@ -103,12 +103,6 @@ namespace CryptoBlock
             }
 
             [JsonIgnore]
-            public CoinTicker CoinTicker
-            {
-                get { return coinTicker; }
-            }
-
-            [JsonIgnore]
             public int CoinId
             {
                 get { return coinId; }

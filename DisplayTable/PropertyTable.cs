@@ -290,23 +290,29 @@ namespace CryptoBlock
                 }
 
                 private static string getPropertyValueString(object obj, Property property)
-                {   
-                    // first assert that object type and property type match
-                    assertObjectAndPropertyTypeMatch(obj, property);
-
-                    object propertyValue = ReflectionUtils.GetPropertyValue(obj, property.PropertyName);
-
+                {
                     string propertyValueString;
 
-                    if (propertyValue == null)
+                    if (obj == null)
                     {
                         propertyValueString = NULL_PROPERTY_VALUE_STRING;
                     }
                     else
                     {
-                        propertyValueString = propertyValue.ToString();
+                        // first assert that object type and property type match
+                        assertObjectAndPropertyTypeMatch(obj, property);
+
+                        object propertyValue = ReflectionUtils.GetPropertyValue(obj, property.PropertyName);
+
+                        if (propertyValue == null)
+                        {
+                            propertyValueString = NULL_PROPERTY_VALUE_STRING;
+                        }
+                        else
+                        {
+                            propertyValueString = propertyValue.ToString();
+                        }
                     }
-                    
 
                     return propertyValueString;
                 }
