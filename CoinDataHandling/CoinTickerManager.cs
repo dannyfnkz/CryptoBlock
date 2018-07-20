@@ -100,7 +100,8 @@ namespace CryptoBlock
             public event Action<CoinTickerManager> RepositoryInitializedEvent;
             public event Action<Range> RepositoryUpdatedEvent;
 
-            private const int COIN_TICKER_UPDATE_THREAD_SLEEP_TIME = 1000 * 120; // in millis
+            private const int COIN_TICKER_UPDATE_THREAD_SLEEP_TIME_UNTIL_NEXT_RUN = 1000 * 120; // in millis
+            private const int COIN_TICKER_UPDATE_THREAD_SLEEP_TIME_AFTER_EXCEPTION = 1000 * 15; // in millis
 
             private static CoinTickerManager instance;
 
@@ -283,12 +284,14 @@ namespace CryptoBlock
                                 onRepositoryInitialized();
                             }
 
-                            Thread.Sleep(COIN_TICKER_UPDATE_THREAD_SLEEP_TIME);
+                            // sleep until next update run
+                            Thread.Sleep(COIN_TICKER_UPDATE_THREAD_SLEEP_TIME_UNTIL_NEXT_RUN);
                         }
                     }
                     catch (RequestHandler.DataRequestException dataRequestException)
                     {
                         handleCoinTickerUpdateException(dataRequestException);
+                        Thread.Sleep(COIN_TICKER_UPDATE_THREAD_SLEEP_TIME_AFTER_EXCEPTION);
                     }
                 }
             }
@@ -311,7 +314,8 @@ namespace CryptoBlock
 
             private void handleCoinTickerUpdateException(Exception exception)
             {
-                ConsoleIOManager.Instance.LogError("An exception occurred while trying to update coin data repository.");
+                ConsoleIOManager.Instance.LogError(
+                    "An exception occurred while trying to update coin ticker repository.");
                 ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
                 ExceptionManager.Instance.LogException(exception);
             }
