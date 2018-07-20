@@ -93,7 +93,7 @@ namespace CryptoBlock
                         // get coin ids with initialized ticker data
                         foreach (int coinId in coinIds)
                         {
-                            if (CoinTickerManager.Instance.HasCoinId(coinId))
+                            if (CoinTickerManager.Instance.HasCoinTicker(coinId))
                             {
                                 coinIdsWithInitalizedTicker.Add(coinId);
                             }

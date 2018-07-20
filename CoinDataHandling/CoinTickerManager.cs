@@ -150,7 +150,7 @@ namespace CryptoBlock
                 }
             }
 
-            public bool HasCoinId(int coinId)
+            public bool HasCoinTicker(int coinId)
             {
                 return coinIdToCoinTicker.ContainsKey(coinId);
             }
@@ -180,13 +180,13 @@ namespace CryptoBlock
                 return coinTickerTableString;
             }
 
-            public void StartCoinTickerUpdateThread()
+            public void StartUpdateThread()
             {
                 coinTickerUpdateThreadRunning = true;
                 coinTickerUpdateTask.Start();
             }
 
-            public void StopCoinTickerUpdateThread()
+            public void StopUpdateThread()
             {
                 coinTickerUpdateThreadRunning = false;
             }
