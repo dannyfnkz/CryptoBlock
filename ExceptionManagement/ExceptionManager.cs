@@ -2,6 +2,7 @@
 using CryptoBlock.Utils;
 using System;
 using System.IO;
+using System.Text;
 
 namespace CryptoBlock
 {
@@ -9,10 +10,23 @@ namespace CryptoBlock
     {
         public class ExceptionManager
         {
-            private const string LOG_FILE_PATH = @"error_log.txt";
-            private static readonly string LOG_FILE_HEADER = string.Format(
-                @"CryptoBlock Error Log File{0}{1}",
-                Environment.NewLine,
+            public class ErrorLogFileWriteException : Exception
+            {
+                public ErrorLogFileWriteException(Exception innerExcepiton)
+                    : base (formatExceptionMessage(), innerExcepiton)
+                {
+
+                }
+
+                private static string formatExceptionMessage()
+                {
+                    return "An error occurred while trying to write to error log file.";
+                }
+            }
+
+            private const string ERROR_LOG_FILE_NAME = "error_log";
+            private static readonly string ERROR_LOG_FILE_HEADER = string.Format(
+                @"CryptoBlock Error Log File{0}",
                 Environment.NewLine);
 
             public static readonly ExceptionManager Instance = new ExceptionManager();
@@ -24,40 +38,39 @@ namespace CryptoBlock
 
             public void LogException(Exception exception)
             {
-                bool newFile = false;
-
-                if (!File.Exists(LOG_FILE_PATH))
+                try
                 {
-                    newFile = true;
+                    // construct exception log
+                    StringBuilder stringBuilder = new StringBuilder();
 
-                    // create a new log file
-                    using (StreamWriter streamWriter = File.CreateText(LOG_FILE_PATH))
+                    if (!FileIOManager.Instance.ErrorLogFileExists(ERROR_LOG_FILE_NAME))
                     {
-                        streamWriter.Write(LOG_FILE_HEADER);
+                        // write error log file header
+                        stringBuilder.Append(ERROR_LOG_FILE_HEADER);
                     }
-                }
 
-                // append exception message to log file
-                using (StreamWriter streamWriter = File.AppendText(LOG_FILE_PATH))
-                {
-                    // add padding between two entries
-                    if (!newFile)
-                    {
-                        streamWriter.WriteLine();
-                    }
+                    // add padding between two entries / between header and first entry
+                    stringBuilder.Append(Environment.NewLine);
 
                     string exceptionMessageHeader = string.Format(
                         "[{0}]{1}",
                         DateTimeUtils.GetCurrentDateTimeString(),
                         Environment.NewLine);
 
-                    streamWriter.Write(exceptionMessageHeader);
+                    stringBuilder.Append(exceptionMessageHeader);
 
                     string exceptionMessage = ExceptionUtils.GetExceptionMessageString(exception);
 
-                    streamWriter.Write(exceptionMessage);
+                    stringBuilder.Append(exceptionMessage);
 
-                    streamWriter.WriteLine();
+                    stringBuilder.Append(Environment.NewLine);
+
+                    // write log to error log file
+                    FileIOManager.Instance.AppendTextToErrorLogFile(ERROR_LOG_FILE_NAME, stringBuilder.ToString());
+                }
+                catch (Exception ex) // error occurred while trying to write to error log file
+                {
+                    LogException(new ErrorLogFileWriteException(ex));
                 }
             }
         }
