@@ -15,16 +15,17 @@ using CryptoBlock.PortfolioManagement;
 using Newtonsoft.Json;
 using CryptoBlock.ServerDataManagement;
 using System.IO;
+using CryptoBlock.Utils.CollectionUtils;
 
 namespace CryptoBlock
 {
 
     class Program
     {
-        bool flag = false;
         static void Main(string[] args)
         {
-                 new ProgramManager().StartProgram();
+            new ProgramManager().StartProgram();
+
         }
     }
 }

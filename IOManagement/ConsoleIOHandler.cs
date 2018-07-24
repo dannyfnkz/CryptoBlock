@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CryptoBlock.Utils.CollectionUtils;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -19,23 +20,138 @@ namespace CryptoBlock
         /// </remarks>
         public class ConsoleIOHandler : IDisposable
         {
-            // when pressed EndOfInputKeyRegistered event is raised
-            private const ConsoleKey END_OF_INPUT_CONSOLE_KEY = ConsoleKey.Enter;
+            private class InputHistoryManager
+            {
+                private const int RECENT_INPUT_ENTRY_STACK_CAPACITY = 50;
+
+                private readonly SearchableStack<string> recentInputEntries =
+                    new SearchableStack<string>(RECENT_INPUT_ENTRY_STACK_CAPACITY);
+
+                private int selectedEntryIndex;
+                private bool browsingActive;
+
+                private ConsoleIOHandler consoleIOHandler;
+
+                public InputHistoryManager(ConsoleIOHandler consoleIOHandler)
+                {
+                    this.consoleIOHandler = consoleIOHandler;
+                }
+
+                public void AddInputEntryToHistory(string inputEntry)
+                {
+                    // avoid adding consecutive duplicate entries to stack
+                    bool addInputEntry =
+                        recentInputEntries.Empty
+                        || inputEntry != recentInputEntries.TopElement();
+
+                    if(addInputEntry)
+                    {
+                        recentInputEntries.Push(inputEntry);
+                    }                  
+                }
+
+                public void HandleInputHistoryBrowsing(ConsoleKeyInfo consoleKeyInfo)
+                {
+                    if (isBrowsingKey(consoleKeyInfo))
+                    {
+                        handleBrowsingKey(consoleKeyInfo);
+                    }
+
+                    // pressed key was not a paging key, and browsing procedure is active
+                    else if (browsingActive)
+                    {
+                        // set browsing procedure state to inactive
+                        browsingActive = false;
+
+                        // pop all recent input entries up to and including original user input
+                        for (int i = 0; i < selectedEntryIndex + 1; i++)
+                        {
+                            recentInputEntries.Pop();
+                        }
+
+                        // reset selected entry index 
+                        selectedEntryIndex = 0;
+                    }
+                }
+
+                private static bool isBrowsingKey(ConsoleKeyInfo consoleKeyInfo)
+                {
+                    return consoleKeyInfo.Key == ConsoleKey.DownArrow
+                        || consoleKeyInfo.Key == ConsoleKey.UpArrow;
+                }
+
+                private void handleBrowsingKey(ConsoleKeyInfo consoleKeyInfo)
+                {
+                    int selectedEntryIndexIncrementAmount = 0;
+
+                    if (consoleKeyInfo.Key == ConsoleKey.UpArrow)
+                    {
+                        selectedEntryIndexIncrementAmount = 1;
+
+                        // start of browsing procedure
+                        if (!browsingActive)
+                        {
+                            // push current user input to stack so it can be retrieved later
+                            string userInput = consoleIOHandler.GetInputBufferContent();
+                            recentInputEntries.Push(userInput);
+
+                            // set paging procedure state to active
+                            browsingActive = true;
+                        }
+                    }
+                    else // consoleKeyInfo.Key == ConsoleKey.DownArrow
+                    {
+                        selectedEntryIndexIncrementAmount = -1;
+
+                        // top of recent input entry stack reached (back to original user input)
+                        if (browsingActive && selectedEntryIndex == 0)
+                        {
+                            // pop original user input from stack
+                            string originalUserInput = recentInputEntries.Pop();
+
+                            // set paging procedure state to inactive
+                            browsingActive = false;
+                        }
+                    }
+
+                    // still within stack bounds, top or bottom not yet reached
+                    if (recentInputEntries.HasElementAt(
+                        selectedEntryIndex + selectedEntryIndexIncrementAmount))
+                    {
+                        // increment selected input entry index
+                        selectedEntryIndex += selectedEntryIndexIncrementAmount;
+
+                        // get selected entry from stack
+                        string selectedInputEntry =
+                            recentInputEntries.ElementAt(selectedEntryIndex);
+
+                        // write selected entry to console
+                        ConsoleUtils.ClearCurrentConsoleLineAndWrite(selectedInputEntry);
+
+                        // set input buffer to selected input entry
+                        consoleIOHandler.FlushInputBuffer();
+                        consoleIOHandler.AppendToInputBuffer(selectedInputEntry);
+                    }
+                }
+            }
 
             // sleep time for input & output listen threads
             private const int LISTEN_THREAD_SLEEP_TIME_MILLIS = 10;
 
             // input
             private StringBuilder inputBuffer = new StringBuilder();
+            InputHistoryManager inputHistoryManager;
 
-            // console input should be registered (when false, console input is ignored)
+            // when true, input is registered
+            // when false, input is ignored
             private bool registerInput = true;
             private bool consoleInputListenThreadRunning = true;
 
             // output
             private Queue<string> outputBuffer = new Queue<string>();
 
-            // output should be registered (when false, output is ignored) 
+            // when true, output is registered
+            // when false, output is ignored
             private bool registerOutput = true;
             private bool outputFlushThreadRunning = true;
 
@@ -52,7 +168,10 @@ namespace CryptoBlock
             public event Action<string> EndOfInputKeyRegistered;
 
             public ConsoleIOHandler()
-            {         
+            {
+                // init recent input browser
+                this.inputHistoryManager = new InputHistoryManager(this);
+
                 // start listening to console input
                 startConsoleInputListenThread();
 
@@ -63,11 +182,6 @@ namespace CryptoBlock
             ~ConsoleIOHandler()
             {
                 Dispose();
-            }
-
-            public ConsoleKey EndOfInputConsoleKey
-            {
-                get { return END_OF_INPUT_CONSOLE_KEY; }
             }
 
             /// <summary>
@@ -92,7 +206,6 @@ namespace CryptoBlock
                 set
                 {
                     assertNotDisposed();
-
                     outputAutoFlush = value;
                 }
             }
@@ -111,7 +224,6 @@ namespace CryptoBlock
                 get
                 {
                     assertNotDisposed();
-
                     return registerInput;
                 }
 
@@ -120,7 +232,6 @@ namespace CryptoBlock
                 set
                 {
                     assertNotDisposed();
-
                     registerInput = value;
                 }
             }
@@ -139,7 +250,6 @@ namespace CryptoBlock
                 get
                 {
                     assertNotDisposed();
-
                     return registerOutput;
                 }
 
@@ -148,7 +258,6 @@ namespace CryptoBlock
                 set
                 {
                     assertNotDisposed();
-
                     registerOutput = value;
                 }
             }
@@ -163,7 +272,6 @@ namespace CryptoBlock
                 get
                 {
                     assertNotDisposed();
-
                     return inputBuffer.Length > 0;
                 }
             }
@@ -178,7 +286,6 @@ namespace CryptoBlock
                 get
                 {
                     assertNotDisposed();
-
                     return outputBuffer.Count > 0;
                 }
             }
@@ -229,8 +336,14 @@ namespace CryptoBlock
             public string GetInputBufferContent()
             {
                 assertNotDisposed();
-
                 return inputBuffer.ToString();
+            }
+
+            [MethodImpl(MethodImplOptions.Synchronized)]
+            public int GetInputBufferCount()
+            {
+                assertNotDisposed();
+                return inputBuffer.Length;
             }
 
             /// <summary>
@@ -260,7 +373,6 @@ namespace CryptoBlock
             public void ClearInputBuffer()
             {
                 assertNotDisposed();
-
                 inputBuffer.Clear();
             }
 
@@ -272,7 +384,6 @@ namespace CryptoBlock
             public void ClearOutputBuffer()
             {
                 assertNotDisposed();
-
                 outputBuffer.Clear();
             }
 
@@ -288,7 +399,6 @@ namespace CryptoBlock
             public void RequestOutputBufferFlush()
             {
                 assertNotDisposed();
-
                 outputFlushRequested = true;
             }
 
@@ -324,8 +434,10 @@ namespace CryptoBlock
             // is therefore not inserted into input buffer
             public string ReadLine()
             {
+                assertNotDisposed();
+
                 // force output flush before reading line if output auto flush is enabled
-                if(outputAutoFlush)
+                if (outputAutoFlush)
                 {
                     ForceOutputBufferFlush();
                 }
@@ -359,6 +471,24 @@ namespace CryptoBlock
                  Console.Write(str);
             }
 
+            [MethodImpl(MethodImplOptions.Synchronized)]
+            private void AppendToInputBuffer(string input)
+            {
+                inputBuffer.Append(input);
+            }
+
+            [MethodImpl(MethodImplOptions.Synchronized)]
+            private void AppendToInputBuffer(char input)
+            {
+                inputBuffer.Append(input);
+            }
+
+            [MethodImpl(MethodImplOptions.Synchronized)]
+            private void RemoveFromInputBuffer(int startIndex, int length)
+            {
+                inputBuffer.Remove(startIndex, length);
+            }
+
             /// <summary>
             /// starts input listen thread, which registers Console key presses.
             /// </summary>
@@ -370,7 +500,7 @@ namespace CryptoBlock
                 {
                     while (consoleInputListenThreadRunning)
                     {
-                        ReadKeyIfAvailable();
+                        readKeyIfAvailable();
                         Thread.Sleep(LISTEN_THREAD_SLEEP_TIME_MILLIS);
                     }
                 });
@@ -399,23 +529,10 @@ namespace CryptoBlock
                         }
                     }
                 });
+
                 outputListenTask.Start();
             }
-            
-            /// <summary>
-            /// clears the console line currently pointed to by the cursor.
-            /// </summary>
-            /// <seealso cref="System.Console.SetCursorPosition(int, int)"/>
-            /// <seealso cref="System.Console.Write(string)"/>
-            [MethodImpl(MethodImplOptions.Synchronized)]
-            private void clearCurrentConsoleLine()
-            {
-                // move cursor one character backwards
-                Console.SetCursorPosition(0, Console.CursorTop);
-                Console.Write(new string(' ', Console.WindowWidth));
-                Console.SetCursorPosition(0, Console.CursorTop - 1);
-            }
-
+           
             /// <summary>
             /// writes the current content of the input buffer to Console.
             /// </summary>
@@ -428,7 +545,6 @@ namespace CryptoBlock
                 }
             }
 
-            // 
             /// <summary>
             /// if <see cref="registerInput"/> is true, reads a single key from Console input buffer (if available)
             /// and stores its char representation in input buffer.
@@ -441,48 +557,59 @@ namespace CryptoBlock
             /// <seealso cref="handleEndOfInputKey()"/>
             /// <seealso cref="handleInputBackspaceKey()"/>
             [MethodImpl(MethodImplOptions.Synchronized)]
-            private void ReadKeyIfAvailable()
+            private void readKeyIfAvailable()
             {
                 if (!registerInput)
                 {
-                    // discarded Console input
+                    // discard Console input
                     ConsoleUtils.ClearConsoleInputBuffer();
                     return;
                 }
 
-                ConsoleKeyInfo consoleKeyInfo = ConsoleUtils.ReadKey();
+                ConsoleKeyInfo consoleKeyInfo = ConsoleUtils.ReadKey(out bool keyAvailable);
 
-                // key available in Console input buffer
-                if (consoleKeyInfo != default(ConsoleKeyInfo))
+                // key available in console input buffer
+                if (keyAvailable)
                 {
-                    // key represents end-of-input
-                    if (consoleKeyInfo.Key == END_OF_INPUT_CONSOLE_KEY)
-                    {
-                        handleEndOfInputKey();
-                    }
-                    // only keys with char representation are inserted to input buffer
-                    else if (consoleKeyInfo.KeyChar != '\0') 
-                    {
-                        if (consoleKeyInfo.Key == ConsoleKey.Backspace)
-                        {
-                            handleInputBackspaceKey();
-                        }
-                        else
-                        {
-                            // append to input buffer
-                            inputBuffer.Append(consoleKeyInfo.KeyChar);
-                        }
-                    }
-                }
+                    handleConsoleKey(consoleKeyInfo);
+                }                    
             }
 
-            /// <summary>
-            /// handles end-of-input key press.
-            /// </summary>
-            /// <seealso cref="onEndOfInputKeyRegistered()"/>
-            private void handleEndOfInputKey()
+            private void handleConsoleKey(ConsoleKeyInfo consoleKeyInfo)
             {
-                onEndOfInputKeyRegistered();
+                // handle input browsing
+                this.inputHistoryManager.HandleInputHistoryBrowsing(consoleKeyInfo);
+
+                if (consoleKeyInfo.Key == ConsoleKey.Enter) // key represents enter
+                {
+                    handleInputEnterKey();
+                }
+                else if (consoleKeyInfo.Key == ConsoleKey.Backspace) // key represents backspace
+                {
+                    handleInputBackspaceKey();
+                }
+                else if (consoleKeyInfo.Key == ConsoleKey.LeftArrow) // key represents left-arrow
+                {
+                    handleInputLeftArrowKey();
+                }
+                else if (consoleKeyInfo.Key == ConsoleKey.RightArrow) // key represents right-arrow
+                {
+                    handleInputRightArrowKey();
+                }
+                // only keys with textual representation are inserted to input buffer
+                else if (ConsoleUtils.HasTextualConsoleRepresentation(consoleKeyInfo))
+                {
+                    if (consoleKeyInfo.Key == ConsoleKey.Backspace)
+                    {
+                        handleInputBackspaceKey();
+                    }
+                    else
+                    {
+                        // append to input buffer
+                        AppendToInputBuffer(consoleKeyInfo.KeyChar);
+                    }
+                }
+
             }
 
             /// <summary>
@@ -492,12 +619,29 @@ namespace CryptoBlock
             [MethodImpl(MethodImplOptions.Synchronized)]
             private void onEndOfInputKeyRegistered()
             {
-                // notify listeners when end of input key is input
+                string inputLine = inputBuffer.ToString();
+
+                // raise EndOfInputKeyRegistered event
                 if (EndOfInputKeyRegistered != null)
-                {
-                    string inputLine = inputBuffer.ToString();
+                {                   
                     EndOfInputKeyRegistered.Invoke(inputLine);
                 }
+
+                // add input entry to recent input browser
+                this.inputHistoryManager.AddInputEntryToHistory(inputLine);
+            }
+
+            /// <summary>
+            /// handles end-of-input key press.
+            /// </summary>
+            /// <seealso cref="onEndOfInputKeyRegistered()"/>
+            private void handleInputEnterKey()
+            {
+                // raise EndOfInputKeyRegistered event
+                onEndOfInputKeyRegistered();
+
+                // move cursor to beginning of next line
+                ConsoleUtils.SetCursorToBeginningOfNextLine();
             }
 
             /// <summary>
@@ -505,13 +649,36 @@ namespace CryptoBlock
             /// if input buffer is not empty, deletes the most recently inserted character
             /// from <see cref="inputBuffer"/>.
             /// </summary>
-            [MethodImpl(MethodImplOptions.Synchronized)]
             private void handleInputBackspaceKey()
             {
                 // remove character from input buffer if not empty
-                if (inputBuffer.Length > 0)
+                if (GetInputBufferCount() > 0)
                 {
-                    inputBuffer.Remove(inputBuffer.Length - 1, 1);
+                    RemoveFromInputBuffer(inputBuffer.Length - 1, 1);
+                }
+
+                // remove character at current cursor position
+                ConsoleUtils.ConsoleWrite(" ");
+
+                // move cursor one character backwards
+                ConsoleUtils.MoveCursorHorizontal(-1);
+            }
+
+            private void handleInputRightArrowKey()
+            {
+                // if not at end of line, move cursor one character forwards
+                if (!ConsoleUtils.IsCursorPointingToEndOfLine())
+                {
+                    ConsoleUtils.MoveCursorHorizontal(1);
+                }
+            }
+
+            private void handleInputLeftArrowKey()
+            {
+                // if not at beginning of line, move cursor one character backwards
+                if (!ConsoleUtils.IsCursorPointingToBeginningOfLine())
+                {
+                    ConsoleUtils.MoveCursorHorizontal(-1);
                 }
             }
 
@@ -535,12 +702,17 @@ namespace CryptoBlock
                 // remove it from Console and write it back after the output buffer flush.
                 // this is done in order to avoid deletion of user input from console,
                 // in case user was in the middle of typing.
-                // it is assumed that user input spans at most one line in Console.
+                // it is assumed that user input spans at most one line in console.
                 bool restoreInputToConsoleFlag = false;
 
+                // cursor doesn't point to beginning of line, user might be in the middle of typing
                 if (!ConsoleUtils.IsCursorPointingToBeginningOfLine())
                 {
-                    clearCurrentConsoleLine();
+                    // clear the current console line (holding user input)
+                    ConsoleUtils.ClearCurrentConsoleLine();
+                    ConsoleUtils.PointCursorToBeginningOfLine();
+
+                    // restore user input after flush
                     restoreInputToConsoleFlag = true;
                 }
 
@@ -573,89 +745,3 @@ namespace CryptoBlock
         }
     } 
 }
-
-/*
- 
-    
-            // when registered, cause EndOfInputKeyRead event to fire
-            private List<ConsoleKey> endOfInputConsoleKeys = new List<ConsoleKey>();
-
-            in ctor
-            //       endOfInputConsoleKeys.Add(DEFAULT_END_OF_INPUT_CONSOLE_KEY);
-
-            
-                        /// <summary>
-            /// list of end-of-input <see cref="ConsoleKey"/>s.
-            /// when a key in the list is intercepted by Console input 
-            /// and subsequently registered in ConsoleIOHandler,
-            /// EndOfInputKeyRegistered event is raised. 
-            /// </summary>
-            public List<ConsoleKey> EndOfInputConsoleKeys
-            {
-                /// <exception cref="ObjectDisposedException"><see cref="assertNotDisposed()"/></exception>
-                [MethodImpl(MethodImplOptions.Synchronized)]
-                get
-                {
-                    assertNotDisposed();
-
-                    return endOfInputConsoleKeys;
-                }
-            }
-
-                /// <summary>
-            /// adds <paramref name="consoleKey"/>to list of end-of-input console keys.
-            /// </summary>
-            /// <exception cref="ObjectDisposedException"><see cref="assertNotDisposed()"/></exception>
-            /// <seealso cref="EndOfInputConsoleKeys"/>
-            /// <param name="consoleKey"></param>
-            [MethodImpl(MethodImplOptions.Synchronized)]
-            public void AddEndOfInputConsoleKey(ConsoleKey consoleKey)
-            {
-                assertNotDisposed();
-
-                endOfInputConsoleKeys.Add(consoleKey);
-            }
-
-            /// <summary>
-            /// adds all ConsoleKeys in <paramref name="consoleKeys"/>to end-of-input <see cref="ConsoleKey"/>list.
-            /// </summary>
-            /// <exception cref="ObjectDisposedException"><see cref="assertNotDisposed()"/></exception>
-            /// <seealso cref="EndOfInputConsoleKeys"/>
-            /// <param name="consoleKeys"></param>
-            [MethodImpl(MethodImplOptions.Synchronized)]
-            public void AddEndOfInputConsoleKeyRange(IEnumerable<ConsoleKey> consoleKeys)
-            {
-                assertNotDisposed();
-
-                endOfInputConsoleKeys.AddRange(consoleKeys);
-            }
-
-            /// <summary>
-            /// removes <paramref name="consoleKey"/>from end-of-input <see cref="ConsoleKey"/>list.
-            /// </summary>
-            /// <exception cref="ObjectDisposedException"><see cref="assertNotDisposed()"/></exception>
-            /// <seealso cref="EndOfInputConsoleKeys"/>
-            /// <param name="consoleKey"></param>
-            /// <returns></returns>
-            [MethodImpl(MethodImplOptions.Synchronized)]
-            public bool RemoveEndOfInputConsoleKey(ConsoleKey consoleKey)
-            {
-                assertNotDisposed();
-
-                return endOfInputConsoleKeys.Remove(consoleKey);
-            }
-
-            /// <summary>
-            /// clears end-of-input <see cref="ConsoleKey"/> list.
-            /// </summary>
-            /// <exception cref="ObjectDisposedException"><see cref="assertNotDisposed()"/></exception>
-            /// <seealso cref="EndOfInputConsoleKeys"/> 
-            [MethodImpl(MethodImplOptions.Synchronized)]
-            public void ClearEndOfInputConsoleKey()
-            {
-                assertNotDisposed();
-
-                endOfInputConsoleKeys.Clear();
-            }
-
-*/

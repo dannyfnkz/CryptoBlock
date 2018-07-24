@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CryptoBlock
 {
-    namespace Utils
+    namespace Utils.CollectionUtils
     {
         public class CollectionUtils
         {
@@ -26,12 +26,12 @@ namespace CryptoBlock
 
                 int hash = 17;
                 int prime = 23;
-                
-                for(int i = 0; i < instanceFields.Length; i++)
+
+                for (int i = 0; i < instanceFields.Length; i++)
                 {
                     object fieldValue = instanceFields[i].GetValue(obj);
 
-                    if(fieldValue != null)
+                    if (fieldValue != null)
                     {
                         hash = hash * prime + fieldValue.GetHashCode();
                     }
@@ -42,9 +42,9 @@ namespace CryptoBlock
 
             public static bool AllItemsEqualTo<T>(IList<T> list, T t)
             {
-                foreach(T curItem in list)
+                foreach (T curItem in list)
                 {
-                    if(!curItem.Equals(t)) // a list item is not equal to t
+                    if (!curItem.Equals(t)) // a list item is not equal to t
                     {
                         return false;
                     }
@@ -58,7 +58,7 @@ namespace CryptoBlock
             {
                 T[] duplicatedArray = new T[arraySize];
 
-                for(int i = 0; i < arraySize; i++)
+                for (int i = 0; i < arraySize; i++)
                 {
                     duplicatedArray[i] = item;
                 }
@@ -69,8 +69,8 @@ namespace CryptoBlock
             public static int GetTotalCount<T>(params IEnumerable<T>[] enumerables)
             {
                 int totalCount = 0;
-                
-                foreach(IEnumerable<T> enumerable in enumerables)
+
+                foreach (IEnumerable<T> enumerable in enumerables)
                 {
                     totalCount += enumerable.Count();
                 }
@@ -85,9 +85,9 @@ namespace CryptoBlock
                 T[] mergedArray = new T[mergedArraySize];
 
                 int mergedArrayIndex = 0;
-                foreach(IEnumerable<T> enumerable in enumerables)
+                foreach (IEnumerable<T> enumerable in enumerables)
                 {
-                    foreach(T item in enumerable)
+                    foreach (T item in enumerable)
                     {
                         mergedArray[mergedArrayIndex++] = item;
                     }
@@ -98,4 +98,3 @@ namespace CryptoBlock
         }
     }
 }
-

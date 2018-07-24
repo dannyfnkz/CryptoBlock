@@ -1,4 +1,5 @@
 ﻿using CryptoBlock.Utils;
+using CryptoBlock.Utils.CollectionUtils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
