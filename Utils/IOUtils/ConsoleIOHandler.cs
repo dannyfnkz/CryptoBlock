@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace CryptoBlock
 {
-    namespace Utils
+    namespace Utils.IOUtils
     {
         /// <summary>
         /// handles Console input / output.

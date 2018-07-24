@@ -1,4 +1,5 @@
 ﻿using CryptoBlock.Utils;
+using CryptoBlock.Utils.IOUtils;
 using System;
 
 namespace CryptoBlock

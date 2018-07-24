@@ -40,7 +40,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConsoleIOHandler.cs" />
     <Compile Include="ConsoleIOManager.cs" />
     <Compile Include="FileIOManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

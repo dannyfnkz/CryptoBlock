@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="CollectionUtils\SearchableStack.cs" />
     <Compile Include="CollectionUtils\CollectionUtils.cs" />
+    <Compile Include="IOUtils\ConsoleIOHandler.cs" />
     <Compile Include="IOUtils\ConsoleIOUtils.cs" />
     <Compile Include="DateTimeUtils.cs" />
     <Compile Include="ExceptionUtils.cs" />
