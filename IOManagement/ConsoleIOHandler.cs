@@ -1,4 +1,5 @@
 ﻿using CryptoBlock.Utils.CollectionUtils;
+using CryptoBlock.Utils.IOUtils;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -126,7 +127,7 @@ namespace CryptoBlock
                             recentInputEntries.ElementAt(selectedEntryIndex);
 
                         // write selected entry to console
-                        ConsoleUtils.ClearCurrentConsoleLineAndWrite(selectedInputEntry);
+                        ConsoleIOUtils.ClearCurrentConsoleLineAndWrite(selectedInputEntry);
 
                         // set input buffer to selected input entry
                         consoleIOHandler.FlushInputBuffer();
@@ -562,11 +563,11 @@ namespace CryptoBlock
                 if (!registerInput)
                 {
                     // discard Console input
-                    ConsoleUtils.ClearConsoleInputBuffer();
+                    ConsoleIOUtils.ClearConsoleInputBuffer();
                     return;
                 }
 
-                ConsoleKeyInfo consoleKeyInfo = ConsoleUtils.ReadKey(out bool keyAvailable);
+                ConsoleKeyInfo consoleKeyInfo = ConsoleIOUtils.ReadKey(out bool keyAvailable);
 
                 // key available in console input buffer
                 if (keyAvailable)
@@ -597,7 +598,7 @@ namespace CryptoBlock
                     handleInputRightArrowKey();
                 }
                 // only keys with textual representation are inserted to input buffer
-                else if (ConsoleUtils.HasTextualConsoleRepresentation(consoleKeyInfo))
+                else if (ConsoleIOUtils.HasTextualConsoleRepresentation(consoleKeyInfo))
                 {
                     if (consoleKeyInfo.Key == ConsoleKey.Backspace)
                     {
@@ -641,7 +642,7 @@ namespace CryptoBlock
                 onEndOfInputKeyRegistered();
 
                 // move cursor to beginning of next line
-                ConsoleUtils.SetCursorToBeginningOfNextLine();
+                ConsoleIOUtils.SetCursorToBeginningOfNextLine();
             }
 
             /// <summary>
@@ -658,27 +659,27 @@ namespace CryptoBlock
                 }
 
                 // remove character at current cursor position
-                ConsoleUtils.ConsoleWrite(" ");
+                ConsoleIOUtils.ConsoleWrite(" ");
 
                 // move cursor one character backwards
-                ConsoleUtils.MoveCursorHorizontal(-1);
+                ConsoleIOUtils.MoveCursorHorizontal(-1);
             }
 
             private void handleInputRightArrowKey()
             {
                 // if not at end of line, move cursor one character forwards
-                if (!ConsoleUtils.IsCursorPointingToEndOfLine())
+                if (!ConsoleIOUtils.IsCursorPointingToEndOfLine())
                 {
-                    ConsoleUtils.MoveCursorHorizontal(1);
+                    ConsoleIOUtils.MoveCursorHorizontal(1);
                 }
             }
 
             private void handleInputLeftArrowKey()
             {
                 // if not at beginning of line, move cursor one character backwards
-                if (!ConsoleUtils.IsCursorPointingToBeginningOfLine())
+                if (!ConsoleIOUtils.IsCursorPointingToBeginningOfLine())
                 {
-                    ConsoleUtils.MoveCursorHorizontal(-1);
+                    ConsoleIOUtils.MoveCursorHorizontal(-1);
                 }
             }
 
@@ -706,11 +707,11 @@ namespace CryptoBlock
                 bool restoreInputToConsoleFlag = false;
 
                 // cursor doesn't point to beginning of line, user might be in the middle of typing
-                if (!ConsoleUtils.IsCursorPointingToBeginningOfLine())
+                if (!ConsoleIOUtils.IsCursorPointingToBeginningOfLine())
                 {
                     // clear the current console line (holding user input)
-                    ConsoleUtils.ClearCurrentConsoleLine();
-                    ConsoleUtils.PointCursorToBeginningOfLine();
+                    ConsoleIOUtils.ClearCurrentConsoleLine();
+                    ConsoleIOUtils.PointCursorToBeginningOfLine();
 
                     // restore user input after flush
                     restoreInputToConsoleFlag = true;

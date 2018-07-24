@@ -50,7 +50,7 @@
   <ItemGroup>
     <Compile Include="CollectionUtils\SearchableStack.cs" />
     <Compile Include="CollectionUtils\CollectionUtils.cs" />
-    <Compile Include="ConsoleUtils.cs" />
+    <Compile Include="IOUtils\ConsoleIOUtils.cs" />
     <Compile Include="DateTimeUtils.cs" />
     <Compile Include="ExceptionUtils.cs" />
     <Compile Include="JsonUtils.cs" />
@@ -64,5 +64,6 @@
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

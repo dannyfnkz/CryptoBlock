@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace CryptoBlock
 {
-    namespace Utils
+    namespace Utils.IOUtils
     {
         /// <summary>
         /// contains methods which provide additional utility for <see cref="System.Console"/>.
         /// </summary>
-        public class ConsoleUtils
+        public class ConsoleIOUtils
         {
 
             public static int CursorLeft
