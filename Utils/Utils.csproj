@@ -50,12 +50,14 @@
   <ItemGroup>
     <Compile Include="CollectionUtils\SearchableStack.cs" />
     <Compile Include="CollectionUtils\CollectionUtils.cs" />
+    <Compile Include="IOUtils\FileIOUtils\FileIOUtils.cs" />
     <Compile Include="InternetUtils\TimeoutWebClient.cs" />
     <Compile Include="InternetUtils\InternetUtils.cs" />
     <Compile Include="IOUtils\ConsoleIOHandler.cs" />
     <Compile Include="IOUtils\ConsoleIOUtils.cs" />
     <Compile Include="DateTimeUtils.cs" />
     <Compile Include="ExceptionUtils.cs" />
+    <Compile Include="IOUtils\FileIOUtils\FileWriteException.cs" />
     <Compile Include="JsonUtils.cs" />
     <Compile Include="MismatchException.cs" />
     <Compile Include="NumberUtils.cs" />

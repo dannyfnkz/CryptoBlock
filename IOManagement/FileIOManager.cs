@@ -1,16 +1,20 @@
-﻿using System.IO;
-using System.Threading.Tasks;
+﻿using CryptoBlock.Utils.IOUtils.FileIOUtils;
+using System.IO;
+using static CryptoBlock.Utils.IOUtils.FileIOUtils.FileWriteException;
 
 namespace CryptoBlock
 {
     namespace IOManagement
     {
         public class FileIOManager
-        {
-            private static FileIOManager instance = new FileIOManager();
-
+        {         
             private const string DATA_FILE_EXTENSION = ".json";
             private const string ERROR_LOG_FILE_EXTENSION = ".txt";
+            private const string TEMP_FILE_EXTENSION = ".temp";
+
+            private static FileIOManager instance = new FileIOManager();
+
+            private static int tempSaveFileId;
 
             private FileIOManager()
             {
@@ -22,22 +26,21 @@ namespace CryptoBlock
                 get { return instance; }
             }
 
-            public async Task WriteTextToDataFileAsync(string fileName, string text)
+            private static int TempSaveFileId
             {
-                string filePath = getDataFilePath(fileName);
-                await writeTextToFileAsync(filePath, text);
+                get { return tempSaveFileId++; }
             }
 
-            public void WriteTextToDataFile(string fileName, string text)
+            public void WriteTextToDataFile(string fileName, string content)
             {
-                string filePath = getDataFilePath(fileName);
-                writeTextToFile(filePath, text);
+                string filePathWithoutExtension = getDataFilePathWithoutExtension(fileName);
+                writeTextToFile(filePathWithoutExtension, DATA_FILE_EXTENSION, content);
             }
 
             public void AppendTextToErrorLogFile(string fileName, string text)
             {
                 string filePath = getErrorLogFilePath(fileName);
-                appendTextToFile(filePath, text);
+                FileIOUtils.AppendTextToFile(filePath, text);
             }
 
             public bool DataFileExists(string fileName)
@@ -58,12 +61,17 @@ namespace CryptoBlock
             {
                 string filePath = getDataFilePath(fileName);
 
-                return readTextFromFile(filePath);
+                return FileIOUtils.ReadTextFromFile(filePath);
             }
 
             private string getDataFilePath(string fileName)
             {
-                return fileName + DATA_FILE_EXTENSION;
+                return getDataFilePathWithoutExtension(fileName) + DATA_FILE_EXTENSION;
+            }
+
+            private string getDataFilePathWithoutExtension(string fileName)
+            {
+                return fileName;
             }
 
             private string getErrorLogFilePath(string fileName)
@@ -71,29 +79,42 @@ namespace CryptoBlock
                 return fileName + ERROR_LOG_FILE_EXTENSION;
             }
 
-            private async Task writeTextToFileAsync(string filePath, string text)
+            private void writeTextToFile(string filePathWithoutExtension, string fileExtension, string content)
             {
-                using (StreamWriter writer = File.CreateText(filePath))
+                string filePath = filePathWithoutExtension + fileExtension;
+                string backupFilePath = getBackupFilePath(filePathWithoutExtension);
+
+                try
                 {
-                    await writer.WriteAsync(text);
+                    FileIOUtils.WriteTextToFile(filePath, content, backupFilePath);
+                }
+                catch(FileWriteException fileWriteException)
+                {
+                    // backup file could not be renamed to requested file path
+                    if(fileWriteException is FileRenameException)
+                    {
+                        FileRenameException fileRenameException = fileWriteException as FileRenameException;
+
+                        try
+                        {
+                            // try renaming backup file to to requested file path
+                            FileIOUtils.RenameFile(fileRenameException.BackupFilePath, filePath);
+                        }
+                        catch(FileWriteException) // renaming failed again
+                        {
+                            throw fileWriteException; // throw original exception
+                        }
+                    }
+                    else
+                    {
+                        throw fileWriteException;
+                    }
                 }
             }
 
-            private void appendTextToFile(string filePath, string text)
+            private string getBackupFilePath(string filePathWithoutExtension)
             {
-                File.AppendAllText(filePath, text);
-            }
-
-            private void writeTextToFile(string filePath, string text)
-            {
-                File.WriteAllText(filePath, text);              
-            }
-
-            private string readTextFromFile(string filePath)
-            {
-                string text = File.ReadAllText(filePath);
-
-                return text;
+                return filePathWithoutExtension + TempSaveFileId + TEMP_FILE_EXTENSION;
             }
         }
     }
