@@ -84,7 +84,7 @@ namespace CryptoBlock
 
             protected override string GetCommandType()
             {
-                throw new NotImplementedException();
+                return COMMAND_TYPE;
             }
         }
     }
