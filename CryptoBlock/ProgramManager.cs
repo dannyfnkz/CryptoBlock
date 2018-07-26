@@ -29,20 +29,12 @@ namespace CryptoBlock
 
             while (true)
             {
-         //       ConsoleIOManager.Instance.ReadKeyIfAvailable();
-
                 if(userHitReturnKey)
                 {
-                    // some padding
-   ////                 ConsoleIOManager.Instance.PrintNewLine();
-                    
                     string userCommand = ConsoleIOManager.Instance.FlushInputBuffer();
                     CommandParser.ParseCommand(userCommand);
 
                     userHitReturnKey = false;
-
-                    // some padding
-       ////             ConsoleIOManager.Instance.PrintNewLine();
                 }
             }
         }
@@ -50,17 +42,11 @@ namespace CryptoBlock
         private void consoleIOManager_EndOfInputKeyRegistered(string inputLine)
         {
             userHitReturnKey = true;
-
-            // some padding after user input line
-  ////          ConsoleIOManager.Instance.PrintNewLine();
         }
 
         private void coinDataManager_RepositoryInitialized(CoinTickerManager coinDataManager)
         {
             ConsoleIOManager.Instance.LogNotice("Coin ticker repository initialized successfully.");
-
-            // some padding
-  ////          ConsoleIOManager.Instance.PrintNewLine();
         }
 
         private void initializeCoinListingManager()
@@ -90,9 +76,6 @@ namespace CryptoBlock
             }
 
             ConsoleIOManager.Instance.LogNotice("Coin listings repository initialized successfully.");
-
-            // some padding
-   ////         ConsoleIOManager.Instance.PrintNewLine();
         }
 
         private void initializeCoinTickerManager(int numberOfCoins)
