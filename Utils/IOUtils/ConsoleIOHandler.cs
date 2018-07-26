@@ -180,11 +180,6 @@ namespace CryptoBlock
                 startOutputFlushThread();
             }
 
-            ~ConsoleIOHandler()
-            {
-                Dispose();
-            }
-
             /// <summary>
             /// when true, output is periodically flushed to Console.
             /// </summary>
@@ -317,7 +312,6 @@ namespace CryptoBlock
             /// <seealso cref="RegisterOutput"/>
             /// <param name="registerInput"></param>
             /// <param name="registerOutput"></param>
-            [MethodImpl(MethodImplOptions.Synchronized)]
             public void SetIORegisterState(bool registerInput, bool registerOutput)
             {
                 assertNotDisposed();
@@ -497,16 +491,17 @@ namespace CryptoBlock
             [MethodImpl(MethodImplOptions.Synchronized)]
             private void startConsoleInputListenThread()
             {
-                Task consoleInputListenTask = new Task(() =>
-                {
-                    while (consoleInputListenThreadRunning)
-                    {
-                        readKeyIfAvailable();
-                        Thread.Sleep(LISTEN_THREAD_SLEEP_TIME_MILLIS);
-                    }
-                });
-
+                Task consoleInputListenTask = new Task(new Action(listenToConsoleInput));
                 consoleInputListenTask.Start();
+            }
+
+            private void listenToConsoleInput()
+            {
+                while (consoleInputListenThreadRunning)
+                {
+                    readKeyIfAvailable();
+                    Thread.Sleep(LISTEN_THREAD_SLEEP_TIME_MILLIS);
+                }
             }
 
             /// <summary>
@@ -736,6 +731,7 @@ namespace CryptoBlock
             /// asserts that object has not been disposed (and is therefore not usable).
             /// </summary>
             /// <exception cref="ObjectDisposedException">thrown if object has been disposed.</exception>
+            [MethodImpl(MethodImplOptions.Synchronized)]
             private void assertNotDisposed()
             {
                 if(disposed)

@@ -3,6 +3,7 @@ using CryptoBlock.ExceptionManagement;
 using CryptoBlock.IOManagement;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -105,7 +106,6 @@ namespace CryptoBlock
 
             private static CoinTickerManager instance;
 
-
             private Dictionary<int, CoinTicker> coinIdToCoinTicker = new Dictionary<int, CoinTicker>();
             //   private CoinTicker[] coinDataArray;
             private int numberOfCoinsInRepository;
@@ -117,8 +117,7 @@ namespace CryptoBlock
 
             public CoinTickerManager(int numberOfCoinsInRepository)
             {
-                this.numberOfCoinsInRepository = numberOfCoinsInRepository;
-                coinTickerUpdateTask = new Task(new Action(updateCoinTickerRepository));
+                this.numberOfCoinsInRepository = numberOfCoinsInRepository;   
             }
 
             public int NumberOfCoinsInRepository
@@ -195,12 +194,16 @@ namespace CryptoBlock
                 return coinTickerTableString;
             }
 
+            [MethodImpl(MethodImplOptions.Synchronized)]
             public void StartUpdateThread()
             {
                 coinTickerUpdateThreadRunning = true;
+
+                coinTickerUpdateTask = new Task(new Action(updateCoinTickerRepository));
                 coinTickerUpdateTask.Start();
             }
 
+            [MethodImpl(MethodImplOptions.Synchronized)]
             public void StopUpdateThread()
             {
                 coinTickerUpdateThreadRunning = false;

@@ -1,0 +1,7 @@
+===== General Remarks =====
+
+	===== Threading =====
+	1. threads which are executed using Tasks are background threads. as such, they are terminated when the program
+	execution ends by throwing a ThreadAbortException.
+	therefore there's no need to explicitly dispose of them on program termination.
+	necessary cleanup can be performed in a catch clause.
