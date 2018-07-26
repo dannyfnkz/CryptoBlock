@@ -21,14 +21,28 @@ namespace CryptoBlock
         /// </remarks>
         public class ConsoleIOHandler : IDisposable
         {
+            /// <summary>
+            /// manages storing & browsing input history.
+            /// recent input entries are added to the stack upto a limit of
+            /// <see cref="RECENT_INPUT_ENTRY_STACK_CAPACITY"/>, after which the least recent entries are
+            /// discarded in favour of newer ones.
+            /// browsing is done by pressing the down arrow (displays newer entries)
+            /// and up arrow (displays earlier entries)
+            /// </summary>
             private class InputHistoryManager
             {
+                // max number of input entries stack holds simultaneously
                 private const int RECENT_INPUT_ENTRY_STACK_CAPACITY = 50;
 
+                // holds most recent input entries
+                // if capcity is reached, least recent entries are discarded in favour of newer ones
                 private readonly SearchableStack<string> recentInputEntries =
                     new SearchableStack<string>(RECENT_INPUT_ENTRY_STACK_CAPACITY);
 
+                // index of input entry which is currently selected - 0 is the most recent entry
                 private int selectedEntryIndex;
+
+                // user is currently browsing input history
                 private bool browsingActive;
 
                 private ConsoleIOHandler consoleIOHandler;
@@ -38,6 +52,20 @@ namespace CryptoBlock
                     this.consoleIOHandler = consoleIOHandler;
                 }
 
+                /// <summary>
+                /// max number of input entries which can be simultaneously stored in history. 
+                /// </summary>
+                public int Capacity
+                {
+                    get { return RECENT_INPUT_ENTRY_STACK_CAPACITY; }
+                }
+
+                /// <summary>
+                /// adds <paramref name="inputEntry"/> to input history.
+                /// if <see cref="Capacity"/> is reached, the least recent entry is removed to make room
+                /// for <paramref name="inputEntry"/>.
+                /// </summary>
+                /// <param name="inputEntry">input entry to be inserted to input history</param>
                 public void AddInputEntryToHistory(string inputEntry)
                 {
                     // avoid adding consecutive duplicate entries to stack
@@ -51,14 +79,30 @@ namespace CryptoBlock
                     }                  
                 }
 
+                /// <summary>
+                /// manages input history browsing based on user key press,
+                /// encapsulated by <paramref name="consoleKeyInfo"/>.
+                /// </summary>
+                /// <remarks>
+                /// <para>
+                /// this method should be called each time user presses a key,
+                /// in order for browsing mechanism to be responsive.
+                /// </para>
+                /// <para>
+                /// if user selects a particular entry, either by hitting an end-of-input key ('Enter' by default)
+                /// or by editing the entry, all entries up to (i.e less recent than) selected entry
+                /// are removed from the history.
+                /// </para>
+                /// </remarks>
+                /// <param name="consoleKeyInfo">user-pressed key</param>
                 public void HandleInputHistoryBrowsing(ConsoleKeyInfo consoleKeyInfo)
                 {
-                    if (isBrowsingKey(consoleKeyInfo))
+                    if (isBrowsingKey(consoleKeyInfo)) // pressed key was a browsing key
                     {
                         handleBrowsingKey(consoleKeyInfo);
                     }
 
-                    // pressed key was not a paging key, and browsing procedure is active
+                    // pressed key was not a browsing key, and browsing procedure is active
                     else if (browsingActive)
                     {
                         // set browsing procedure state to inactive
@@ -75,14 +119,27 @@ namespace CryptoBlock
                     }
                 }
 
+                /// <summary>
+                /// returns whether <paramref name="consoleKeyInfo"/> is used by the input entry browsing mechanism.
+                /// </summary>
+                /// <param name="consoleKeyInfo">user-pressed key</param>
+                /// <returns></returns>
                 private static bool isBrowsingKey(ConsoleKeyInfo consoleKeyInfo)
                 {
                     return consoleKeyInfo.Key == ConsoleKey.DownArrow
                         || consoleKeyInfo.Key == ConsoleKey.UpArrow;
                 }
 
+                /// <summary>
+                /// handles browsing key encapsulated by <paramref name="consoleKeyInfo"/>,
+                /// as defined by the browsing mechanism:
+                /// <see cref="ConsoleKey.UpArrow"/> displays less recent entries;
+                /// <see cref="ConsoleKey.DownArrow"/> displays more recent entries.
+                /// </summary>
+                /// <param name="consoleKeyInfo"></param>
                 private void handleBrowsingKey(ConsoleKeyInfo consoleKeyInfo)
                 {
+                    // amount to increment / decrement index of currently selected input entry
                     int selectedEntryIndexIncrementAmount = 0;
 
                     if (consoleKeyInfo.Key == ConsoleKey.UpArrow)
@@ -96,7 +153,7 @@ namespace CryptoBlock
                             string userInput = consoleIOHandler.GetInputBufferContent();
                             recentInputEntries.Push(userInput);
 
-                            // set paging procedure state to active
+                            // set browsing procedure state to active
                             browsingActive = true;
                         }
                     }
@@ -110,7 +167,7 @@ namespace CryptoBlock
                             // pop original user input from stack
                             string originalUserInput = recentInputEntries.Pop();
 
-                            // set paging procedure state to inactive
+                            // set browsing procedure state to inactive
                             browsingActive = false;
                         }
                     }
@@ -427,6 +484,16 @@ namespace CryptoBlock
             // synchroniously reads input until user presses the return key, returns said input
             // note that input is not registered by the input listen thread and
             // is therefore not inserted into input buffer
+
+            /// <summary>
+            /// synchroniously reads user console input until 'Enter' key is pressed, then returns said input.
+            /// </summary>
+            /// <remarks>
+            /// input is not registered by the input listen thread, and is therefore not appended to the input buffer.
+            /// </remarks>
+            /// <returns>
+            /// user input read from console
+            /// </returns>
             public string ReadLine()
             {
                 assertNotDisposed();
@@ -495,6 +562,13 @@ namespace CryptoBlock
                 consoleInputListenTask.Start();
             }
 
+            /// <summary>
+            /// continuously reads a user-pressed key from console input buffer(if available),
+            /// then sleeps for a specified timeout period.
+            /// runs as long as <see cref="consoleInputListenThreadRunning"/> is set to true.
+            /// </summary>
+            /// <seealso cref="readKeyIfAvailable"/>
+            /// <seealso cref="System.Threading.Thread.Sleep(int)"/>
             private void listenToConsoleInput()
             {
                 while (consoleInputListenThreadRunning)
@@ -571,6 +645,19 @@ namespace CryptoBlock
                 }                    
             }
 
+            /// <summary>
+            /// handles a user-pressed console key, encapsulated by <paramref name="consoleKeyInfo"/>.
+            /// if <paramref name="consoleKeyInfo"/> represents a textual key it is appended to input buffer,
+            /// else it is treated accordingly.
+            /// </summary>
+            /// <seealso cref="AppendToInputBuffer(char)"/>
+            /// <seealso cref="handleInputEnterKey"/>
+            /// <seealso cref="handleInputBackspaceKey"/>
+            /// <seealso cref="handleInputLeftArrowKey"/>
+            /// <seealso cref="handleInputRightArrowKey"/>
+            /// <seealso cref="handleInputBackspaceKey"/>
+            /// <seealso cref="AppendToInputBuffer"/>
+            /// <param name="consoleKeyInfo">a user-pressed console key</param>
             private void handleConsoleKey(ConsoleKeyInfo consoleKeyInfo)
             {
                 // handle input browsing
@@ -593,7 +680,7 @@ namespace CryptoBlock
                     handleInputRightArrowKey();
                 }
                 // only keys with textual representation are inserted to input buffer
-                else if (ConsoleIOUtils.HasTextualConsoleRepresentation(consoleKeyInfo))
+                else if (ConsoleIOUtils.IsTextualKey(consoleKeyInfo))
                 {
                     if (consoleKeyInfo.Key == ConsoleKey.Backspace)
                     {
@@ -605,7 +692,6 @@ namespace CryptoBlock
                         AppendToInputBuffer(consoleKeyInfo.KeyChar);
                     }
                 }
-
             }
 
             /// <summary>
@@ -660,6 +746,9 @@ namespace CryptoBlock
                 ConsoleIOUtils.MoveCursorHorizontal(-1);
             }
 
+            /// <summary>
+            /// handles right arrow key user key press.
+            /// </summary>
             private void handleInputRightArrowKey()
             {
                 // if not at end of line, move cursor one character forwards
@@ -669,6 +758,9 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// handles left arrow key user key press.
+            /// </summary>
             private void handleInputLeftArrowKey()
             {
                 // if not at beginning of line, move cursor one character backwards
@@ -679,6 +771,10 @@ namespace CryptoBlock
             }
 
             // flush is done on the calling thread
+            /// <summary>
+            /// forces flush on output buffer. flush is done synchronously.
+            /// </summary>
+            /// <seealso cref="flushOutputBuffer"/>
             protected void ForceOutputBufferFlush()
             {
                 flushOutputBuffer();

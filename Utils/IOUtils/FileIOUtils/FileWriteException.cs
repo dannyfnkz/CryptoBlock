@@ -8,6 +8,9 @@ namespace CryptoBlock
 {
     namespace Utils.IOUtils.FileIOUtils
     {
+        /// <summary>
+        /// thrown if an exception occurs while trying to perform a file write operation.
+        /// </summary>
         public class FileWriteException : Exception
         {
             private string filePath;
@@ -21,17 +24,20 @@ namespace CryptoBlock
                 this.filePath = filePath;
             }
 
-            public string FilePath
-            {
-                get { return filePath; }
-            }
-
             public FileWriteException(
                 string filePath,
                 Exception innerException)
                 : base(formatExceptionMessage(filePath), innerException)
             {
 
+            }
+
+            /// <summary>
+            /// path of file the write operation is performed on.
+            /// </summary>
+            public string FilePath
+            {
+                get { return filePath; }
             }
 
             private static string formatExceptionMessage(string filePath, string additionalDetails = null)
@@ -48,6 +54,9 @@ namespace CryptoBlock
                 return message;
             }
 
+            /// <summary>
+            /// thrown if backup file failed to be created during file write operation.
+            /// </summary>
             public class BackupFileCreateException : FileWriteException
             {
                 public BackupFileCreateException(
@@ -55,7 +64,7 @@ namespace CryptoBlock
                     Exception innerException)
                     : base(filePath, formatExceptionMessage(filePath), innerException)
                 {
-
+                    
                 }
 
                 private static string formatExceptionMessage(string filePath)
@@ -68,6 +77,9 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if a required file rename operation failed during file write operation.
+            /// </summary>
             public class FileRenameException : FileWriteException
             {
                 private string backupFilePath;
@@ -81,6 +93,9 @@ namespace CryptoBlock
                     this.backupFilePath = backupFilePath;
                 }
 
+                /// <summary>
+                /// path of backup file containing the new requested content.
+                /// </summary>
                 public string BackupFilePath
                 {
                     get { return backupFilePath; }
@@ -96,6 +111,9 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if backup file failed to be deleted during file write operation.
+            /// </summary>
             public class BackupFileDeleteException : FileWriteException
             {
                 private string backupFilePath;
@@ -109,12 +127,15 @@ namespace CryptoBlock
 
                 }
 
+                /// <summary>
+                /// path of backup file which failed to be deleted.
+                /// </summary>
                 public string BackupFilePath
                 {
                     get { return backupFilePath; }
                 }
 
-                private static string formatExceptionMessage(string filePath, string backupFilePath)
+                private static new string formatExceptionMessage(string filePath, string backupFilePath)
                 {
                     return string.Format(
                         "Deleting backup file at location '{0}' failed.{1}"

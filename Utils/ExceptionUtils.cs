@@ -13,24 +13,49 @@ namespace CryptoBlock
         /// </summary>
         public static class ExceptionUtils
         {
-
+            /// <summary>
+            /// converts <paramref name="aggregateException"/> into an <see cref="System.Exception"/>,
+            /// having <paramref name="exceptionMessage"/> as part of its exception message.
+            /// </summary>
+            /// <remarks>
+            /// conversion is achieved by merging <paramref name="exceptionMessage"/>
+            /// and unified aggregate exception message into a single exception message,
+            /// which then serves as the converted exception's message.
+            /// </remarks>
+            /// <seealso cref="GetUnifiedAggregateExceptionMessage(AggregateException)"/>
+            /// <param name="exceptionMessage"></param>
+            /// <param name="aggregateException"></param>
+            /// <returns>
+            /// converted <see cref="System.Exception"/>, 
+            /// based on <paramref name="aggregateException"/> and having <paramref name="exceptionMessage"/>
+            /// as its message
+            /// </returns>
             public static Exception ToException(string exceptionMessage, AggregateException aggregateException)
             {
                 Exception exception;
 
-                string aggregateExceptionString = GetUnifiedAggregateExceptionMessage(aggregateException);
+                // merge aggregate exception message with exceptionMessage provided as argument
+                string aggregateExceptionMessage = GetUnifiedAggregateExceptionMessage(aggregateException);
                 string unifiedExceptionMessage = string.Format(
                     "{0}{1}{2}",
                     exceptionMessage,
                     Environment.NewLine,
-                    aggregateExceptionString);
+                    aggregateExceptionMessage);
                     
-
+                // return exception containing merged message
                 exception = new Exception(unifiedExceptionMessage);
 
                 return exception;
             }
 
+            /// <summary>
+            /// converts <paramref name="aggregateException"/> into an <see cref="System.Exception"/>.
+            /// </summary>
+            /// <see cref="ToException(string, AggregateException)"/>
+            /// <param name="aggregateException"></param>
+            /// <returns>
+            /// converted <see cref="System.Exception"/>, based on <paramref name="aggregateException"/>
+            /// </returns>
             public static Exception ToException(AggregateException aggregateException)
             {
                 return ToException(string.Empty, aggregateException);

@@ -8,6 +8,9 @@ namespace CryptoBlock
 {
     namespace Utils
     {
+        /// <summary>
+        /// thrown if two properties which were supposed to be equal, were in fact not equal.
+        /// </summary>
         public class MismatchException : Exception
         {
             private string firstPropertyName;
@@ -20,11 +23,17 @@ namespace CryptoBlock
                 this.secondPropertyName = secondPropertyName;
             }
 
+            /// <summary>
+            /// name of first property.
+            /// </summary>
             public string FirstPropertyName
             {
                 get { return firstPropertyName; }
             }
 
+            /// <summary>
+            /// name of second property.
+            /// </summary>
             public string SecondPropertyName
             {
                 get { return secondPropertyName; }

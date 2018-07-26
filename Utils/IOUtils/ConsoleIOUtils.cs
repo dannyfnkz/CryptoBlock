@@ -14,13 +14,19 @@ namespace CryptoBlock
         /// </summary>
         public class ConsoleIOUtils
         {
-
+            /// <summary>
+            /// the horizontal offset, in characters, of the console cursor from the beginning of the line
+            /// it is pointing to.
+            /// </summary>
             public static int CursorLeft
             {
                 get { return Console.CursorLeft; }
                 set { Console.CursorLeft = value; }
             }
 
+            /// <summary>
+            /// the vertical offset, in lines, of the console cursor from the top of the console window.
+            /// </summary>
             public static int CursorTop
             {
                 get { return Console.CursorTop; }
@@ -57,7 +63,7 @@ namespace CryptoBlock
                     consoleKeyInfo = Console.ReadKey(true);
 
                     // write key to console if it has a textual representation
-                    if (HasTextualConsoleRepresentation(consoleKeyInfo)) 
+                    if (IsTextualKey(consoleKeyInfo)) 
                     {
                         Console.Write(consoleKeyInfo.KeyChar);
                     }
@@ -90,26 +96,52 @@ namespace CryptoBlock
                 Console.SetCursorPosition(cursorLeft, Console.CursorTop - 1);
             }
 
+            /// <summary>
+            /// sets the console cursor position to (x,y) = (<paramref name="cursorLeft"/>, <paramref name="cursorTop"/>)
+            /// </summary>
+            /// <param name="cursorLeft"></param>
+            /// <param name="cursorTop"></param>
             public static void SetCursorPosition(int cursorLeft, int cursorTop)
             {
                 Console.SetCursorPosition(cursorLeft, cursorTop);
             }
 
+            /// <summary>
+            /// sets the console cursor position to beginning of next line.
+            /// </summary>
             public static void SetCursorToBeginningOfNextLine()
             {
                 SetCursorPosition(0, CursorTop + 1);
             }
 
+            /// <summary>
+            /// moves console cursor horizontally, <paramref name="moveAmountHorizontal"/> characters to the right.
+            /// if <paramref name="moveAmountHorizontal"/> is negative, moves cursor to the left.
+            /// </summary>
+            /// <param name="moveAmountHorizontal"></param>
             public static void MoveCursorHorizontal(int moveAmountHorizontal)
             {
                 SetCursorPosition(CursorLeft + moveAmountHorizontal, CursorTop);
             }
 
+            /// <summary>
+            /// moves console cursor vertically, <paramref name="moveAmountHorizontal"/> lines upwards.
+            /// if <paramref name="moveAmountVertical"/> is negative, moves cursor downwards.
+            /// </summary>
+            /// <param name="moveAmountVertical"></param>
             public static void MoveCursorVertical(int moveAmountVertical)
             {
                 SetCursorPosition(CursorLeft, CursorTop + moveAmountVertical);
             }
 
+            /// <summary>
+            /// clears the line console cursor is currently pointing to,
+            /// and writes <paramref name="output"/> to same line, formatting <paramref name="output"/>
+            /// according to <paramref name="args"/> if it is a composite format string.
+            /// </summary>
+            /// <seealso cref="ConsoleWrite(string, params object[])"/>
+            /// <param name="output">plain output string or a composite format string</param>
+            /// <param name="args">an object array which contains zero or more objects to format</param>
             public static void ClearCurrentConsoleLineAndWrite(string output, params object[] args)
             {
                 ClearCurrentConsoleLine();
@@ -117,7 +149,27 @@ namespace CryptoBlock
                 ConsoleWrite(output, args);           
             }
 
-            public static bool HasTextualConsoleRepresentation(ConsoleKeyInfo consoleKeyInfo)
+            /// <summary>
+            /// points the console cursor to the beginning of the line it is currently pointing to.
+            /// </summary>
+            public static void PointCursorToBeginningOfLine()
+            {
+                CursorLeft = 0;
+            }
+
+            /// <summary>
+            /// returns true if <paramref name="consoleKeyInfo"/> has a textual console representation 
+            /// </summary>
+            /// <remarks>
+            /// note keys checked are only those which are caught by <see cref="ReadKey(out bool)"/>.
+            /// </remarks>
+            /// <param name="consoleKeyInfo">
+            /// a <see cref="System.ConsoleKeyInfo"/> caught by <see cref="ReadKey(out bool)"/>
+            /// </param>
+            /// <returns>
+            /// true if <paramref name="consoleKeyInfo"/> has a textual console representation, else false
+            /// </returns>
+            public static bool IsTextualKey(ConsoleKeyInfo consoleKeyInfo)
             {
                 return consoleKeyInfo.Key != ConsoleKey.Escape
                     && consoleKeyInfo.Key != ConsoleKey.DownArrow
@@ -127,7 +179,7 @@ namespace CryptoBlock
             }
 
             /// <summary>
-            /// empties the Console input buffer.
+            /// clears the Console input buffer.
             /// <seealso cref="System.Console"/>
             /// </summary>
             public static void ClearConsoleInputBuffer()
@@ -136,11 +188,6 @@ namespace CryptoBlock
                 {
                     Console.ReadKey(true);
                 }
-            }
-
-            public static void PointCursorToBeginningOfLine()
-            {
-                CursorLeft = 0;
             }
 
             /// <summary>
@@ -155,16 +202,39 @@ namespace CryptoBlock
                 return Console.CursorLeft == 0;
             }
 
+            /// <summary>
+            /// returns whether if console cursor is pointing to the end of a line.
+            /// </summary>
+            /// <returns>
+            ///  true if console cursor is pointing to the end of a line,
+            ///  else false
+            /// </returns>
             public static bool IsCursorPointingToEndOfLine()
             {
                 return Console.CursorLeft == Console.WindowWidth - 1;
             }
 
+            /// <summary>
+            /// writes <paramref name="output"/> to the line cursor is currently pointing to.
+            /// if <paramref name="output"/> is a compsite format string, formats string according to
+            /// <paramref name="args"/>.
+            /// <seealso cref="System.Console.Write(string, params object[])"/>
+            /// </summary>
+            /// <param name="output">plain output string or a composite format string</param>
+            /// <param name="args">an object array which contains zero or more objects to format</param>
             public static void ConsoleWrite(string output, params object[] args)
             {
                 Console.Write(output, args);
             }
 
+            /// <summary>
+            /// writes <paramref name="output"/> to the line cursor is currently pointing to,
+            /// formatting <paramref name="output"/> according to <paramref name="args"/>
+            /// if it is a composite format string.
+            /// </summary>
+            /// <seealso cref="System.Console.Write(string, params object[])"/>
+            /// <param name="output">plain output string or a composite format string</param>
+            /// <param name="args">an object array which contains zero or more objects to format</param>
             public static void ConsoleWriteLine(string output, params object[] args)
             {
                 Console.WriteLine(output, args);

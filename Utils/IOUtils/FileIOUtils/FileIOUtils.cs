@@ -5,17 +5,28 @@ namespace CryptoBlock
 {
     namespace Utils.IOUtils.FileIOUtils
     {
+        // note: still need exception handling for actions other than write text
         public static class FileIOUtils
         {
             private const string TEMP_FILE_EXTENSION = ".temp";
 
-            // writes specified content to requested file path.
-            // if file with specified filePath does not exist, creates a new file with requested content.
-            // else, if file with specified filePath already exists,
-            // performs a safe overwrite under the condition that backupFilePath != null:
-            // at the end of a successful or unsuccessful execution, it is guaranteed that
-            // either 1. file with specified filePath maintains its original content,
-            // or 2. backup file contains the requested content.
+            /// <summary>
+            /// synchronously writes <paramref name="content"/> to file at location <paramref name="filePath"/>.
+            /// if file at <paramref name="filePath"/> does not exist,
+            /// creates a new file containing <paramref name="content"/>.
+            /// else, if file with specified filePath already exists,
+            /// performs a safe overwrite under the condition that <paramref name="backupFilePath"/> is not null. 
+            /// </summary>
+            /// <remarks>
+            /// if <paramref name="backupFilePath"/> != null, one of the following is guaranteed:
+            /// 1. file at <paramref name="filePath"/> maintains its original content;
+            /// 2. file at <paramref name="filePath"/> contains <paramref name="content"/>;
+            /// 3. a generated backup file at location <paramref name="backupFilePath"/>
+            /// contains <paramref name="content"/>.
+            /// </remarks>
+            /// <param name="filePath">location of file to write text to</param>
+            /// <param name="content">content to be written to <paramref name="filePath"/></param>
+            /// <param name="backupFilePath">location of generated backup file</param>
             public static void WriteTextToFile(string filePath, string content, string backupFilePath = null)
             {
                 if (File.Exists(filePath) && backupFilePath != null)
@@ -72,22 +83,48 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// synchronously reads text from file located at <paramref name="filePath"/>.
+            /// </summary>
+            /// <param name="filePath">location of file to read text from</param>
+            /// <returns>
+            /// text read from file located at <paramref name="filePath"/>
+            /// </returns>
             public static string ReadTextFromFile(string filePath)
             {
                 string text = File.ReadAllText(filePath);
+
                 return text;
             }
 
+            /// <summary>
+            /// synchronously appends <paramref name="text"/> to end of file at location <paramref name="filePath"/>.
+            /// </summary>
+            /// <param name="filePath">location of file to append text to</param>
+            /// <param name="text"></param>
             public static void AppendTextToFile(string filePath, string text)
             {
                 File.AppendAllText(filePath, text);
             }
 
+            /// <summary>
+            /// deletes file at <paramref name="filePath"/>, if exists.
+            /// </summary>
+            /// <param name="filePath">location of file to delete</param>
             public static void DeleteFile(string filePath)
             {
                 File.Delete(filePath);
             }
 
+            /// <summary>
+            /// renames file at location <paramref name="oldFilePathWithoutExtension"/>
+            /// with extension <paramref name="oldFileExtension"/> to <paramref name="newFilePathWithoutExtension"/>
+            /// with extension <paramref name="newFileExtension"/>.
+            /// </summary>
+            /// <param name="oldFilePathWithoutExtension"></param>
+            /// <param name="oldFileExtension"></param>
+            /// <param name="newFilePathWithoutExtension"></param>
+            /// <param name="newFileExtension"></param>
             public static void RenameFile(
                 string oldFilePathWithoutExtension,
                 string oldFileExtension,
@@ -102,6 +139,15 @@ namespace CryptoBlock
 
             // automic in both windows (NTFS) and linux: either the operation fails and old file path is preserved,
             // or it succeeds and file path is changed to newFilePath
+            /// <summary>
+            /// renames file at location <paramref name="oldFilePath"/> to <paramref name="newFilePath"/>.
+            /// </summary>
+            /// <remarks>
+            /// automic in both windows (NTFS) and linux: either the operation fails and old file path is preserved,
+            /// or it succeeds and <paramref name="oldFilePath"/> is changed to <paramref name="newFilePath"/>.
+            /// </remarks>
+            /// <param name="oldFilePath"></param>
+            /// <param name="newFilePath"></param>
             public static void RenameFile(string oldFilePath, string newFilePath)
             {
                 File.Move(oldFilePath, newFilePath);

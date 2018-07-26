@@ -9,38 +9,59 @@ namespace CryptoBlock
 {
     namespace Utils.InternetUtils
     {
+        /// <summary>
+        /// <see cref="System.Net.WebClient"/> with a configurable request timeout.
+        /// </summary>
+        // required to make TimeoutWebClient open in code editor
+        // as WebClient inherits from System.ComponentModel.Component which is configured to use designer view
         [System.ComponentModel.DesignerCategory("Code")]
         public class TimeoutWebClient : WebClient
         {
-            private const int DEFAULT_CONNECTION_TIMEOUT_MILLIS = 10 * 1000;
+            // default request timeout
+            private const int DEFAULT_REQUEST_TIMEOUT_MILLIS = 10 * 1000;
 
-            private int timeoutMillis;
+            // request timeout in milliseconds
+            private int requestTimeoutMillis;
 
-            public TimeoutWebClient(int timeoutMillis = DEFAULT_CONNECTION_TIMEOUT_MILLIS)
+            public TimeoutWebClient(int requestTimeoutMillis = DEFAULT_REQUEST_TIMEOUT_MILLIS)
             {
-                this.timeoutMillis = timeoutMillis;
+                this.requestTimeoutMillis = requestTimeoutMillis;
             }
 
-            public int TimeoutMillis
+            /// <summary>
+            /// request timeout value in milliseconds.
+            /// </summary>
+            public int RequestTimeoutMillis
             {
-                get { return timeoutMillis; }
+                get { return requestTimeoutMillis; }
                 set
                 {
-                    if (timeoutMillis < 0)
+                    if (requestTimeoutMillis < 0)
                     {
                         throw new ArgumentException(
-                            "Timeout vaule must be a non-negative integer.", "TimeoutMillis");
+                            "Request timeout value must be a non-negative integer.", "TimeoutMillis");
                     }
 
-                    timeoutMillis = value;
+                    requestTimeoutMillis = value;
                 }
             }
 
+            /// <summary>
+            /// overridden in order to configure request timeout.
+            /// </summary>
+            /// <seealso cref="System.Net.WebClient.GetWebRequest(Uri)"/>
+            /// <seealso cref="System.Net.WebRequest"/>
+            /// <param name="uri"></param>
+            /// <returns></returns>
             protected override WebRequest GetWebRequest(Uri uri)
             {
+                // get web client web request
                 WebRequest webRequest = base.GetWebRequest(uri);
-                webRequest.Timeout = timeoutMillis;
-                ((HttpWebRequest)webRequest).ReadWriteTimeout = timeoutMillis;
+
+                // set request timeout
+                webRequest.Timeout = requestTimeoutMillis;
+                ((HttpWebRequest)webRequest).ReadWriteTimeout = requestTimeoutMillis;
+
                 return webRequest;
             }
         }

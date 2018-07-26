@@ -9,8 +9,20 @@ namespace CryptoBlock
 {
     namespace Utils.CollectionUtils
     {
+        /// <summary>
+        /// contains methods which provide additional utility for <see cref="System.Collections"/>.
+        /// </summary>
         public class CollectionUtils
         {
+            /// <summary>
+            /// converts <paramref name="enumerable"/> into an array.
+            /// </summary>
+            /// <seealso cref="System.Collections.Generic.IEnumerable{T}.ToArray()"/>
+            /// <typeparam name="T"></typeparam>
+            /// <param name="enumerable"></param>
+            /// <returns>
+            /// array representing <paramref name="enumerable"/>
+            /// </returns>
             public static T[] ConvertToArray<T>(IEnumerable<T> enumerable)
             {
                 if (enumerable == null)
@@ -19,6 +31,21 @@ namespace CryptoBlock
                 return enumerable as T[] ?? enumerable.ToArray();
             }
 
+            /// <summary>
+            /// returns hashcode of <paramref name="obj"/> based on its instance fields (regardless of access level).
+            /// </summary>
+            /// <remarks>
+            /// uses hash function:
+            /// <c>
+            /// hash = prime0;
+            /// foreach (fieldInfo in instanceFields)
+            ///     hash = hash * prime1 + fieldInfo.GetValue(obj);
+            /// </c>
+            /// </remarks>
+            /// <param name="obj"></param>
+            /// <returns>
+            /// hashcode of <paramref name="obj"/> based on its instance fields
+            /// </returns>
             public static int GetHashCode(object obj)
             {
                 // get all instance fields in obj
@@ -40,20 +67,39 @@ namespace CryptoBlock
                 return hash;
             }
 
-            public static bool AllItemsEqualTo<T>(IList<T> list, T t)
+            /// <summary>
+            /// returns whether all items in <paramref name="list"/> are equal to <paramref name="item"/>
+            /// </summary>
+            /// <typeparam name="T"></typeparam>
+            /// <param name="list"></param>
+            /// <param name="t"></param>
+            /// <returns></returns>
+            public static bool AllItemsEqualTo<T>(IList<T> list, T item)
             {
                 foreach (T curItem in list)
                 {
-                    if (!curItem.Equals(t)) // a list item is not equal to t
+                    if (!curItem.Equals(item)) // a list item is not equal to item
                     {
                         return false;
                     }
                 }
 
-                // all list items equal to t
+                // all list items equal to item
                 return true;
             }
 
+            /// <summary>
+            /// returns an array containing <paramref name="item"/> cloned <paramref name="arraySize"/> times.
+            /// </summary>
+            /// <remarks>
+            /// uses shallow cloning.
+            /// </remarks>
+            /// <typeparam name="T"></typeparam>
+            /// <param name="item"></param>
+            /// <param name="arraySize"></param>
+            /// <returns>
+            /// array containing <paramref name="item"/> cloned <paramref name="arraySize"/> times
+            /// </returns>
             public static T[] DuplicateToArray<T>(T item, int arraySize)
             {
                 T[] duplicatedArray = new T[arraySize];
@@ -66,11 +112,21 @@ namespace CryptoBlock
                 return duplicatedArray;
             }
 
+            /// <summary>
+            /// returns the total count of all <see cref="System.Collections.Generic.IEnumerable{T}"/>s
+            /// in <paramref name="enumerables"/>.
+            /// </summary>
+            /// <typeparam name="T"></typeparam>
+            /// <param name="enumerables"></param>
+            /// <returns>
+            /// total count of all <see cref="System.Collections.Generic.IEnumerable{T}"/>s
+            /// in <paramref name="enumerables"/>.
+            /// </returns>
             public static int GetTotalCount<T>(params IEnumerable<T>[] enumerables)
             {
                 int totalCount = 0;
 
-                foreach (IEnumerable<T> enumerable in enumerables)
+                foreach (IEnumerable<T> enumerable in enumerables) // add each individual count to totalCount
                 {
                     totalCount += enumerable.Count();
                 }
@@ -78,6 +134,18 @@ namespace CryptoBlock
                 return totalCount;
             }
 
+            /// <summary>
+            /// merges all individual items in<see cref="System.Collections.Generic.IEnumerable{T}"/>s
+            /// contained in <paramref name="enumerables"/>
+            /// into a single array.
+            /// </summary>
+            /// <seealso cref="GetTotalCount{T}(IEnumerable{T}[])"/>
+            /// <typeparam name="T"></typeparam>
+            /// <param name="enumerables"></param>
+            /// <returns>
+            /// an array containing all individual items in <see cref="System.Collections.Generic.IEnumerable{T}"/>s
+            /// contained in <paramref name="enumerables"/>
+            /// </returns>
             public static T[] MergeToArray<T>(params IEnumerable<T>[] enumerables)
             {
                 int mergedArraySize = GetTotalCount(enumerables);
@@ -85,9 +153,9 @@ namespace CryptoBlock
                 T[] mergedArray = new T[mergedArraySize];
 
                 int mergedArrayIndex = 0;
-                foreach (IEnumerable<T> enumerable in enumerables)
+                foreach (IEnumerable<T> enumerable in enumerables) // go through all enumerables in array
                 {
-                    foreach (T item in enumerable)
+                    foreach (T item in enumerable) // add each individual item in current enumerable to mergedArray
                     {
                         mergedArray[mergedArrayIndex++] = item;
                     }

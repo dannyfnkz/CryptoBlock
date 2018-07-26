@@ -14,11 +14,32 @@ namespace CryptoBlock
             public const string TAB_STRING = "\t";
             public const char TAB_CHAR = '\t';
 
+            /// <summary>
+            /// if <paramref name="nullable"/> != null, returns its string representation;
+            /// else, returns <paramref name="defaultStringValue"/>.
+            /// </summary>
+            /// <typeparam name="T">A type which inherits from ValueType</typeparam>
+            /// <param name="nullable"></param>
+            /// <param name="defaultStringValue"></param>
+            /// <returns>
+            /// if <paramref name="nullable"/> != null, <paramref name="nullable"/>.ToString()
+            /// else, <paramref name="defaultStringValue"/>
+            /// </returns>
             public static string ToString<T>(T? nullable, string defaultStringValue) where T : struct
             {
                 return nullable.HasValue ? nullable.Value.ToString() : defaultStringValue;
             }
 
+            /// <summary>
+            /// if <paramref name="obj"/> != null, returns its string representation;
+            /// else, returns <paramref name="defaultStringValue"/>.
+            /// </summary>
+            /// <param name="obj"></param>
+            /// <param name="defaultStringValue"></param>
+            /// <returns>
+            /// if <paramref name="obj"/> != null, <paramref name="obj"/>.ToString()
+            /// else, <paramref name="defaultStringValue"/>
+            /// </returns>
             public static string ToString(object obj, string defaultStringValue)
             {
                 return obj != null ? obj.ToString() : defaultStringValue;
@@ -43,6 +64,19 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// appends strings from <paramref name="appendants"/> at the the end of <paramref name="str"/>
+            /// in their original order,
+            /// every two strings seperated by <paramref name="seperator"/>.
+            /// </summary>
+            /// <param name="str"></param>
+            /// <param name="seperator"></param>
+            /// <param name="appendants"></param>
+            /// <returns>
+            /// a string containing the result of appending strings from <paramref name="appendants"/>
+            /// at the the end of <paramref name="str"/> in their original order,
+            /// every two strings seperated by <paramref name="seperator"/>
+            /// </returns>
             public static string Append(string str, string seperator, params string[] appendants)
             {
                 StringBuilder stringBuilder = new StringBuilder(str);
@@ -51,7 +85,7 @@ namespace CryptoBlock
                 {
                     stringBuilder.Append(appendants[i]);
 
-                    if(i < appendants.Length - 1)
+                    if(i < appendants.Length - 1) // append seperator if not at last appendant
                     {
                         stringBuilder.Append(seperator);
                     }      
@@ -156,6 +190,15 @@ namespace CryptoBlock
                 return stringBuilder.ToString();
             }
 
+            /// <summary>
+            /// returns whether <paramref name="str"/> starts with one of the prefixes in <paramref name="prefixes"/>.
+            /// </summary>
+            /// <param name="str"></param>
+            /// <param name="prefixes"></param>
+            /// <returns>
+            /// true if <paramref name="str"/> starts with one of the prefixes in <paramref name="prefixes"/>,
+            /// else false
+            /// </returns>
             public static bool StartsWith(string str, params string[] prefixes)
             {
                 foreach (string prefix in prefixes)
@@ -171,6 +214,17 @@ namespace CryptoBlock
 
             // if str starts with one of the prefixes in in params array, returns that prefix
             // else, returns null
+            /// <summary>
+            /// if <paramref name="str"/> starts with one of the prefixes in <paramref name="prefixes"/>,
+            /// returns that prefix; else returns null.
+            /// </summary>
+            /// <param name="str"></param>
+            /// <param name="prefixes"></param>
+            /// <returns>
+            /// if <paramref name="str"/> starts with one of the prefixes in <paramref name="prefixes"/>,
+            /// returns that prefix
+            /// else, returns null. 
+            /// </returns>
             public static string GetPrefixIfStartsWith(string str, params string[] prefixes)
             {
                 foreach (string prefix in prefixes)
