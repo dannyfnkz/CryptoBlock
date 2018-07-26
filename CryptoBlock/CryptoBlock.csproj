@@ -101,6 +101,10 @@
       <Project>{22928362-4d96-41e2-835a-e0e01f8867c0}</Project>
       <Name>PortfolioManagement</Name>
     </ProjectReference>
+    <ProjectReference Include="..\SystemManagement\SystemManagement.csproj">
+      <Project>{62140fd7-6aad-441a-bfce-ed674cd7e898}</Project>
+      <Name>SystemManagement</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Utils\Utils.csproj">
       <Project>{6f6a790c-b7fd-4be0-bc50-d9405654eb6b}</Project>
       <Name>Utils</Name>

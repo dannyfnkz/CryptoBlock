@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IOManagement", "IOManagemen
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandHandling", "CommandHandling\CommandHandling.csproj", "{9808D72E-9760-4E7A-84FB-1F3F8BDE222B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemManagement", "SystemManagement\SystemManagement.csproj", "{62140FD7-6AAD-441A-BFCE-ED674CD7E898}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,6 +65,10 @@ Global
 		{9808D72E-9760-4E7A-84FB-1F3F8BDE222B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9808D72E-9760-4E7A-84FB-1F3F8BDE222B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9808D72E-9760-4E7A-84FB-1F3F8BDE222B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{62140FD7-6AAD-441A-BFCE-ED674CD7E898}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62140FD7-6AAD-441A-BFCE-ED674CD7E898}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62140FD7-6AAD-441A-BFCE-ED674CD7E898}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62140FD7-6AAD-441A-BFCE-ED674CD7E898}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

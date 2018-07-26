@@ -3,6 +3,7 @@ using CryptoBlock.CommandHandling;
 using CryptoBlock.IOManagement;
 using CryptoBlock.PortfolioManagement;
 using CryptoBlock.ServerDataManagement;
+using CryptoBlock.SystemManagement;
 using CryptoBlock.Utils;
 
 namespace CryptoBlock
@@ -37,7 +38,8 @@ namespace CryptoBlock
         private static readonly CommandExecutor[] commandExecutors = new CommandExecutor[]
         {
                 new ServerDataCommandExecutor(), 
-                new PortfolioCommandExecutor()
+                new PortfolioCommandExecutor(),
+                new SystemCommandExecutor()
         };
 
         public static void ParseCommand(string userInput)
