@@ -50,9 +50,7 @@
   <ItemGroup>
     <Compile Include="CollectionUtils\SearchableStack.cs" />
     <Compile Include="CollectionUtils\CollectionUtils.cs" />
-    <Compile Include="InternetUtils\TimeoutWebClient.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Include="InternetUtils\TimeoutWebClient.cs" />
     <Compile Include="InternetUtils\InternetUtils.cs" />
     <Compile Include="IOUtils\ConsoleIOHandler.cs" />
     <Compile Include="IOUtils\ConsoleIOUtils.cs" />

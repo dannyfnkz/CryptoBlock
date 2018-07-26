@@ -9,6 +9,7 @@ namespace CryptoBlock
 {
     namespace Utils.InternetUtils
     {
+        [System.ComponentModel.DesignerCategory("Code")]
         public class TimeoutWebClient : WebClient
         {
             private const int DEFAULT_CONNECTION_TIMEOUT_MILLIS = 10 * 1000;
@@ -19,13 +20,13 @@ namespace CryptoBlock
             {
                 this.timeoutMillis = timeoutMillis;
             }
-            
+
             public int TimeoutMillis
             {
                 get { return timeoutMillis; }
                 set
                 {
-                    if(timeoutMillis < 0)
+                    if (timeoutMillis < 0)
                     {
                         throw new ArgumentException(
                             "Timeout vaule must be a non-negative integer.", "TimeoutMillis");
