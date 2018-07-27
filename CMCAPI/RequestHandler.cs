@@ -3,7 +3,8 @@ using System.Net;
 using System.Collections.Generic;
 using static CryptoBlock.CMCAPI.CoinListing;
 using static CryptoBlock.CMCAPI.CoinTicker;
-using static CryptoBlock.CMCAPI.HttpGetRequestHandler;
+using static CryptoBlock.Utils.InternetUtils.HttpGetRequestHandler;
+using CryptoBlock.Utils.InternetUtils;
 
 namespace CryptoBlock
 {

@@ -6,7 +6,7 @@ using System.Text;
 
 namespace CryptoBlock
 {
-    namespace CMCAPI
+    namespace Utils.InternetUtils
     {
         /// <summary>
         /// handles a single synchronous HTTP GET request.

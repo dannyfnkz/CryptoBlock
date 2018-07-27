@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="CollectionUtils\IndexableStack.cs" />
     <Compile Include="CollectionUtils\CollectionUtils.cs" />
+    <Compile Include="InternetUtils\HttpGetRequestHandler.cs" />
     <Compile Include="IOUtils\FileIOUtils\FileIOUtils.cs" />
     <Compile Include="InternetUtils\TimeoutWebClient.cs" />
     <Compile Include="InternetUtils\InternetUtils.cs" />
