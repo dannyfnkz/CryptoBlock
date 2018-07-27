@@ -1,20 +1,20 @@
 ﻿using CryptoBlock.IOManagement;
-using CryptoBlock.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CryptoBlock
 {
     namespace CommandHandling
     {
+        /// <summary>
+        /// represents a single executable command.
+        /// </summary>
         public abstract class Command
         {
-            public class InvalidNumberOfArgumentsException : CommandExecutionException
+            /// <summary>
+            /// thrown if user gave a wrong number of arguments for command. 
+            /// </summary>
+            public class WrongNumberOfArgumentsException : CommandExecutionException
             {
-                public InvalidNumberOfArgumentsException(int minNumberOfArguments, int maxNumberOfArguments)
+                public WrongNumberOfArgumentsException(int minNumberOfArguments, int maxNumberOfArguments)
                     : base(formatExceptionMessage(minNumberOfArguments, maxNumberOfArguments))
                 {
 
@@ -22,7 +22,7 @@ namespace CryptoBlock
 
                 private static string formatExceptionMessage(int minNumberOfArguments, int maxNumberOfArguments)
                 {
-                    return string.Format("Invalid number of arguments: should be between {0} and {1}.",
+                    return string.Format("wrong number of arguments: should be between {0} and {1}.",
                         minNumberOfArguments,
                         maxNumberOfArguments);
                 }
@@ -39,43 +39,64 @@ namespace CryptoBlock
                 this.maxNumberOfArguments = maxNumberOfArguments;
             }
 
+            /// <summary>
+            /// unique prefix determines what command the user requested.
+            /// </summary>
             public string Prefix
             {
                 get { return prefix; }
             }
 
+            /// <summary>
+            /// minimum number of arguments allowed for command.
+            /// </summary>
             public int MinNumberOfArguments
             {
                 get { return minNumberOfArguments; }
             }
 
+            /// <summary>
+            /// maximum number of arguments allowed for command.
+            /// </summary>
             public int MaxNumberOfArguments
             {
                 get { return maxNumberOfArguments; }
             }
 
+            /// <summary>
+            /// executes command with given <paramref name="commandArguments"/>.
+            /// </summary>
+            /// <param name="commandArguments"></param>
             public abstract void ExecuteCommand(string[] commandArguments);
 
-            protected void HandleInvalidNumberOfArguments(
+            /// <summary>
+            /// checks whether user entered a wrong number of arguments,
+            /// and logs appropriate message to console in that case. 
+            /// </summary>
+            /// <param name="commandArguments"></param>
+            /// <param name="invalidNumberOfArguments">
+            /// set to true if user entered a wrong number of argument, else false
+            /// </param>
+            protected void HandleWrongNumberOfArguments(
                 string[] commandArguments,
-                out bool invalidNumberOfArguments)
+                out bool wrongNumberOfArguments)
             {
                 int numberOfArguments = commandArguments.Length;
 
                 if (numberOfArguments < minNumberOfArguments || numberOfArguments > maxNumberOfArguments)
                 {
-                    // invalid number of arguments
-                    invalidNumberOfArguments = true;
+                    // wrong number of arguments
+                    wrongNumberOfArguments = true;
 
                     ConsoleIOManager.Instance.LogErrorFormat(
                         false,
-                        "Invalid number of arguments for command: should be between {0} and {1}.",                        
+                        "Wrong number of arguments for command: should be between {0} and {1}.",                        
                         minNumberOfArguments,
                         maxNumberOfArguments);
                 }
                 else // valid number of arguments
                 {
-                    invalidNumberOfArguments = false;
+                    wrongNumberOfArguments = false;
                 }
             }
         }

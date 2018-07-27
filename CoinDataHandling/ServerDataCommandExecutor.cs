@@ -35,7 +35,7 @@ namespace CryptoBlock
                 public override void ExecuteCommand(string[] commandArguments)
                 {
                     // handle case where number of arguments is invalid
-                    HandleInvalidNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
+                    HandleWrongNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
 
                     if (invalidNumberOfArguments)
                     {
@@ -73,7 +73,7 @@ namespace CryptoBlock
                 public override void ExecuteCommand(string[] commandArguments)
                 {
                     // handle where number of arguments is invalid
-                    HandleInvalidNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
+                    HandleWrongNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
 
                     if (invalidNumberOfArguments)
                     {
@@ -159,14 +159,14 @@ namespace CryptoBlock
 
             public ServerDataCommandExecutor()
             {
-                // populate commandPrefixToCommmand dictionary with (prefix, command) pairs
-                AddPrefixToCommandPair(new CoinTickerCommmand());
-                AddPrefixToCommandPair(new CoinListingCommand());
+                // add associations between commands and their prefixes
+                AddCommandPrefixToCommandPair(new CoinTickerCommmand());
+                AddCommandPrefixToCommandPair(new CoinListingCommand());
             }
 
-            protected override string GetCommandType()
+            public override string CommandType
             {
-                return COMMAND_TYPE;
+                get { return COMMAND_TYPE; }
             }
         }
     }

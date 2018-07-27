@@ -49,7 +49,7 @@ namespace CryptoBlock
                 public override void ExecuteCommand(string[] commandArguments)
                 {
                     // handle case where number of arguments is invalid
-                    HandleInvalidNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
+                    HandleWrongNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
 
                     if (invalidNumberOfArguments)
                     {
@@ -132,7 +132,7 @@ namespace CryptoBlock
                 public override void ExecuteCommand(string[] commandArguments)
                 {
                     // handle case where number of arguments is invalid
-                    HandleInvalidNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
+                    HandleWrongNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
 
                     if (invalidNumberOfArguments)
                     {
@@ -191,7 +191,7 @@ namespace CryptoBlock
                 public override void ExecuteCommand(string[] commandArguments)
                 {
                     // handle case where number of arguments is invalid
-                    HandleInvalidNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
+                    HandleWrongNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
 
                     if (invalidNumberOfArguments)
                     {
@@ -250,7 +250,7 @@ namespace CryptoBlock
                 public override void ExecuteCommand(string[] commandArguments)
                 {
                     // handle case where number of arguments is invalid
-                    HandleInvalidNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
+                    HandleWrongNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
 
                     if (invalidNumberOfArguments)
                     {
@@ -358,7 +358,7 @@ namespace CryptoBlock
                 public override void ExecuteCommand(string[] commandArguments)
                 {
                     // handle case where number of arguments is invalid
-                    HandleInvalidNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
+                    HandleWrongNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
 
                     if (invalidNumberOfArguments)
                     {
@@ -451,8 +451,8 @@ namespace CryptoBlock
 
             public PortfolioCommandExecutor()
             {
-                // populate commandPrefixToCommmand dictionary with (prefix, command) pairs
-                AddPrefixToCommandPair(
+                // add associations between commands and their prefixes
+                AddCommandPrefixToCommandPair(
                     new PortfolioViewCommand(),
                     new PortfolioAddCommand(),
                     new PortfolioRemoveCommand(),
@@ -460,9 +460,9 @@ namespace CryptoBlock
                     new PortfolioSellCommand());
             }
 
-            protected override string GetCommandType()
+            public override string CommandType
             {
-                return COMMAND_TYPE;
+                get { return COMMAND_TYPE; }
             }
         }
     }
