@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Text;
+using CryptoBlock.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using static CryptoBlock.Utils.JsonUtils;
 
 namespace CryptoBlock
 {
@@ -9,6 +11,15 @@ namespace CryptoBlock
     {
         public class CoinListing : CoinData
         {
+            public class CoinListingParseException : Exception
+            {
+                public CoinListingParseException(string message, Exception innerException)
+                    : base(message, innerException)
+                {
+
+                }
+            }
+
             public CoinListing(int id, string name, string symbol, long unixTimestamp)
                 : base(id, name, symbol, unixTimestamp)
             {
@@ -26,17 +37,17 @@ namespace CryptoBlock
 
                     JToken coinListingJToken = (JToken)JsonConvert.DeserializeObject(ListingJSONString);
 
-                    AssertExist(coinListingJToken, "metadata", "data");
+                    JsonUtils.AssertExist(coinListingJToken, "metadata", "data");
 
                     JToken coinListingMetadataJToken = coinListingJToken["metadata"];
-                    AssertExist(coinListingMetadataJToken, "num_cryptocurrencies");
-                    int coinListingArrayLength = GetPropertyValue<int>(
+                    JsonUtils.AssertExist(coinListingMetadataJToken, "num_cryptocurrencies");
+                    int coinListingArrayLength = JsonUtils.GetPropertyValue<int>(
                         coinListingMetadataJToken,
                         "num_cryptocurrencies");
 
                     if (coinListingArrayLength <= 0)
                     {
-                        throw new CoinDataPropertyParseException("data.num_cryptocurrencies");
+                        throw new JsonPropertyParseException("data.num_cryptocurrencies");
                     }
 
                     coinListingArray = new CoinListing[coinListingArrayLength];
@@ -48,9 +59,12 @@ namespace CryptoBlock
                 }
                 catch (Exception exception)
                 {
-                    if (exception is JsonReaderException || exception is InvalidCastException)
+                    if (
+                        exception is JsonReaderException 
+                        || exception is JsonPropertyParseException 
+                        || exception is InvalidCastException)
                     {
-                        throw new CoinDataParseException("Invalid JSON string.");
+                        throw new CoinListingParseException("Invalid JSON string.", exception);
                     }
                     else
                     {
@@ -84,7 +98,7 @@ namespace CryptoBlock
 
                 catch (ArgumentOutOfRangeException) // listing array size specified in JSON string was incorrect
                 {
-                    throw new CoinDataPropertyParseException("metadata.num_cryptocurrencies");
+                    throw new JsonPropertyParseException("metadata.num_cryptocurrencies");
                 }
             }
 

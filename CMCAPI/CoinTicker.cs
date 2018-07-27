@@ -4,6 +4,7 @@ using System.Text;
 using CryptoBlock.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using static CryptoBlock.Utils.JsonUtils;
 
 namespace CryptoBlock
 {
@@ -11,6 +12,21 @@ namespace CryptoBlock
     {
         public class CoinTicker : CoinData
         {
+            public class CoinTickerParseException : Exception
+            {
+                public CoinTickerParseException(string message, Exception innerException)
+                    : base(message, innerException)
+                {
+
+                }
+
+                public CoinTickerParseException(string message)
+                    : base(message)
+                {
+
+                }
+            }
+
             public class InvalidCoinIndexException : Exception
             {
                 private int coinIndex;
@@ -30,7 +46,6 @@ namespace CryptoBlock
                 {
                     return string.Format("Coin index not found: {0}.", coinIndex);
                 }
-
             }
 
             private const string RESPONSE_COIN_ID_NOT_FOUND_ERROR_FIELD_VALUE = "id not found";
@@ -121,14 +136,14 @@ namespace CryptoBlock
                     JToken coinTickerArrayJToken = (JToken)JsonConvert.DeserializeObject(tickerArrayJSONString);
 
                     // handle metadata fields
-                    AssertExist(coinTickerArrayJToken, "metadata");
+                    JsonUtils.AssertExist(coinTickerArrayJToken, "metadata");
                     JToken coinTickerArrayMetadataJToken = coinTickerArrayJToken["metadata"];
                     long unixTimestamp = parseUnixTimestamp(coinTickerArrayMetadataJToken);
 
                     assertNoErrorSpecifiedInResponse(coinTickerArrayMetadataJToken, coinIndex);
 
                     // handle data field, containing the ticker array
-                    AssertExist(coinTickerArrayJToken, "data");
+                    JsonUtils.AssertExist(coinTickerArrayJToken, "data");
                     JArray coinTickerDataJArray = (JArray)coinTickerArrayJToken["data"];
 
                     fillCoinTickerList(
@@ -140,9 +155,12 @@ namespace CryptoBlock
                 }
                 catch (Exception exception)
                 {
-                    if (exception is JsonReaderException || exception is InvalidCastException)
+                    if (
+                        exception is JsonReaderException
+                        || exception is JsonPropertyParseException
+                        || exception is InvalidCastException)
                     {
-                        throw new CoinDataParseException("Invalid JSON string.");
+                        throw new CoinTickerParseException("Invalid JSON string.", exception);
                     }
                     else
                     {
@@ -158,14 +176,14 @@ namespace CryptoBlock
                     JToken coinTickerJToken = (JToken)JsonConvert.DeserializeObject(tickerJSONString);
 
                     // handle metadata fields
-                    AssertExist(coinTickerJToken, "metadata");
+                    JsonUtils.AssertExist(coinTickerJToken, "metadata");
                     JToken coinTickerMetadataJToken = coinTickerJToken["metadata"];
                     long unixTimestamp = parseUnixTimestamp(coinTickerMetadataJToken);
 
                     assertNoErrorSpecifiedInResponse(coinTickerMetadataJToken, coinId);
 
                     // handle data fields
-                    AssertExist(coinTickerJToken, "data");
+                    JsonUtils.AssertExist(coinTickerJToken, "data");
                     JToken coinTickerDataJToken = coinTickerJToken["data"];
 
                     CoinTicker CoinTicker = parseCoinTicker(coinTickerDataJToken, unixTimestamp);
@@ -177,10 +195,11 @@ namespace CryptoBlock
                 {
                     if (
                         exception is JsonReaderException
+                        || exception is JsonPropertyParseException
                         || exception is InvalidCastException
                         || exception is InvalidOperationException)
                     {
-                        throw new CoinDataParseException("Invalid JSON string.", exception);
+                        throw new CoinTickerParseException("Invalid JSON string.", exception);
                     }
                     else
                     {
@@ -192,7 +211,7 @@ namespace CryptoBlock
             private static CoinTicker parseCoinTicker(JToken coinTickerDataJToken, long unixTimestamp)
             {
                 // handle CoinData fields
-                AssertExist(
+                JsonUtils.AssertExist(
                     coinTickerDataJToken,
                     "id",
                     "name",
@@ -202,26 +221,26 @@ namespace CryptoBlock
                     "total_supply",
                     "max_supply");
 
-                int id = GetPropertyValue<int>(coinTickerDataJToken, "id");
-                string name = GetPropertyValue<string>(coinTickerDataJToken, "name");
-                string symbol = GetPropertyValue<string>(coinTickerDataJToken, "symbol");
-                int rank = GetPropertyValue<int>(coinTickerDataJToken, "rank");
-                double? circulatingSupply = GetPropertyValue<double?>(coinTickerDataJToken, "circulating_supply");
-                double? totalSupply = GetPropertyValue<double?>(coinTickerDataJToken, "total_supply");
-                double? maxSupply = GetPropertyValue<double?>(coinTickerDataJToken, "max_supply");
+                int id = JsonUtils.GetPropertyValue<int>(coinTickerDataJToken, "id");
+                string name = JsonUtils.GetPropertyValue<string>(coinTickerDataJToken, "name");
+                string symbol = JsonUtils.GetPropertyValue<string>(coinTickerDataJToken, "symbol");
+                int rank = JsonUtils.GetPropertyValue<int>(coinTickerDataJToken, "rank");
+                double? circulatingSupply = JsonUtils.GetPropertyValue<double?>(coinTickerDataJToken, "circulating_supply");
+                double? totalSupply = JsonUtils.GetPropertyValue<double?>(coinTickerDataJToken, "total_supply");
+                double? maxSupply = JsonUtils.GetPropertyValue<double?>(coinTickerDataJToken, "max_supply");
 
-                AssertExist(coinTickerDataJToken, "quotes");
+                JsonUtils.AssertExist(coinTickerDataJToken, "quotes");
                 JToken CoinTickerDataQuotesJToken = coinTickerDataJToken["quotes"];
-                AssertExist(CoinTickerDataQuotesJToken, "USD");
+                JsonUtils.AssertExist(CoinTickerDataQuotesJToken, "USD");
                 JToken CoinTickerDataQuotesUsdJToken = CoinTickerDataQuotesJToken["USD"];
 
                 // handle CoinData.quotes.USD fields
-                AssertExist(CoinTickerDataQuotesUsdJToken, "price", "volume_24h", "market_cap", "percent_change_24h");
+                JsonUtils.AssertExist(CoinTickerDataQuotesUsdJToken, "price", "volume_24h", "market_cap", "percent_change_24h");
 
-                double priceUsd = GetPropertyValue<double>(CoinTickerDataQuotesUsdJToken, "price");
-                double? volume24hUsd = GetPropertyValue<double?>(CoinTickerDataQuotesUsdJToken, "volume_24h");
-                double? marketCapUsd = GetPropertyValue<double?>(CoinTickerDataQuotesUsdJToken, "market_cap");
-                double percentChange24hUsd = GetPropertyValue<double>(
+                double priceUsd = JsonUtils.GetPropertyValue<double>(CoinTickerDataQuotesUsdJToken, "price");
+                double? volume24hUsd = JsonUtils.GetPropertyValue<double?>(CoinTickerDataQuotesUsdJToken, "volume_24h");
+                double? marketCapUsd = JsonUtils.GetPropertyValue<double?>(CoinTickerDataQuotesUsdJToken, "market_cap");
+                double percentChange24hUsd = JsonUtils.GetPropertyValue<double>(
                     CoinTickerDataQuotesUsdJToken,
                     "percent_change_24h");
 
@@ -249,7 +268,7 @@ namespace CryptoBlock
             {
                 for (int i = 0; i < coinTickerDataJArray.Count; i++)
                 {
-                    AssertExist(coinTickerDataJArray, i);
+                    JsonUtils.AssertExist(coinTickerDataJArray, i);
                     JToken currentCoinTickerJToken = coinTickerDataJArray[i];
 
                     CoinTicker currentCoinTicker = parseCoinTicker(currentCoinTickerJToken, unixTimestamp);
@@ -259,8 +278,8 @@ namespace CryptoBlock
 
             private static long parseUnixTimestamp(JToken metadataJToken)
             {
-                AssertExist(metadataJToken, "timestamp");
-                long unixTimestamp = GetPropertyValue<int>(metadataJToken, "timestamp");
+                JsonUtils.AssertExist(metadataJToken, "timestamp");
+                long unixTimestamp = JsonUtils.GetPropertyValue<int>(metadataJToken, "timestamp");
 
                 return unixTimestamp;
             }
@@ -272,19 +291,20 @@ namespace CryptoBlock
 
             private static void assertNoErrorSpecifiedInResponse(JToken metadataJToken, int coinIndex)
             {
-                AssertExist(metadataJToken, "error");
+                JsonUtils.AssertExist(metadataJToken, "error");
 
-                if (!IsNull(metadataJToken, "error")) // error in response
+                if (!JsonUtils.IsPropertyNull(metadataJToken, "error")) // server reported an error in its response
                 {
-                    string errorMessage = GetPropertyValue<string>(metadataJToken, "error");
+                    string errorMessage = JsonUtils.GetPropertyValue<string>(metadataJToken, "error");
 
+                    // coin id does not exit in server
                     if (errorMessage == RESPONSE_COIN_ID_NOT_FOUND_ERROR_FIELD_VALUE)
                     {
                         throw new InvalidCoinIndexException(coinIndex);
                     }
                     else // unhandled error 
                     {
-                        throw new CoinDataParseException(errorMessage);
+                        throw new CoinTickerParseException(errorMessage);
                     }
                 }
             }

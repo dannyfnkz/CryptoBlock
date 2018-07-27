@@ -1,7 +1,4 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System;
 using CryptoBlock.Utils;
 using Newtonsoft.Json.Linq;
 
@@ -9,54 +6,45 @@ namespace CryptoBlock
 {
     namespace CMCAPI
     {
+        /// <summary>
+        /// encapsulates basic coin data which remains almost constant (changes very infrequently).
+        /// </summary>
         public class CoinData
         {
-            public class CoinDataParseException : Exception
-            {
-                public CoinDataParseException(string message)
-                    : base(message)
-                {
-
-                }
-
-                public CoinDataParseException(string message, Exception innerException)
-                    : base(message, innerException)
-                {
-
-                }
-            }
-
-            public class CoinDataPropertyParseException : CoinDataParseException
-            {
-                public CoinDataPropertyParseException(string propertyName)
-                    : base(formatExceptionMessage(propertyName))
-                {
-
-                }
-
-                public CoinDataPropertyParseException(string propertyName, Exception innerException)
-                    : base(formatExceptionMessage(propertyName), innerException)
-                {
-
-                }
-
-                private static string formatExceptionMessage(string propertyName)
-                {
-                    return string.Format("Property does not exist in JToken or is invalid: {0}.", propertyName);
-                }
-            }
-
+            /// <summary>
+            /// coin id, as specified by CMC.
+            /// </summary>
             protected int id;
+
+            /// <summary>
+            /// coin name, e.g Bitcoin.
+            /// </summary>
             protected string name;
+
+            /// <summary>
+            /// coin symbol used in tickers, e.g BTC.
+            /// </summary>
             protected string symbol;
+
+            /// <summary>
+            /// time when coin data was retrieved from server.
+            /// </summary>
             protected long unixTimestamp;
 
+            /// <summary>
+            /// initializes a new <see cref="CoinData"/> object using <paramref name="coinTicker"/>.
+            /// </summary>
+            /// <param name="coinTicker"></param>
             public CoinData(CoinTicker coinTicker)
                 : this(coinTicker.id, coinTicker.name, coinTicker.symbol, coinTicker.unixTimestamp)
             {
 
             }
 
+            /// <summary>
+            /// initializes a new <see cref="CoinData"/> object using <paramref name="coinListing"/>.
+            /// </summary>
+            /// <param name="coinListing"></param>
             public CoinData(CoinListing coinListing)
                 : this(coinListing.id, coinListing.name, coinListing.symbol, coinListing.unixTimestamp)
             {
@@ -86,80 +74,26 @@ namespace CryptoBlock
                 get { return symbol; }
             }
 
+            /// <summary>
+            /// time when this <see cref="CoinData"/> was retrieved from server.
+            /// </summary>
             public long UnixTimestamp
             {
                 get { return unixTimestamp; }
             }
 
-            // table row value display strings
-            protected const string NULL_VALUE_TABLE_DISPLAY_STRING = "N/A";
+            //// table row value display strings
+            //protected const string NULL_VALUE_TABLE_DISPLAY_STRING = "N/A";
 
-            // returns null if property with specified name does not exist in jToken
-            protected static T GetPropertyValue<T>(JToken jToken, string propertyName)
-            {
-                try
-                {
-                    // propertyName field exists in jToken, but its value is null
-                    if (IsNull(jToken, propertyName))
-                    {
-                        return default(T);
-                    }
+            //protected static string GetTableDisplayString<T>(T? propertyValue) where T : struct
+            //{
+            //    return StringUtils.ToString(propertyValue, NULL_VALUE_TABLE_DISPLAY_STRING);
+            //}
 
-                    T propertyValue = jToken.Value<T>(propertyName);
-
-                    return propertyValue;
-                }
-                catch (Exception exception)
-                {
-                    // type of T is wrong (e.g jToken[propertyName] is string but T was int)
-                    if (exception is FormatException || exception is InvalidCastException
-                        || exception is NullReferenceException) // propertyName does not exist in jToken
-                    {
-                        throw new CoinDataPropertyParseException(propertyName, exception);
-                    }
-
-                    throw exception;
-                }
-            }
-
-            protected static bool CheckExist(JToken jToken, params object[] properties)
-            {
-                foreach (object property in properties)
-                {
-                    if (jToken[property] == null)
-                    {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-
-            protected static void AssertExist(JToken jToken, params object[] properties)
-            {
-                foreach (object property in properties)
-                {
-                    if (jToken[property] == null)
-                    {
-                        throw new CoinDataPropertyParseException(property.ToString());
-                    }
-                }
-            }
-
-            protected static bool IsNull(JToken jToken, string propertyName)
-            {
-                return jToken[propertyName].Type == JTokenType.Null;
-            }
-
-            protected static string GetTableDisplayString<T>(T? propertyValue) where T : struct
-            {
-                return StringUtils.ToString(propertyValue, NULL_VALUE_TABLE_DISPLAY_STRING);
-            }
-
-            protected static string GetTableDisplayString(object propertyValue)
-            {
-                return StringUtils.ToString(propertyValue, NULL_VALUE_TABLE_DISPLAY_STRING);
-            }
+            //protected static string GetTableDisplayString(object propertyValue)
+            //{
+            //    return StringUtils.ToString(propertyValue, NULL_VALUE_TABLE_DISPLAY_STRING);
+            //}
         }
     }
 }

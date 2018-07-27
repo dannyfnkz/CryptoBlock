@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Net;
 using System.Collections.Generic;
+using static CryptoBlock.CMCAPI.CoinListing;
+using static CryptoBlock.CMCAPI.CoinTicker;
+
 namespace CryptoBlock
 {
     namespace CMCAPI
@@ -216,9 +219,9 @@ namespace CryptoBlock
                 {
                     throw new CoinTickerRequestInvalidStartIndexException(startIndex, invalidCoinIndexException);
                 }
-                catch (CoinData.CoinDataParseException dataParseException)
+                catch (CoinTickerParseException coinTickerParseException)
                 {
-                    throw new ServerResponseParseException(dataParseException);
+                    throw new ServerResponseParseException(coinTickerParseException);
                 }
             }
 
@@ -236,7 +239,7 @@ namespace CryptoBlock
             /// <returns>
             /// <see cref="CoinTicker"/>object corresponding to coin with <paramref name="coinId"/>.
             /// </returns>
-            public static CoinTicker RequestCoinData(int coinId)
+            public static CoinTicker RequestCoinTicker(int coinId)
             {
                 CoinTicker CoinTicker;
 
@@ -258,9 +261,9 @@ namespace CryptoBlock
                 {
                     throw new CoinIdDoesNotExistException(coinId, invalidCoinIndexException);
                 }
-                catch (CoinData.CoinDataParseException dataParseException)
+                catch (CoinTickerParseException coinTickerParseException)
                 {
-                    throw new ServerResponseParseException(dataParseException);
+                    throw new ServerResponseParseException(coinTickerParseException);
                 }
             }
 
@@ -289,7 +292,7 @@ namespace CryptoBlock
                     return coinListingsArray;
 
                 }
-                catch (CoinData.CoinDataParseException dataParseException)
+                catch (CoinListingParseException dataParseException)
                 {
                     throw new ServerResponseParseException(dataParseException);
                 }        
