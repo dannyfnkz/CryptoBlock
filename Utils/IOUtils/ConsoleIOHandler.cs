@@ -36,8 +36,8 @@ namespace CryptoBlock
 
                 // holds most recent input entries
                 // if capcity is reached, least recent entries are discarded in favour of newer ones
-                private readonly SearchableStack<string> recentInputEntries =
-                    new SearchableStack<string>(RECENT_INPUT_ENTRY_STACK_CAPACITY);
+                private readonly IndexableStack<string> recentInputEntries =
+                    new IndexableStack<string>(RECENT_INPUT_ENTRY_STACK_CAPACITY);
 
                 // index of input entry which is currently selected - 0 is the most recent entry
                 private int selectedEntryIndex;

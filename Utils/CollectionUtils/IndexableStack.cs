@@ -24,7 +24,7 @@ namespace CryptoBlock
         /// </para>
         /// </remarks>
         /// <typeparam name="T"></typeparam>
-        public class SearchableStack<T>
+        public class IndexableStack<T>
         {
             /// <summary>
             /// thrown an operation was performed which requires a non-empty stack.
@@ -55,7 +55,7 @@ namespace CryptoBlock
             // number of elements in stack
             private int numberOfElements;
 
-            public SearchableStack(int capacity)
+            public IndexableStack(int capacity)
             {
                 this.capacity = capacity;
 
