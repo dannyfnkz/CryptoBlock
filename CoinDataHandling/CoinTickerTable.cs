@@ -17,7 +17,7 @@ namespace CryptoBlock
                 CirculatingSupply,
                 PriceUsd,
                 Volume24hUsd,
-                PercentChange24hUsd
+                PricePercentChange24hUsd
             }
 
             private static readonly PropertyTable.Property[] COIN_DATA_PROPERTIES =
@@ -58,10 +58,10 @@ namespace CryptoBlock
                             "Volume24hUsd")
                     },
                     {
-                        eDisplayProperty.PercentChange24hUsd,
+                        eDisplayProperty.PricePercentChange24hUsd,
                         new PropertyTable.Property(
                             COIN_TICKER_PROPERTY_TYPE,
-                            "PercentChange24hUsd")
+                            "PricePercentChange24hUsd")
                     },
                 };
 
@@ -93,11 +93,11 @@ namespace CryptoBlock
                             displayPropertyToProperty[eDisplayProperty.Volume24hUsd])
                     },
                     {
-                        eDisplayProperty.PercentChange24hUsd,
+                        eDisplayProperty.PricePercentChange24hUsd,
                         new PropertyTable.PropertyColumn(
                             "% chg 24h",
                             11,
-                            displayPropertyToProperty[eDisplayProperty.PercentChange24hUsd])
+                            displayPropertyToProperty[eDisplayProperty.PricePercentChange24hUsd])
                     }
                 };
 

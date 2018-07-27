@@ -3,6 +3,7 @@ using System.Net;
 using System.Collections.Generic;
 using static CryptoBlock.CMCAPI.CoinListing;
 using static CryptoBlock.CMCAPI.CoinTicker;
+using static CryptoBlock.CMCAPI.HttpGetRequestHandler;
 
 namespace CryptoBlock
 {
@@ -41,11 +42,6 @@ namespace CryptoBlock
                 {
 
                 }
-
-                //private static string formatErrorMessage(string message)
-                //{
-                //    return string.Format("Data request to server failed: {0}{1}", message, Environment.NewLine);
-                //}
             }
 
             /// <summary>
@@ -121,6 +117,9 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if an invalid start index was specified for a <see cref="CoinTicker"/> data request.
+            /// </summary>
             public class CoinTickerRequestInvalidStartIndexException : DataRequestException
             {
                 public CoinTickerRequestInvalidStartIndexException(int startIndex)
@@ -143,6 +142,9 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if an invalid number of coins was specified for a <see cref="CoinTicker"/> data request.
+            /// </summary>
             public class CoinTickerRequestInvalidNumberOfCoinsException : DataRequestException
             {
                 public CoinTickerRequestInvalidNumberOfCoinsException(int lo, int hi)
@@ -157,55 +159,89 @@ namespace CryptoBlock
                 }
             }
 
+            // base url for CMC server requests
             private const string BASE_URL = @"https://api.coinmarketcap.com/v2/";
+
+            // url for coin ticker requests
             private const string TICKER_REQUEST_URL = BASE_URL + @"ticker/";
+
+            // url for coin listing requests
             private const string LISTINGS_REQUEST_URL = BASE_URL + @"listings/";
 
-            private const int COIN_DATA_REQUEST_MAX_NUMBER_OF_COINS = 100;
-            private const string COIN_DATA_REQUEST_STRUCTURE_TYPE = "array";
+            // max number of coins which can be requested in a coin ticker request
+            private const int COIN_TICKER_REQUEST_MAX_NUMBER_OF_COINS = 100;
 
-            private static readonly Dictionary<eSortType, string> sortTypeToString = 
-                new Dictionary<eSortType, string>();
+            // type of structure to store coin ticker data in server response
+            private const string COIN_TICKER_REQUEST_STRUCTURE_TYPE = "array";
 
-            static RequestHandler()
+            private static readonly Dictionary<eSortType, string> sortTypeToString =
+                new Dictionary<eSortType, string>()
             {
-                sortTypeToString[eSortType.Id] = "id";
-                sortTypeToString[eSortType.PercentChange24h] = "percent_change_24h";
-                sortTypeToString[eSortType.Rank] = "rank";
-                sortTypeToString[eSortType.Volume24h] = "volume_24h";
+                {eSortType.Id, "id" },
+                {eSortType.PercentChange24h, "percent_change_24h" },
+                {eSortType.Rank, "rank" },
+                {eSortType.Volume24h, "volume_24h" }
+            };
+
+            /// <summary>
+            /// maximum number of coin tickers which can be returned in a single request.
+            /// </summary>
+            public static int CoinTickerRequestMaxNumberOfCoins
+            {
+                get { return COIN_TICKER_REQUEST_MAX_NUMBER_OF_COINS; }
             }
 
-            public static int CoinDataRequestMaxNumberOfCoins
-            {
-                get { return COIN_DATA_REQUEST_MAX_NUMBER_OF_COINS; }
-            }
-
+            /// <summary>
+            /// requests from server <see cref="CoinTickers"/> with indices in range
+            /// [<paramref name="startIndex"/>, (<paramref name="startIndex"/> + <paramref name="numberOfCoins"/>)].
+            /// </summary>
+            /// <param name="startIndex"></param>
+            /// <param name="numberOfCoins"></param>
+            /// <param name="sortType"></param>
+            /// <returns>
+            /// <see cref="CoinTicker"/> array of length <paramref name="numberOfCoins"/> containing
+            /// <see cref="CoinTicker"/>s of indices in range
+            /// [[<paramref name="startIndex"/>, (<paramref name="startIndex"/> + <paramref name="numberOfCoins"/>)]
+            /// </returns>
+            /// <exception cref="CoinTickerRequestInvalidStartIndexException">
+            /// thrown if <paramref name="startIndex"/> < 0
+            /// </exception>
+            /// <exception cref="CoinTickerRequestInvalidNumberOfCoinsException">
+            /// thrown if <paramref name="numberOfCoins"/> <= 0 ||
+            /// <paramref name="numberOfCoins"/> > COIN_TICKER_REQUEST_MAX_NUMBER_OF_COINS
+            /// </exception>
+            /// <exception cref="CoinTickerRequestInvalidStartIndexException">
+            /// thrown if <paramref name="startIndex"/> does not exist in server.
+            /// </exception>
+            /// <exception cref="ServerResponseParseException">
+            /// thrown if server response was invalid.
+            /// </exception>
             public static CoinTicker[] RequestCoinTicker(
                 int startIndex,
                 int numberOfCoins,
                 eSortType sortType = eSortType.Id)
             {
-                if(startIndex < 0)
+                if(startIndex < 0) // invalid start index
                 {
                     throw new CoinTickerRequestInvalidStartIndexException(startIndex);
                 }
 
-                if(numberOfCoins <= 0 || numberOfCoins > COIN_DATA_REQUEST_MAX_NUMBER_OF_COINS)
+                // invalid number of coins
+                if(numberOfCoins <= 0 || numberOfCoins > COIN_TICKER_REQUEST_MAX_NUMBER_OF_COINS)
                 {
                     throw new CoinTickerRequestInvalidNumberOfCoinsException(1, 100);
                 }
-
+                
+                // prepare request
                 string uri = TICKER_REQUEST_URL;
-                HttpGetRequestHandler.GetRequestParameter[] requestParameters
-                    = HttpGetRequestHandler.GetRequestParameter.ToGetRequestParameterArray(
-                        new string[] { "start", "limit", "sort", "structure" },
-                        new string[]
-                        {
-                            startIndex.ToString(),
-                            numberOfCoins.ToString(),
-                            sortTypeToString[sortType],
-                            COIN_DATA_REQUEST_STRUCTURE_TYPE
-                        });
+
+                GetRequestParameter[] requestParameters = new GetRequestParameter[]
+                {
+                    new GetRequestParameter("start", startIndex.ToString()),
+                    new GetRequestParameter("limit", numberOfCoins.ToString()),
+                    new GetRequestParameter("sort", sortTypeToString[sortType].ToString()),
+                    new GetRequestParameter("structure",  COIN_TICKER_REQUEST_STRUCTURE_TYPE)
+                };
 
                 string serverResponseJson = sendDataRequest(uri, requestParameters);
 
@@ -215,13 +251,13 @@ namespace CryptoBlock
 
                     return coinDataArray;
                 }
-                catch(CoinTicker.InvalidCoinIndexException invalidCoinIndexException)
+                catch(CoinIndexNotFoundException coinIndexNotFoundException)
                 {
-                    throw new CoinTickerRequestInvalidStartIndexException(startIndex, invalidCoinIndexException);
+                    throw new CoinTickerRequestInvalidStartIndexException(startIndex, coinIndexNotFoundException);
                 }
-                catch (CoinTickerParseException coinTickerParseException)
+                catch (CoinTickerJsonParseException coinTickerJsonParseException)
                 {
-                    throw new ServerResponseParseException(coinTickerParseException);
+                    throw new ServerResponseParseException(coinTickerJsonParseException);
                 }
             }
 
@@ -257,13 +293,13 @@ namespace CryptoBlock
                     CoinTicker = CoinTicker.Parse(serverResponse, coinId);
                     return CoinTicker;
                 }
-                catch (CoinTicker.InvalidCoinIndexException invalidCoinIndexException)
+                catch (CoinIndexNotFoundException coinIndexNotFoundException)
                 {
-                    throw new CoinIdDoesNotExistException(coinId, invalidCoinIndexException);
+                    throw new CoinIdDoesNotExistException(coinId, coinIndexNotFoundException);
                 }
-                catch (CoinTickerParseException coinTickerParseException)
+                catch (CoinTickerJsonParseException coinTickerJsonParseException)
                 {
-                    throw new ServerResponseParseException(coinTickerParseException);
+                    throw new ServerResponseParseException(coinTickerJsonParseException);
                 }
             }
 
@@ -288,13 +324,13 @@ namespace CryptoBlock
 
                 try
                 {
-                    coinListingsArray = CoinListing.ParseStaticCoinDataArray(serverResponse);
+                    coinListingsArray = CoinListing.ParseCoinListingArray(serverResponse);
                     return coinListingsArray;
 
                 }
-                catch (CoinListingParseException dataParseException)
+                catch (CoinListingJsonParseException coinListingJsonParseException)
                 {
-                    throw new ServerResponseParseException(dataParseException);
+                    throw new ServerResponseParseException(coinListingJsonParseException);
                 }        
             }
 

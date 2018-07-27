@@ -38,13 +38,13 @@ namespace CryptoBlock
                 new PropertyTable.Property[]
             {
                 CoinTickerTable.GetProperty(CoinTickerTable.eDisplayProperty.PriceUsd),
-                CoinTickerTable.GetProperty(CoinTickerTable.eDisplayProperty.PercentChange24hUsd)
+                CoinTickerTable.GetProperty(CoinTickerTable.eDisplayProperty.PricePercentChange24hUsd)
             };
             private static readonly PropertyTable.PropertyColumn[] COIN_TICKER_PROPERTY_COLUMNS =
                 new PropertyTable.PropertyColumn[]
             {
                 CoinTickerTable.GetPropertyColumn(CoinTickerTable.eDisplayProperty.PriceUsd),
-                CoinTickerTable.GetPropertyColumn(CoinTickerTable.eDisplayProperty.PercentChange24hUsd)
+                CoinTickerTable.GetPropertyColumn(CoinTickerTable.eDisplayProperty.PricePercentChange24hUsd)
             };
 
             private static readonly Type PORTFOLIO_ENTRY_PROPERTY_TYPE = typeof(PortfolioEntry);

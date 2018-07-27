@@ -250,7 +250,7 @@ namespace CryptoBlock
                         // fetch data of current coin section
                         CoinTicker[] currentCoinTickerSection = RequestHandler.RequestCoinTicker(
                             leastRecentlyUpdatedCoinIndex,
-                            RequestHandler.CoinDataRequestMaxNumberOfCoins);
+                            RequestHandler.CoinTickerRequestMaxNumberOfCoins);
 
                         // update appropriate section in coin data array with newly fetched data
                         int currentCoinDataSectionSize = Math.Min(

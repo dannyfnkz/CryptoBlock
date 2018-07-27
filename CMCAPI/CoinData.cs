@@ -1,8 +1,4 @@
-﻿using System;
-using CryptoBlock.Utils;
-using Newtonsoft.Json.Linq;
-
-namespace CryptoBlock
+﻿namespace CryptoBlock
 {
     namespace CMCAPI
     {
@@ -11,24 +7,9 @@ namespace CryptoBlock
         /// </summary>
         public class CoinData
         {
-            /// <summary>
-            /// coin id, as specified by CMC.
-            /// </summary>
             protected int id;
-
-            /// <summary>
-            /// coin name, e.g Bitcoin.
-            /// </summary>
             protected string name;
-
-            /// <summary>
-            /// coin symbol used in tickers, e.g BTC.
-            /// </summary>
             protected string symbol;
-
-            /// <summary>
-            /// time when coin data was retrieved from server.
-            /// </summary>
             protected long unixTimestamp;
 
             /// <summary>
@@ -59,16 +40,25 @@ namespace CryptoBlock
                 this.unixTimestamp = unixTimestamp;
             }
 
+            /// <summary>
+            /// coin id, as specified by CMC.
+            /// </summary>
             public int Id
             {
                 get { return id; }
             }
 
+            /// <summary>
+            /// coin name, e.g Bitcoin.
+            /// </summary>
             public string Name
             {
                 get { return name; }
             }
 
+            /// <summary>
+            /// coin symbol used in tickers, e.g BTC.
+            /// </summary>
             public string Symbol
             {
                 get { return symbol; }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using CryptoBlock.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -10,28 +9,37 @@ namespace CryptoBlock
 {
     namespace CMCAPI
     {
+        /// <summary>
+        /// a CMC coin ticker.
+        /// </summary>
         public class CoinTicker : CoinData
         {
-            public class CoinTickerParseException : Exception
+            /// <summary>
+            /// thrown if <see cref="CoinTicker"/> could not be parsed from server JSON response string.
+            /// </summary>
+            public class CoinTickerJsonParseException : Exception
             {
-                public CoinTickerParseException(string message, Exception innerException)
+                public CoinTickerJsonParseException(string message, Exception innerException)
                     : base(message, innerException)
                 {
 
                 }
 
-                public CoinTickerParseException(string message)
+                public CoinTickerJsonParseException(string message)
                     : base(message)
                 {
 
                 }
             }
 
-            public class InvalidCoinIndexException : Exception
+            /// <summary>
+            /// thrown if the specified coin index (coin id in case of single ticker request) was not found.
+            /// </summary>
+            public class CoinIndexNotFoundException : Exception
             {
                 private int coinIndex;
 
-                public InvalidCoinIndexException(int coinIndex)
+                public CoinIndexNotFoundException(int coinIndex)
                     : base(formatExceptionMessage(coinIndex))
                 {
                     this.coinIndex = coinIndex;
@@ -48,7 +56,8 @@ namespace CryptoBlock
                 }
             }
 
-            private const string RESPONSE_COIN_ID_NOT_FOUND_ERROR_FIELD_VALUE = "id not found";
+            // value in JSON server response string metadata.error field in case coin index was not found
+            private const string RESPONSE_COIN_INDEX_NOT_FOUND_ERROR_FIELD_VALUE = "id not found";
 
             private int rank;
             private double? circulatingSupply;
@@ -57,7 +66,7 @@ namespace CryptoBlock
             private double? priceUsd;
             private double? volume24hUsd;
             private double? marketCapUsd;
-            private double? percentChange24hUsd;
+            private double? pricePercentChange24hUsd;
 
             public CoinTicker(
                 int id,
@@ -70,7 +79,7 @@ namespace CryptoBlock
                 double? priceUsd,
                 double? volume24hUsd,
                 double? marketCapUsd,
-                double? percentChange24hUsd,
+                double? pricePercentChange24hUsd,
                 long unixTimestamp)
                 : base(id, name, symbol, unixTimestamp)
             {
@@ -81,53 +90,121 @@ namespace CryptoBlock
                 this.priceUsd = priceUsd;
                 this.volume24hUsd = volume24hUsd;
                 this.marketCapUsd = marketCapUsd;
-                this.percentChange24hUsd = percentChange24hUsd;
+                this.pricePercentChange24hUsd = pricePercentChange24hUsd;
             }
 
+            /// <summary>
+            /// rank determined by <see cref="MarketCapUsd"/>.
+            /// </summary>
             public int Rank
             {
                 get { return rank; }
             }
 
+            /// <summary>
+            /// approximation of the number of coins that are circulating in the market.
+            /// </summary>
+            /// <remarks>
+            /// if null, data regarding circulating supply is not available.
+            /// </remarks>
             public double? CirculatingSupply
             {
                 get { return circulatingSupply; }
             }
 
+            /// <summary>
+            /// total amount of coins in existence
+            /// </summary>
+            /// <remarks>
+            /// if null, data regarding total supply is not available.
+            /// </remarks>
             public double? TotalSupply
             {
                 get { return totalSupply; }
             }
 
+            /// <summary>
+            /// approximation of the maximum amount of coins that will ever exist in the lifetime of the coin.
+            /// </summary>
+            /// <remarks>
+            /// if null, data regarding max supply is not available.
+            /// </remarks>
             public double? MaxSupply
             {
                 get { return maxSupply; }
             }
 
+            /// <summary>
+            /// price of coin in USD.
+            /// </summary>
+            /// <remarks>
+            /// if null, data regarding price in USD is not available.
+            /// </remarks>
             public double? PriceUsd
             {
                 get { return priceUsd; }
             }
 
+            /// <summary>
+            /// 24 hour period trading volume of coin in USD.
+            /// </summary>
+            /// <remarks>
+            /// if null, data regarding 24 hour USD volume is not available.
+            /// </remarks>
             public double? Volume24hUsd
             {
                 get { return volume24hUsd; }
             }
 
+            /// <summary>
+            /// calculate as (<see cref = "PriceUsd" /> x < see cref="CirculatingSupply"/>).
+            /// </summary>
+            /// <remarks>
+            /// if null, data regarding market cap in usd is not available.
+            /// </remarks>
             public double? MarketCapUsd
             {
                 get { return marketCapUsd; }
             }
 
-            public double? PercentChange24hUsd
+            /// <summary>
+            /// percentage of the change in coin price in the last 24 hour period.
+            /// </summary>
+            /// <remarks>
+            /// if null, data regarding coin 24 hour price change percentage is not available.
+            /// </remarks>
+            public double? PricePercentChange24hUsd
             {
-                get { return percentChange24hUsd; }
+                get { return pricePercentChange24hUsd; }
             }
 
+            /// <summary>
+            /// parses array of <see cref="CoinTicker"/>s from <paramref name="tickerArrayJSONString"/>,
+            /// starting at <paramref name="startingCoinIndex"/>,
+            /// and having a maximum length of <paramref name="CoinTickerArrayMaxSize"/>.
+            /// </summary>
+            /// <param name="tickerArrayJSONString"></param>
+            /// <param name="startingCoinIndex">
+            /// index of first coin in <paramref name="tickerArrayJSONString"/>
+            /// </param>
+            /// <param name="CoinTickerArrayMaxSize">
+            /// maximum length of parsed array
+            /// </param>
+            /// <returns>
+            /// array of <see cref="CoinTicker"/>s parsed from <paramref name="tickerArrayJSONString"/>,
+            /// starting at <paramref name="startingCoinIndex"/>,
+            /// and having a maximum length of <paramref name="CoinTickerArrayMaxSize"/>
+            /// </returns>
+            /// <exception cref="CoinTickerJsonParseException">
+            /// thrown if <paramref name="tickerArrayJSONString"/> was invalid.
+            /// </exception>
+            /// <exception cref="CoinIndexNotFoundException">
+            /// thrown if specified <paramref name="startingCoinIndex"/> does not exist in server.
+            /// </exception>
             public static CoinTicker[] ParseArray(
                 string tickerArrayJSONString,
-                int coinIndex,
-                int CoinTickerArrayMaxSize)
+                int startingCoinIndex,
+                int coinTickerArrayMaxLength)
             {
                 try
                 {
@@ -140,18 +217,22 @@ namespace CryptoBlock
                     JToken coinTickerArrayMetadataJToken = coinTickerArrayJToken["metadata"];
                     long unixTimestamp = parseUnixTimestamp(coinTickerArrayMetadataJToken);
 
-                    assertNoErrorSpecifiedInResponse(coinTickerArrayMetadataJToken, coinIndex);
+                    // assert that (valid) server response did not specify an error.
+                    assertNoErrorSpecifiedInResponse(coinTickerArrayMetadataJToken, startingCoinIndex);
 
-                    // handle data field, containing the ticker array
+                    // fetch ticker array JToken, located in data field
                     JsonUtils.AssertExist(coinTickerArrayJToken, "data");
-                    JArray coinTickerDataJArray = (JArray)coinTickerArrayJToken["data"];
+                    JArray coinTickerJArray = (JArray)coinTickerArrayJToken["data"];
 
+                    // fill coinTickerList with data from ticker JArray
                     fillCoinTickerList(
                         coinTickerList,
-                        coinTickerDataJArray,
+                        coinTickerJArray,
                         unixTimestamp);
 
-                    return coinTickerList.ToArray();
+                    int coinTickerArrayLength = Math.Min(coinTickerArrayMaxLength, coinTickerList.Count);
+
+                    return coinTickerList.GetRange(0, coinTickerArrayLength).ToArray();
                 }
                 catch (Exception exception)
                 {
@@ -160,15 +241,31 @@ namespace CryptoBlock
                         || exception is JsonPropertyParseException
                         || exception is InvalidCastException)
                     {
-                        throw new CoinTickerParseException("Invalid JSON string.", exception);
+                        throw new CoinTickerJsonParseException("Invalid JSON string.", exception);
                     }
-                    else
+                    else // unhandled exception
                     {
                         throw exception;
                     }
                 }
             }
 
+            /// <summary>
+            /// parses a single <see cref="CoinTicker"/> with <paramref name="coinId"/>
+            /// from <paramref name="tickerJSONString"/>.
+            /// </summary>
+            /// <param name="tickerJSONString"></param>
+            /// <param name="coinId"></param>
+            /// <returns>
+            /// <see cref="CoinTicker"/> having <paramref name="coinId"/>
+            /// parsed from <paramref name="tickerJSONString"/>
+            /// </returns>
+            /// <exception cref="CoinIndexNotFoundException">
+            /// <seealso cref="assertNoErrorSpecifiedInResponse(JToken, int)"/>
+            /// </exception>
+            /// <exception cref="CoinTickerJsonParseException">
+            /// thrown if <paramref name="tickerJSONString"/> is invalid
+            /// </exception>
             public static CoinTicker Parse(string tickerJSONString, int coinId)
             {
                 try
@@ -186,7 +283,8 @@ namespace CryptoBlock
                     JsonUtils.AssertExist(coinTickerJToken, "data");
                     JToken coinTickerDataJToken = coinTickerJToken["data"];
 
-                    CoinTicker CoinTicker = parseCoinTicker(coinTickerDataJToken, unixTimestamp);
+                    // parse coin ticker using coinTickerDataJToken
+                    CoinTicker CoinTicker = parse(coinTickerDataJToken, unixTimestamp);
 
                     return CoinTicker;
                 }
@@ -199,7 +297,7 @@ namespace CryptoBlock
                         || exception is InvalidCastException
                         || exception is InvalidOperationException)
                     {
-                        throw new CoinTickerParseException("Invalid JSON string.", exception);
+                        throw new CoinTickerJsonParseException("Invalid JSON string.", exception);
                     }
                     else
                     {
@@ -208,9 +306,91 @@ namespace CryptoBlock
                 }
             }
 
-            private static CoinTicker parseCoinTicker(JToken coinTickerDataJToken, long unixTimestamp)
+            public override string ToString()
             {
-                // handle CoinData fields
+                return StringUtils.ToString(this);
+            }
+
+            /// <summary>
+            /// fills <paramref name="CoinTickerList"/> with <see cref="CoinTicker"/>s parsed from
+            /// <paramref name="coinTickerJArray"/>, each having <paramref name="unixTimestamp"/>.
+            /// </summary>
+            /// <seealso cref="parse(JToken, long)"/>
+            /// <param name="CoinTickerList"></param>
+            /// <param name="coinTickerJArray"></param>
+            /// <param name="unixTimestamp"></param>
+            /// <exception cref="ArgumentNullException">
+            /// <seealso cref="JsonUtils.AssertExist(JToken, object[])"/>
+            /// </exception>
+            /// <exception cref="ArgumentNullException">
+            /// <seealso cref="JsonUtils.AssertExist(JToken, object[])"/>
+            /// </exception>
+            /// <exception cref="JsonPropertyParseException">
+            /// <seealso cref="parse(JToken, long)"/>
+            /// </exception>
+            /// <exception cref="JsonReaderException">
+            /// <seealso cref="JToken.Value{T}(object)"/>
+            /// <seealso cref="parse(JToken, long)"/>
+            /// </exception>
+            /// <exception cref="InvalidCastException">
+            /// <seealso cref="parse(JToken, long)"/>
+            /// <seealso cref="JToken.Value{T}(object)"/>
+            /// </exception>
+            /// <exception cref="InvalidOperationException">
+            /// <seealso cref="parse(JToken, long)"/>
+            /// <seealso cref="JToken.Value{T}(object)"/>
+            /// </exception>
+            private static void fillCoinTickerList(
+                List<CoinTicker> CoinTickerList,
+                JArray coinTickerJArray,
+                long unixTimestamp)
+            {
+                for (int i = 0; i < coinTickerJArray.Count; i++)
+                {
+                    // get JToken of the i'th item in coin tickre array
+                    JsonUtils.AssertExist(coinTickerJArray, i);
+                    JToken currentCoinTickerJToken = coinTickerJArray[i];
+
+                    // parse i'th coin ticker from corresponding JToken
+                    CoinTicker currentCoinTicker = parse(currentCoinTickerJToken, unixTimestamp);
+
+                    // add coin ticker to list
+                    CoinTickerList.Add(currentCoinTicker);
+                }
+            }
+
+            /// <summary>
+            /// parses <see cref="CoinTicker"/> having <paramref name="unixTimestamp"/> from
+            /// <paramref name="coinTickerDataJToken"/>.
+            /// </summary>
+            /// <param name="coinTickerDataJToken"></param>
+            /// <param name="unixTimestamp"></param>
+            /// <returns>
+            /// <see cref="CoinTicker"/> parsed from <paramref name="coinTickerDataJToken"/>,
+            /// having <paramref name="unixTimestamp"/>
+            /// </returns>
+            /// <exception cref="ArgumentNullException">
+            /// <seealso cref="JsonUtils.AssertExist(JToken, object[])"/>
+            /// <seealso cref="JsonUtils.GetPropertyValue{T}(JToken, string)"/>
+            /// </exception>
+            /// <exception cref="JsonPropertyParseException">
+            /// <seealso cref="JsonUtils.GetPropertyValue{T}(JToken, string)"/>
+            /// <seealso cref="JsonUtils.AssertExist(JToken, object[])"/>
+            /// </exception>
+            /// <exception cref="JsonReaderException">
+            /// <seealso cref="JToken.Value{T}(object)"/>
+            /// </exception>
+            /// <exception cref="InvalidCastException">
+            /// <seealso cref="JToken.Value{T}(object)"/>
+            /// </exception>
+            /// <exception cref="InvalidOperationException">
+            /// <seealso cref="JToken.Value{T}(object)"/>
+            /// </exception>
+            private static CoinTicker parse(JToken coinTickerDataJToken, long unixTimestamp)
+            {
+                // fetch coin ticker fields
+
+                // handle "data" fields
                 JsonUtils.AssertExist(
                     coinTickerDataJToken,
                     "id",
@@ -229,12 +409,13 @@ namespace CryptoBlock
                 double? totalSupply = JsonUtils.GetPropertyValue<double?>(coinTickerDataJToken, "total_supply");
                 double? maxSupply = JsonUtils.GetPropertyValue<double?>(coinTickerDataJToken, "max_supply");
 
+                // handle "data.quotes" fields
                 JsonUtils.AssertExist(coinTickerDataJToken, "quotes");
                 JToken CoinTickerDataQuotesJToken = coinTickerDataJToken["quotes"];
                 JsonUtils.AssertExist(CoinTickerDataQuotesJToken, "USD");
                 JToken CoinTickerDataQuotesUsdJToken = CoinTickerDataQuotesJToken["USD"];
 
-                // handle CoinData.quotes.USD fields
+                // handle data.quotes.USD fields
                 JsonUtils.AssertExist(CoinTickerDataQuotesUsdJToken, "price", "volume_24h", "market_cap", "percent_change_24h");
 
                 double priceUsd = JsonUtils.GetPropertyValue<double>(CoinTickerDataQuotesUsdJToken, "price");
@@ -244,6 +425,7 @@ namespace CryptoBlock
                     CoinTickerDataQuotesUsdJToken,
                     "percent_change_24h");
 
+                // init a new coin ticker
                 CoinTicker CoinTicker = new CoinTicker(
                     id,
                     name,
@@ -261,50 +443,70 @@ namespace CryptoBlock
                 return CoinTicker;
             }
 
-            private static void fillCoinTickerList(
-                List<CoinTicker> CoinTickerList,
-                JArray coinTickerDataJArray,
-                long unixTimestamp)
-            {
-                for (int i = 0; i < coinTickerDataJArray.Count; i++)
-                {
-                    JsonUtils.AssertExist(coinTickerDataJArray, i);
-                    JToken currentCoinTickerJToken = coinTickerDataJArray[i];
-
-                    CoinTicker currentCoinTicker = parseCoinTicker(currentCoinTickerJToken, unixTimestamp);
-                    CoinTickerList.Add(currentCoinTicker);
-                }
-            }
-
+            /// <summary>
+            /// parses unix timestamp <paramref name="metadataJToken"/>.
+            /// </summary>
+            /// <seealso cref="JsonUtils.GetPropertyValue{T}(JToken, string)"/>
+            /// <param name="metadataJToken"></param>
+            /// <returns>
+            /// unix timestamp parsed from <paramref name="metadataJToken"/>
+            /// </returns>
+            /// <exception cref="ArgumentNullException">
+            /// <seealso cref="JsonUtils.AssertExist(JToken, object[])"/>
+            /// </exception>
+            /// <exception cref="JsonPropertyParseException>
+            /// <seealso cref="JsonUtils.AssertExist(JToken, object[])"/>
+            /// <seealso cref="JsonUtils.GetPropertyValue{T}(JToken, string)"/>
+            /// </exception>
             private static long parseUnixTimestamp(JToken metadataJToken)
             {
                 JsonUtils.AssertExist(metadataJToken, "timestamp");
+
                 long unixTimestamp = JsonUtils.GetPropertyValue<int>(metadataJToken, "timestamp");
 
                 return unixTimestamp;
             }
 
-            public override string ToString()
+            /// <summary>
+            /// asserts that server has not specified in <paramref name="metadataJToken"/> that an error occurred
+            /// while processing request.
+            /// </summary>
+            /// <param name="metadataJToken"></param>
+            /// <param name="coinIndex">
+            /// index of first (or only) <see cref="CoinTicker"/> requested from server.
+            /// </param>
+            /// <exception cref="ArgumentNullException">
+            /// <seealso cref="JsonUtils.AssertExist(JToken, object[])"/>
+            /// </exception>
+            /// <exception cref="JsonPropertyParseException">
+            /// <seealso cref="JsonUtils.AssertExist(JToken, object[])"/>
+            /// <seealso cref="JsonUtils.GetPropertyValue{T}(JToken, string)"/>
+            /// </exception>
+            /// <exception cref="CoinIndexNotFoundException">
+            /// thrown if server specified that <paramref name="startingCoinIndex"/> does not exist in server
+            /// </exception>
+            /// <exception cref="CoinTickerJsonParseException">
+            /// thrown if server specified an unhandled error
+            /// </exception>
+            private static void assertNoErrorSpecifiedInResponse(JToken metadataJToken, int startingCoinIndex)
             {
-                return StringUtils.ToString(this);
-            }
-
-            private static void assertNoErrorSpecifiedInResponse(JToken metadataJToken, int coinIndex)
-            {
+                // assert that error field exists in meta data
                 JsonUtils.AssertExist(metadataJToken, "error");
 
-                if (!JsonUtils.IsPropertyNull(metadataJToken, "error")) // server reported an error in its response
+                // error field value is not null - server reported an error in its response
+                if (!JsonUtils.IsPropertyNull(metadataJToken, "error")) 
                 {
-                    string errorMessage = JsonUtils.GetPropertyValue<string>(metadataJToken, "error");
+                    // get error field value
+                    string errorFieldValue = JsonUtils.GetPropertyValue<string>(metadataJToken, "error");
 
-                    // coin id does not exit in server
-                    if (errorMessage == RESPONSE_COIN_ID_NOT_FOUND_ERROR_FIELD_VALUE)
+                    // coin id does not exist in server
+                    if (errorFieldValue == RESPONSE_COIN_INDEX_NOT_FOUND_ERROR_FIELD_VALUE)
                     {
-                        throw new InvalidCoinIndexException(coinIndex);
+                        throw new CoinIndexNotFoundException(startingCoinIndex);
                     }
                     else // unhandled error 
                     {
-                        throw new CoinTickerParseException(errorMessage);
+                        throw new CoinTickerJsonParseException(errorFieldValue);
                     }
                 }
             }

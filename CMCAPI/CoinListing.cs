@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using CryptoBlock.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -9,14 +8,25 @@ namespace CryptoBlock
 {
     namespace CMCAPI
     {
+        /// <summary>
+        /// represents a CMC coin listing.
+        /// </summary>
         public class CoinListing : CoinData
         {
-            public class CoinListingParseException : Exception
+            /// <summary>
+            /// thrown if <see cref="CoinListing"/> could not be parsed from server JSON response string.
+            /// </summary>
+            public class CoinListingJsonParseException : Exception
             {
-                public CoinListingParseException(string message, Exception innerException)
-                    : base(message, innerException)
+                public CoinListingJsonParseException(Exception innerException)
+                    : base(formatExceptionMessage(), innerException)
                 {
 
+                }
+
+                private static string formatExceptionMessage()
+                {
+                    return "Invalid JSON server response string.";
                 }
             }
 
@@ -26,33 +36,50 @@ namespace CryptoBlock
 
             }
 
-            // throws CoinDataParseException.NullMetadataFieldException if metadata field was null
-            // throws CoinDataParseException.NullDataFieldException if CoinData field was null
-            // throws CoinDataParseException if an inner CoinData / metadata field was null
-            internal static CoinListing[] ParseStaticCoinDataArray(string ListingJSONString)
+            /// <summary>
+            /// parses a <see cref="CoinListing"/> array from <paramref name="ListingJsonString"/>.
+            /// </summary>
+            /// <seealso cref="JsonConvert.DeserializeObject(string)"/>
+            /// <seealso cref="JsonUtils.AssertExist(JToken, object[])"/>
+            /// <seealso cref="JToken.Value{T}(object)"/>
+            /// <param name="ListingJSONString"></param>
+            /// <returns>
+            /// <see cref="CoinListing"/> array parsed from <paramref name="ListingJsonString"/>
+            /// </returns>
+            /// <exception cref="CoinListingJsonParseException">
+            /// thrown if <paramref name="ListingJsonString"/> is invalid.
+            /// </exception>
+            internal static CoinListing[] ParseCoinListingArray(string ListingJsonString)
             {
                 try
                 {
-                    CoinListing[] coinListingArray = null;
+                    CoinListing[] coinListingArray;
 
-                    JToken coinListingJToken = (JToken)JsonConvert.DeserializeObject(ListingJSONString);
+                    // deserialize json string to get a JToken
+                    JToken coinListingJToken = (JToken)JsonConvert.DeserializeObject(ListingJsonString);
 
+                    // handle matadata
                     JsonUtils.AssertExist(coinListingJToken, "metadata", "data");
-
                     JToken coinListingMetadataJToken = coinListingJToken["metadata"];
+
+                    // get length of coin listing array
                     JsonUtils.AssertExist(coinListingMetadataJToken, "num_cryptocurrencies");
                     int coinListingArrayLength = JsonUtils.GetPropertyValue<int>(
                         coinListingMetadataJToken,
                         "num_cryptocurrencies");
 
-                    if (coinListingArrayLength <= 0)
+                    if (coinListingArrayLength <= 0) // invalid coin listing array length
                     {
                         throw new JsonPropertyParseException("data.num_cryptocurrencies");
                     }
 
+                    // init coin listing array
                     coinListingArray = new CoinListing[coinListingArrayLength];
 
+                    // get coin listing array JToken
                     JToken CoinListingsArrayJToken = coinListingJToken["data"];
+
+                    // fill coin listing array with data from JToken
                     fillCoinListingArray(coinListingArray, CoinListingsArrayJToken);
 
                     return coinListingArray;
@@ -64,26 +91,40 @@ namespace CryptoBlock
                         || exception is JsonPropertyParseException 
                         || exception is InvalidCastException)
                     {
-                        throw new CoinListingParseException("Invalid JSON string.", exception);
+                        throw new CoinListingJsonParseException(exception);
                     }
-                    else
+                    else // unhandled exception
                     {
                         throw exception;
                     }
                 }
             }
 
-            // throws ArgumentNullException if a required field does not exist in staticCoinDataJSONObject
+            /// <summary>
+            /// fills <paramref name="coinListingArray"/> with <see cref="CoinListing"/>s fetched from
+            /// <paramref name="coinListingArrayJToken"/>.
+            /// </summary>
+            /// <param name="coinListingArray"></param>
+            /// <param name="CoinListingArrayJToken"></param>
+            /// <exception cref="ArgumentNullException">
+            /// <seealso cref="JsonUtils.AssertExist(JToken, object[])"/>
+            /// </exception>
+            /// <exception cref="JsonPropertyParseException">
+            /// <seealso cref="JsonUtils.AssertExist(JToken, object[])"/>
+            /// <seealso cref="JsonUtils.GetPropertyValue{T}(JToken, string)"/>
+            /// in addition, thrown if listing array length specified in <paramref name="coinListingArrayJToken"/>
+            /// does not match length of <paramref name="coinListingArray"/>
+            /// </exception>
             private static void fillCoinListingArray(
                 CoinListing[] coinListingArray,
-                JToken CoinListingArrayJToken)
+                JToken coinListingArrayJToken)
             {
                 try
                 {
                     for (int i = 0; i < coinListingArray.Length; i++)
                     {
-                        AssertExist(CoinListingArrayJToken, i);
-                        JToken currentCoinListing = CoinListingArrayJToken[i];
+                        AssertExist(coinListingArrayJToken, i);
+                        JToken currentCoinListing = coinListingArrayJToken[i];
 
                         AssertExist(currentCoinListing, "id", "name", "symbol");
 
@@ -95,8 +136,8 @@ namespace CryptoBlock
                         coinListingArray[i] = new CoinListing(id, name, symbol, unixTimestamp);
                     }
                 }
-
-                catch (ArgumentOutOfRangeException) // listing array size specified in JSON string was incorrect
+                // listing array size specified in coinListingArrayJToken does not match coinListingArray length
+                catch (ArgumentOutOfRangeException) 
                 {
                     throw new JsonPropertyParseException("metadata.num_cryptocurrencies");
                 }
@@ -104,7 +145,7 @@ namespace CryptoBlock
 
             public override string ToString()
             {
-                return Utils.StringUtils.ToString(this);
+                return StringUtils.ToString(this);
             }
         }
     }
