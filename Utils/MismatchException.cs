@@ -9,7 +9,7 @@ namespace CryptoBlock
     namespace Utils
     {
         /// <summary>
-        /// thrown if two properties which were supposed to be equal, were in fact not equal.
+        /// thrown if two properties which were expected to be equal, were in fact not equal.
         /// </summary>
         public class MismatchException : Exception
         {

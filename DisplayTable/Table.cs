@@ -9,10 +9,31 @@ namespace CryptoBlock
 {
     namespace TableDisplay
     {
+        /// <summary>
+        /// represents a table consisting a header (<see cref="GetTableHeaderString"/>, <see cref="Column"/>s,
+        /// and <see cref="Row"/>s, where all <see cref="Row"/>s have the same number of <see cref="Column"/>s.
+        /// </summary>
+        /// <remarks>
+        /// displayable as a string in the format:
+        ///         col0 | col1 | col2 |...
+        /// row0:   val0   val1   val2
+        /// row1:   val0   val1   val2
+        /// ...
+        /// (<see cref="GetTableDisplayString"/>).
+        ///  </remarks>
+        ///  <seealso cref="Row"/>
+        ///  <seealso cref="Column"/>
         public class Table
         {
+            /// <summary>
+            /// represents a table column.
+            /// </summary>
             public class Column
             {
+                /// <summary>
+                /// thrown if column width provided as argument was negative.
+                /// </summary>
+                /// <seealso cref="System.ArgumentOutOfRangeException"/>
                 public class WidthOutOfRangeException : ArgumentOutOfRangeException
                 {
                     public WidthOutOfRangeException(int givenWidth)
@@ -23,10 +44,15 @@ namespace CryptoBlock
 
                     private static string formatExceptionMessage()
                     {
-                        return "Column width must be greater than or equal to column header length";
+                        return "Width must be greater than zero.";
                     }
                 }
 
+                /// <summary>
+                /// thrown if column headers array and column widths array, provided as arguments,
+                /// had different lengths.
+                /// </summary>
+                /// <seealso cref="Utils.MismatchException"/>
                 public class WidhtsAndHeadersCountMismatchException : MismatchException
                 {
                     public WidhtsAndHeadersCountMismatchException()
@@ -39,6 +65,12 @@ namespace CryptoBlock
                 private string header;
                 private int width;
 
+                /// <summary>
+                /// initializes a new column with specified <paramref name="header"/> and <paramref name="width"/>.
+                /// </summary>
+                /// <param name="header"></param>
+                /// <param name="width"></param>
+                /// <exception cref="WidthOutOfRangeException"><seealso cref="assertValidWidth(int, string)"/></exception>
                 public Column(string header, int width)
                 {
                     assertValidWidth(width, header);
@@ -47,6 +79,11 @@ namespace CryptoBlock
                     this.width = width;
                 }
 
+                /// <summary>
+                /// initializes a table column with the same header and width as <paramref name="column"/>
+                /// </summary>
+                /// <param name="column"></param>
+                /// <exception cref="WidthOutOfRangeException"><seealso cref="Column(int,int)"/></exception>
                 public Column(Column column) 
                     : this(column.header, column.width)
                 {
@@ -63,6 +100,19 @@ namespace CryptoBlock
                     get { return width; }
                 }
 
+                /// <summary>
+                /// parses a column array using <paramref name="headers"/> and <paramref name="widths"/> lists,
+                /// where (<paramref name="headers"/>[i], <paramref name="widths"/>) specify the i'th column.
+                /// </summary>
+                /// <param name="headers"></param>
+                /// <param name="widths"></param>
+                /// <returns>
+                /// a column array where the i'th element has header of <paramref name="headers"/>[i]
+                /// and width of <paramref name="widths"/>[i]
+                /// </returns>
+                /// <exception cref="WidhtsAndHeadersCountMismatchException">
+                /// <seealso cref="assertMatchingWidthsAndHeadersCount(IList{string}, IList{int})"/>
+                /// </exception>
                 public static Column[] ParseArray(IList<string> headers, IList<int> widths)
                 {
                     // assert headers.Length and widths.Length match
@@ -70,6 +120,7 @@ namespace CryptoBlock
 
                     Column[] columns = new Column[headers.Count];
 
+                    // i'th column in columns has (headers[i], widths[i]) as its values
                     for (int i = 0; i < headers.Count; i++)
                     {
                         string currentHeader = headers[i];
@@ -115,14 +166,30 @@ namespace CryptoBlock
                     return header.PadRight(width);
                 }
 
+                /// <summary>
+                /// asserts that width is greater than or equal to zero.
+                /// </summary>
+                /// <param name="width"></param>
+                /// <param name="header"></param>
+                /// <exception cref="WidthOutOfRangeException">
+                /// thrown if <paramref name="width"/> is negative.
+                /// </exception>
                 private static void assertValidWidth(int width, string header)
                 {
                     if (width < 0)
                     {
-                        throw new ArgumentOutOfRangeException("width", width, "Width must be greater than zero.");
+                        throw new WidthOutOfRangeException(width);
                     }
                 }
 
+                /// <summary>
+                /// asserts that <paramref name="headers"/> and <paramref name="widths"/> have matching lengths.
+                /// </summary>
+                /// <param name="headers"></param>
+                /// <param name="widths"></param>
+                /// <exception cref="WidhtsAndHeadersCountMismatchException">
+                /// thrown if <paramref name="headers"/> and <paramref name="widths"/> don't have matching lengths.
+                /// </exception>
                 private static void assertMatchingWidthsAndHeadersCount(IList<string> headers, IList<int> widths)
                 {
                     if(headers.Count != widths.Count)
@@ -132,25 +199,49 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// represents a table row.
+            /// </summary>
             public class Row
             {
                 private readonly string[] columnValues;
 
+                /// <summary>
+                /// initializes a table row with <paramref name="columnValues"/> as its column values. 
+                /// </summary>
+                /// <param name="columnValues"></param>
+                /// <exception cref="ArgumentNullException">
+                /// <seealso cref="CollectionUtils.ConvertToArray{T}(IEnumerable{T})"/>
+                /// </exception>
                 public Row(IEnumerable<string> columnValues)
                 {
                     this.columnValues = CollectionUtils.ConvertToArray(columnValues);
                 }
 
+                /// <summary>
+                /// number of column values row has.
+                /// </summary>
                 public int ColumnCount
                 {
                     get { return columnValues.Length; }
                 }
 
+                /// <summary>
+                /// array of column values row has.
+                /// </summary>
                 public string[] ColumnValues
                 {
                     get { return columnValues; }
                 }
 
+                /// <summary>
+                /// returns the value of the column at index <paramref name="columnIndex"/>. 
+                /// </summary>
+                /// <param name="columnIndex"></param>
+                /// <returns>
+                /// value of the column at index <paramref name="columnIndex"/>. 
+                /// </returns>
+                /// <exception cref="System.IndexOutOfRangeException"></exception>
                 public string GetColumnValue(int columnIndex)
                 {
                     return columnValues[columnIndex];
@@ -183,8 +274,21 @@ namespace CryptoBlock
                 {
                     return CollectionUtils.GetHashCode(this);
                 }
-
-                // if columnWidth is zero (less than actual width) padRight retuns the original string.
+                // 
+                /// <summary>
+                /// returns the string representation of row,
+                /// consisting of row column values, where the i'th column value is aligned to the right
+                /// according to <paramref name="columns"/>[i].Width.
+                /// </summary>
+                /// <remarks>
+                /// if <paramref name="columns"/>[i].Width is less than actual i'th column value width,
+                /// <see cref="String.PadRight(int)"/> returns the original string.
+                /// </remarks>
+                /// <param name="columns"></param>
+                /// <returns>
+                /// string representation of row, consisting of the column values,
+                /// aligned according to <paramref name="columns"/> widths
+                /// </returns>
                 public string ToString(IList<Column> columns)
                 {
                     StringBuilder rowStringBuilder = new StringBuilder();
@@ -201,6 +305,9 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// represents an exception related to the <see cref="Table"/> class.
+            /// </summary>
             public class TableException : Exception
             {
                 public TableException(string exceptionMessage)
@@ -210,6 +317,10 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if a <see cref="Row"/> was attempted to be added,
+            /// which has a different column count than the <see cref="Table"/> it was being added to.
+            /// </summary>
             public class RowColumnCountMismatchException : Exception
             {
                 public RowColumnCountMismatchException()
@@ -224,6 +335,9 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if an operation which requires table to be empty of rows was attempted to be performed.
+            /// </summary>
             public class OperationRequiresEmptyTableException : Exception
             {
                 private string operationName;
@@ -234,6 +348,9 @@ namespace CryptoBlock
                     this.operationName = operationName;
                 }
 
+                /// <summary>
+                /// name of the operation which was attempted to be performed.
+                /// </summary>
                 public string OperationName
                 {
                     get { return operationName; }
@@ -247,9 +364,23 @@ namespace CryptoBlock
                 }
             }
 
+            // table columns
             private List<Column> columns = new List<Column>();
+
+            // table rows
             private List<Row> rows = new List<Row>();
 
+            /// <summary>
+            /// initializes a table with specified <paramref name="tableColumns"/> and <paramref name="tableRows"/>.
+            /// </summary>
+            /// <param name="tableColumns"></param>
+            /// <param name="tableRows"></param>
+            /// <exception cref="OperationRequiresEmptyTableException">
+            /// <seealso cref="AddColumnRange{T}(IList{T})"/>
+            /// </exception>
+            /// <exception cref="RowColumnCountMismatchException">
+            /// <seealso cref="AddRowRange{T}(IList{T})"/>
+            /// </exception>
             public Table(IList<Column> tableColumns = null, IList<Row> tableRows = null)
             {
                 if(tableColumns != null)
@@ -263,26 +394,50 @@ namespace CryptoBlock
                 }               
             }
 
+            /// <summary>
+            /// number of columns in table.
+            /// </summary>
             public int ColumnCount
             {
                 get { return columns.Count; }
             }
 
+            /// <summary>
+            /// number of rows in table.
+            /// </summary>
             public int RowCount
             {
                 get { return rows.Count; }
             }
 
+            /// <summary>
+            /// table row count is zero.
+            /// </summary>
             public bool EmptyOfRows
             {
                 get { return rows.Count == 0; }
             }
 
+            /// <summary>
+            /// returns row at index <paramref name="rowIndex"/>.
+            /// </summary>
+            /// <param name="rowIndex"></param>
+            /// <returns>
+            /// row at index <paramref name="rowIndex"/>.
+            /// </returns>
+            /// <exception cref="SystemIndexOutOfRangeException"></exception>
             public Row GetRow(int rowIndex)
             {
                 return rows[rowIndex];
             }
 
+            /// <summary>
+            /// adds <paramref name="tableRow"/> to <see cref="Table"/>'s row list.
+            /// </summary>
+            /// <param name="tableRow"></param>
+            /// <exception cref="RowColumnCountMismatchException">
+            /// <seealso cref="assertColumnCountMatchesTable(Row)"/>
+            /// </exception>
             public void AddRow(Row tableRow)
             {
                 assertColumnCountMatchesTable(tableRow);
@@ -290,6 +445,17 @@ namespace CryptoBlock
                 rows.Add(tableRow);
             }
 
+            /// <summary>
+            /// adds all rows in <paramref name="rows"/> to table row list.
+            /// </summary>
+            /// <typeparam name="T">inherits from <see cref="Row"/></typeparam>
+            /// <param name="rows"></param>
+            /// <exception cref="RowColumnCountMismatchException">
+            /// <seealso cref="assertColumnCountMatchesTable(Row)"/>
+            /// </exception>
+            /// <exception cref="System.ArgumentNullException">
+            /// <seealso cref="List{T}.AddRange(IEnumerable{T})"/>
+            /// </exception>
             public void AddRowRange<T>(IList<T> rows) where T : Row
             {
                 foreach(Row row in rows)
@@ -300,30 +466,68 @@ namespace CryptoBlock
                 this.rows.AddRange(rows);
             }
 
-            // false if remove was unsuccessful / item not found in row list
+            /// <summary>
+            /// <para>
+            /// removes <paramref name="row"/> from table row list.
+            /// </para>
+            /// <para>
+            /// returns whether <paramref name="row"/> existed in <see cref="Table"/> row list prior to being removed.
+            /// </para>
+            /// </summary>
+            /// <param name="row"></param>
+            /// <returns>
+            /// true if <paramref name="row"/> existed in <see cref="Table"/> row list prior to being removed,
+            /// else false
+            /// </returns>
             public bool RemoveRow(Row row)
             {
                 return rows.Remove(row);
             }
 
+            /// <summary>
+            /// <para>
+            /// removes each <see cref="Row"/> in <paramref name="rows"/> from <see cref="Table"/>'s
+            /// row list, if it exists there.
+            /// </para>
+            /// <para>
+            /// returns a bool array of length <paramref name="rows"/>.Count where the i'th item is
+            /// true iff <paramref name="rows"/>[i] existed in <see cref="Table"/>'s row list.
+            /// </para>
+            /// </summary>
+            /// <typeparam name="T">inherits from <see cref="Row"/>.</typeparam>
+            /// <param name="rows"></param>
+            /// <returns>
+            /// bool array of length <paramref name="rows"/>.Count where the i'th item is
+            /// true iff <paramref name="rows"/>[i] existed in <see cref="Table"/>'s row list
+            /// </returns>
             public bool[] RemoveRowRange<T>(IList<T> rows) where T : Row
             {
                 bool[] rowsRemoved = new bool[rows.Count];
-
-                // try removing each row in rows, and store whether removal was successful in rowsRemoved 
+  
                 for(int i = 0; i < rows.Count; i++)
                 {
+                    // try removing i'th row in rows, and store whether removal was successful in rowsRemoved[i] 
                     rowsRemoved[i] = RemoveRow(rows[i]);
                 }
 
                 return rowsRemoved;
             }
 
+            /// <summary>
+            /// removes all rows from table row list.
+            /// </summary>
             public void ClearRows()
             {
                 rows.Clear();
             }
-            
+
+            /// <summary>
+            /// adds <paramref name="column"/> to table column list.
+            /// </summary>
+            /// <param name="column"></param>
+            /// <exception cref="OperationRequiresEmptyTableException">
+            /// <seealso cref="assertTableEmptyOfRows(string)"/>
+            /// </exception>
             public void AddColumn(Column column)
             {
                 assertTableEmptyOfRows("AddColumn");
@@ -331,6 +535,14 @@ namespace CryptoBlock
                 columns.Add(column);
             }
 
+            /// <summary>
+            /// adds all columns in <paramref name="columns"/> to table column list.
+            /// </summary>
+            /// <typeparam name="T">inherits from <see cref="Column"/></typeparam>
+            /// <param name="columns"></param>
+            /// <exception cref="OperationRequiresEmptyTableException">
+            /// <seealso cref="assertTableEmptyOfRows(string)"/>
+            /// </exception>
             public void AddColumnRange<T>(IList<T> columns) where T : Column
             {
                 assertTableEmptyOfRows("AddColumnRange");
@@ -339,13 +551,35 @@ namespace CryptoBlock
             }
 
             // false if remove was unsuccessful / item not found in row list
+            /// <summary>
+            /// removes <see cref="Column"/> from table column list, if it exists there.
+            /// </summary>
+            /// <param name="column"></param>
+            /// <returns>
+            /// true if column existed in table column list before removal, else false
+            /// </returns>
+            /// <exception cref="OperationRequiresEmptyTableException">
+            /// <seealso cref="assertTableEmptyOfRows(string)"/>
+            /// </exception>
             public bool RemoveColumn(Column column)
             {
                 assertTableEmptyOfRows("RemoveColumn");
-
                 return columns.Remove(column);
             }
 
+            /// <summary>
+            /// removes every <see cref="Column"/> in <paramref name="columns"/> from table column list,
+            /// if it exists there.
+            /// </summary>
+            /// <typeparam name="T">inherits from <see cref="Column"/></typeparam>
+            /// <param name="columns"></param>
+            /// <returns>
+            /// bool array of length <paramref name="columns"/>.Count where the i'th item is
+            /// true iff <paramref name="columns"/>[i] existed in table column list
+            /// </returns>
+            /// <exception cref="OperationRequiresEmptyTableException">
+            /// <seealso cref="RemoveColumn(Column)"/>
+            /// </exception>
             public bool[] RemoveColumnRange<T>(IList<T> columns) where T : Column
             {
                 bool[] columnsRemoved = new bool[columns.Count];
@@ -359,6 +593,12 @@ namespace CryptoBlock
                 return columnsRemoved;
             }
 
+            /// <summary>
+            /// removes all <see cref="Column"/>s from table column list.
+            /// </summary>
+            /// <exception cref="OperationRequiresEmptyTableException">
+            /// <seealso cref="assertTableEmptyOfRows(string)"/>
+            /// </exception>
             public void ClearColumns()
             {
                 assertTableEmptyOfRows("RemoveColumn");
@@ -366,29 +606,56 @@ namespace CryptoBlock
                 columns.Clear();
             }
 
-            public string GetColumnHeaderString()
+            /// <summary>
+            /// returns a string representation of the table header, consisting of <see cref="Column"/> headers
+            /// appended to each other in order of <see cref="Column"/>s.
+            /// </summary>
+            /// <returns>
+            /// string representing the table header
+            /// </returns>
+            public string GetTableHeaderString()
             {
-                StringBuilder columnHeaderStringBuilder = new StringBuilder();
+                StringBuilder tableHeaderStringBuilder = new StringBuilder();
 
                 foreach(Column column in columns)
                 {
-                    columnHeaderStringBuilder.Append(column.ToString());
+                    tableHeaderStringBuilder.Append(column.ToString());
                 }
 
-                return columnHeaderStringBuilder.ToString();
+                return tableHeaderStringBuilder.ToString();
             }
-            
+
+            /// <summary>
+            /// returns a string representing the <paramref name="rowIndex"/>'th <see cref="Row"/>
+            /// in table row list.
+            /// </summary>
+            /// <param name="rowIndex"></param>
+            /// <returns>
+            /// string representing the <paramref name="rowIndex"/>'th <see cref="Row"/>
+            /// in table row list.
+            /// </returns>
+            /// <seealso cref="Row.ToString(IList{Column})"/>
+            /// <exception cref="System.IndexOutOfRangeException">thrown if index was invalid.</exception>
             public string GetRowString(int rowIndex)
             {
                 return rows[rowIndex].ToString(columns);
             }
 
+            /// <summary>
+            /// returns a string representation of the table,
+            /// consisting of the table header and all table <see cref="Row"/>s.
+            /// </summary>
+            /// <returns>
+            /// string representation of the table
+            /// </returns>
+            /// <seealso cref="GetTableHeaderString"/>
+            /// <seealso cref="Row.ToString(IList{Column})"/>
             public string GetTableDisplayString()
             {
                 StringBuilder tableStringBuilder = new StringBuilder();
 
                 // append column header string
-                string columnHeaderString = GetColumnHeaderString();
+                string columnHeaderString = GetTableHeaderString();
                 tableStringBuilder.Append(columnHeaderString);
                 tableStringBuilder.Append(Environment.NewLine);
 
@@ -403,6 +670,13 @@ namespace CryptoBlock
                 return tableStringBuilder.ToString();
             }
 
+            /// <summary>
+            /// asserts that table <see cref="Row"/> list is empty.
+            /// </summary>
+            /// <param name="operationName"></param>
+            /// <exception cref="OperationRequiresEmptyTableException">
+            /// thrown if table row list is not empty
+            /// </exception>
             private void assertTableEmptyOfRows(string operationName)
             {
                 if (!EmptyOfRows)
@@ -411,6 +685,13 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// asserts that <see cref="Row.ColumnCount"/> is equal to number of columns in table.
+            /// </summary>
+            /// <param name="tableRow"></param>
+            /// <exception cref="RowColumnCountMismatchException">
+            /// thrown if <see cref="Row.ColumnCount"/> is not equal to number of columns in table.
+            /// </exception>
             private void assertColumnCountMatchesTable(Row tableRow)
             {
                 if (tableRow.ColumnCount != ColumnCount)

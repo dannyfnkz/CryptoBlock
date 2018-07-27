@@ -23,6 +23,7 @@ namespace CryptoBlock
             /// <returns>
             /// array representing <paramref name="enumerable"/>
             /// </returns>
+            /// <exception cref="ArgumentNullException">thrown if <paramref name="enumerable"/> was null.</exception>
             public static T[] ConvertToArray<T>(IEnumerable<T> enumerable)
             {
                 if (enumerable == null)
