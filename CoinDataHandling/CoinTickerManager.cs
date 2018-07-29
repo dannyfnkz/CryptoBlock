@@ -320,7 +320,7 @@ namespace CryptoBlock
                 ConsoleIOManager.Instance.LogError(
                     "An exception occurred while trying to update coin ticker repository.");
                 ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
-                ExceptionManager.Instance.LogException(exception);
+                ExceptionManager.Instance.LogToErrorFile(exception);
             }
         }
     }

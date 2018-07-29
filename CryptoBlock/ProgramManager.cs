@@ -64,7 +64,7 @@ namespace CryptoBlock
                 }
                 catch (CoinListingManager.RepositoryUpdateException repositoryUpdateException)
                 {
-                    ExceptionManager.Instance.LogException(repositoryUpdateException);
+                    ExceptionManager.Instance.LogToErrorFile(repositoryUpdateException);
 
                     ConsoleIOManager.Instance.LogError("An error occurred while trying to" +
                         " initialize coin listing repository.");

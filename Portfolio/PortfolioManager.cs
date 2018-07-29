@@ -318,7 +318,7 @@ namespace CryptoBlock
                             ConsoleIOManager.Instance.LogError(
                                 "An error occurred while trying to save portfolio data to file.");
                             ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
-                            ExceptionManager.Instance.LogException(exception);
+                            ExceptionManager.Instance.LogToErrorFile(exception);
                         }
                     }
 
@@ -374,7 +374,7 @@ namespace CryptoBlock
                 {
                     ConsoleIOManager.Instance.LogNotice("Could not load data. File might be corrupt.");
                     ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
-                    ExceptionManager.Instance.LogException(exception);
+                    ExceptionManager.Instance.LogToErrorFile(exception);
                 }
             }
 
