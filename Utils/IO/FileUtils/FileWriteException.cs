@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CryptoBlock
 {
-    namespace Utils.IOUtils.FileIOUtils
+    namespace Utils.IO.FileUtils
     {
         /// <summary>
         /// thrown if an exception occurs while trying to perform a file write operation.
@@ -17,8 +13,9 @@ namespace CryptoBlock
 
             public FileWriteException(
                 string filePath,
-                string additionalDetails,
-                Exception innerException)
+                Exception innerException,
+                string additionalDetails = null
+                )
                 : base(formatExceptionMessage(filePath, additionalDetails), innerException)
             {
                 this.filePath = filePath;
@@ -40,6 +37,23 @@ namespace CryptoBlock
                 get { return filePath; }
             }
 
+            /// <summary>
+            /// thrown if an error occurs while trying to append text to file.
+            /// </summary>
+            public class FileAppendException : FileWriteException
+            {
+                public FileAppendException(string filePath, Exception innerException)
+                    : base(filePath, innerException, formatExceptionMessage())
+                {
+
+                }
+
+                private static string formatExceptionMessage()
+                {
+                    return "Could not append to file.";
+                }
+            }
+
             private static string formatExceptionMessage(string filePath, string additionalDetails = null)
             {
                 string lineAppendage = additionalDetails == null ?
@@ -47,7 +61,7 @@ namespace CryptoBlock
                     ": " + additionalDetails;
 
                 string message = string.Format(
-                    "An exception occurred while trying to write to file: '{0}'{1}",
+                    "An exception occurred while trying to write to file at location '{0}'{1}",
                     filePath,
                     lineAppendage);
 
@@ -62,7 +76,7 @@ namespace CryptoBlock
                 public BackupFileCreateException(
                     string filePath,
                     Exception innerException)
-                    : base(filePath, formatExceptionMessage(filePath), innerException)
+                    : base(filePath, innerException, formatExceptionMessage(filePath))
                 {
                     
                 }
@@ -88,7 +102,7 @@ namespace CryptoBlock
                     string filePath,
                     string backupFilePath,
                     Exception innerException)
-                    : base(filePath, formatExceptionMessage(backupFilePath), innerException)
+                    : base(filePath, innerException, formatExceptionMessage(backupFilePath))
                 {
                     this.backupFilePath = backupFilePath;
                 }
@@ -122,9 +136,9 @@ namespace CryptoBlock
                     string filePath,
                     string backupFilePath,
                     Exception innerException)
-                    : base(filePath, formatExceptionMessage(filePath, backupFilePath), innerException)
+                    : base(filePath, innerException, formatExceptionMessage(filePath, backupFilePath))
                 {
-
+                    this.backupFilePath = backupFilePath;
                 }
 
                 /// <summary>

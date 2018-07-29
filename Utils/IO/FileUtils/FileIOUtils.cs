@@ -1,9 +1,10 @@
 ﻿using System;
 using System.IO;
+using static CryptoBlock.Utils.IO.FileUtils.FileWriteException;
 
 namespace CryptoBlock
 {
-    namespace Utils.IOUtils.FileIOUtils
+    namespace Utils.IO.FileUtils
     {
         // note: still need exception handling for actions other than write text
         public static class FileIOUtils
@@ -11,11 +12,15 @@ namespace CryptoBlock
             private const string TEMP_FILE_EXTENSION = ".temp";
 
             /// <summary>
+            /// <para>
             /// synchronously writes <paramref name="content"/> to file at location <paramref name="filePath"/>.
             /// if file at <paramref name="filePath"/> does not exist,
             /// creates a new file containing <paramref name="content"/>.
-            /// else, if file with specified filePath already exists,
+            /// </para>
+            /// <para>
+            /// if file with specified filePath already exists,
             /// performs a safe overwrite under the condition that <paramref name="backupFilePath"/> is not null. 
+            /// </para>
             /// </summary>
             /// <remarks>
             /// if <paramref name="backupFilePath"/> != null, one of the following is guaranteed:
@@ -27,6 +32,17 @@ namespace CryptoBlock
             /// <param name="filePath">location of file to write text to</param>
             /// <param name="content">content to be written to <paramref name="filePath"/></param>
             /// <param name="backupFilePath">location of generated backup file</param>
+            /// <exception cref="BackupFileCreateException">
+            /// thrown if an exception occurred while trying to write <paramref name="content"/> to backup file.
+            /// </exception>
+            /// <exception cref="FileRenameException">
+            /// thrown if an exception occurred while trying to rename backup file
+            /// (containing <paramref name="content"/>)
+            /// or file at <paramref name="filePath"/>, containing old content.
+            /// </exception>
+            /// <exception cref="BackupFileDeleteException">
+            /// thrown if an exception occurred while trying to delete backup file.
+            /// </exception>
             public static void WriteTextToFile(string filePath, string content, string backupFilePath = null)
             {
                 if (File.Exists(filePath) && backupFilePath != null)
@@ -40,7 +56,7 @@ namespace CryptoBlock
                     }
                     catch(Exception exception)
                     {
-                        throw new FileWriteException.BackupFileCreateException(filePath, exception);
+                        throw new BackupFileCreateException(filePath, exception);
                     }
 
                     string tempOldFilePath = filePath + TEMP_FILE_EXTENSION;
@@ -57,7 +73,7 @@ namespace CryptoBlock
                     }
                     catch(Exception exception)
                     {
-                        throw new FileWriteException.FileRenameException(filePath, backupFilePath, exception);
+                        throw new FileRenameException(filePath, backupFilePath, exception);
                     }
 
                     try
@@ -67,10 +83,12 @@ namespace CryptoBlock
                     }
                     catch(Exception exception)
                     {
-                        throw new FileWriteException.BackupFileDeleteException(filePath, tempOldFilePath, exception);
+                        throw new BackupFileDeleteException(filePath, tempOldFilePath, exception);
                     }
                 }
-                else // file does not exist: create a new file
+                // file does not exist or backup file path not specified : create a new file / override existing
+                // file without backup
+                else
                 {
                     try
                     {
@@ -90,21 +108,42 @@ namespace CryptoBlock
             /// <returns>
             /// text read from file located at <paramref name="filePath"/>
             /// </returns>
+            /// <exception cref="FileReadException">
+            /// thrown if an exception occurred while trying to read text from file.
+            /// </exception>
             public static string ReadTextFromFile(string filePath)
             {
-                string text = File.ReadAllText(filePath);
+                try
+                {
+                    string text = File.ReadAllText(filePath);
 
-                return text;
+                    return text;
+                }
+                catch (Exception exception)
+                {
+                    throw new FileReadException(filePath, exception, null);
+                }
             }
 
             /// <summary>
             /// synchronously appends <paramref name="text"/> to end of file at location <paramref name="filePath"/>.
             /// </summary>
+            /// <seealso cref="File.AppendAllText(string, string)"/>
             /// <param name="filePath">location of file to append text to</param>
             /// <param name="text"></param>
+            /// <exception cref="FileAppendException">
+            /// thrown if an exception occurred while trying to append to file
+            /// </exception>
             public static void AppendTextToFile(string filePath, string text)
             {
-                File.AppendAllText(filePath, text);
+                try
+                {
+                    File.AppendAllText(filePath, text);
+                }
+                catch(Exception exception)
+                {
+                    throw new FileAppendException(filePath, exception);
+                }
             }
 
             /// <summary>

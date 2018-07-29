@@ -1,20 +1,25 @@
-﻿using CryptoBlock.Utils.IOUtils.FileIOUtils;
+﻿using CryptoBlock.Utils.IO.FileUtils;
 using System.IO;
-using static CryptoBlock.Utils.IOUtils.FileIOUtils.FileWriteException;
+using static CryptoBlock.Utils.IO.FileUtils.FileWriteException;
 
 namespace CryptoBlock
 {
     namespace IOManagement
     {
+        /// <summary>
+        /// handles file I/O.
+        /// </summary>
         public class FileIOManager
-        {         
+        {   
+            // file extensions
             private const string DATA_FILE_EXTENSION = ".json";
             private const string ERROR_LOG_FILE_EXTENSION = ".txt";
             private const string TEMP_FILE_EXTENSION = ".temp";
 
             private static FileIOManager instance = new FileIOManager();
 
-            private static int tempSaveFileId;
+            // unique session id for temporary write files
+            private static int tempWriteFileId;
 
             private FileIOManager()
             {
@@ -26,59 +31,161 @@ namespace CryptoBlock
                 get { return instance; }
             }
 
-            private static int TempSaveFileId
+            /// <summary>
+            /// returns a unique session id for a temporary write file.
+            /// </summary>
+            private static int TempWriteFileId
             {
-                get { return tempSaveFileId++; }
+                get { return tempWriteFileId++; }
             }
 
-            public void WriteTextToDataFile(string fileName, string content)
+            /// <summary>
+            /// synchronously writes <paramref name="content"/> to data file named <paramref name="dataFileName"/>. 
+            /// if file does not exist, creates a new file containing <paramref name="content"/>.
+            /// if file exists, overrwrites existing file safely.
+            /// </summary>
+            /// <seealso cref="writeTextToFile(string, string, string)"/>
+            /// <param name="dataFileName"></param>
+            /// <param name="content"></param>
+            /// <exception cref="BackupFileCreateException">
+            /// <seealso cref="writeTextToFile(string, string, string)"/>
+            /// </exception>
+            /// <exception cref="FileRenameException">
+            /// <seealso cref="writeTextToFile(string, string, string)"/>
+            /// </exception>
+            /// <exception cref="BackupFileDeleteException">
+            /// <seealso cref="writeTextToFile(string, string, string)"/>
+            /// </exception>
+            public void WriteTextToDataFile(string dataFileName, string content)
             {
-                string filePathWithoutExtension = getDataFilePathWithoutExtension(fileName);
+                string filePathWithoutExtension = getDataFilePathWithoutExtension(dataFileName);
                 writeTextToFile(filePathWithoutExtension, DATA_FILE_EXTENSION, content);
             }
 
-            public void AppendTextToErrorLogFile(string fileName, string text)
+            /// <summary>
+            /// synchronously appends <paramref name="text"/> to error log file named
+            /// <paramref name="errorLogFileName"/>.
+            /// </summary>
+            /// <seealso cref="getErrorLogFilePath(string)"/>
+            /// <seealso cref="FileIOUtils.AppendTextToFile(string, string)"/>
+            /// <param name="errorLogFileName"></param>
+            /// <param name="text"></param>
+            /// <exception cref="FileAppendException">
+            /// <seealso cref="FileIOUtils.AppendTextToFile(string, string)"/>
+            /// </exception>
+            public void AppendTextToErrorLogFile(string errorLogFileName, string text)
             {
-                string filePath = getErrorLogFilePath(fileName);
+                string filePath = getErrorLogFilePath(errorLogFileName);
                 FileIOUtils.AppendTextToFile(filePath, text);
             }
 
-            public bool DataFileExists(string fileName)
+            /// <summary>
+            /// returns whether data file named <paramref name="dataFileName"/> exists.
+            /// </summary>
+            /// <seealso cref="getDataFilePath(string)"/>
+            /// <seealso cref="File.Exists(string)"/>
+            /// <param name="dataFileName"></param>
+            /// <returns>
+            /// true if data file with <paramref name="dataFileName"/> exists,
+            /// else false
+            /// </returns>
+            public bool DataFileExists(string dataFileName)
             {
-                string filePath = getDataFilePath(fileName);
+                string filePath = getDataFilePath(dataFileName);
 
                 return File.Exists(filePath);
             }
 
-            public bool ErrorLogFileExists(string fileName)
+            /// <summary>
+            /// returns whether error log file named <paramref name="errorLogFileName"/> exists.
+            /// </summary>
+            /// <see cref="getErrorLogFilePath(string)"/>
+            /// <seealso cref="File.Exists(string)"/>
+            /// <param name="errorLogFileName"></param>
+            /// <returns>
+            /// true if error log file with <paramref name="errorLogFileName"/> exists,
+            /// else false.
+            /// </returns>
+            public bool ErrorLogFileExists(string errorLogFileName)
             {
-                string filePath = getErrorLogFilePath(fileName);
+                string filePath = getErrorLogFilePath(errorLogFileName);
 
                 return File.Exists(filePath);
             }
 
-            public string ReadTextFromDataFile(string fileName)
+            /// <summary>
+            /// returns textual content of data file at location <paramref name="dataFileName"/>.
+            /// </summary>
+            /// <seealso cref="FileIOUtils.ReadTextFromFile(string)"/>
+            /// <param name="dataFileName"></param>
+            /// <returns>
+            /// textual content of data file at location <paramref name="dataFileName"/>.
+            /// </returns>
+            /// <exception cref="FileReadException">
+            /// <seealso cref="FileIOUtils.ReadTextFromFile(string)"/>
+            /// </exception>
+            public string ReadTextFromDataFile(string dataFileName)
             {
-                string filePath = getDataFilePath(fileName);
+                string filePath = getDataFilePath(dataFileName);
 
                 return FileIOUtils.ReadTextFromFile(filePath);
             }
 
-            private string getDataFilePath(string fileName)
+            /// <summary>
+            /// returns file path for <paramref name="dataFileName"/>.
+            /// </summary>
+            /// <param name="dataFileName"></param>
+            /// <returns>
+            /// file path for <paramref name="dataFileName"/>
+            /// </returns>
+            private string getDataFilePath(string dataFileName)
             {
-                return getDataFilePathWithoutExtension(fileName) + DATA_FILE_EXTENSION;
+                return getDataFilePathWithoutExtension(dataFileName) + DATA_FILE_EXTENSION;
             }
 
-            private string getDataFilePathWithoutExtension(string fileName)
+            /// <summary>
+            /// returns file path, without extension, for <paramref name="dataFileName"/>.
+            /// </summary>
+            /// <param name="dataFileName"></param>
+            /// <returns>
+            /// file path, without extension, for <paramref name="dataFileName"/>
+            /// </returns>
+            private string getDataFilePathWithoutExtension(string dataFileName)
             {
-                return fileName;
+                return dataFileName;
             }
 
-            private string getErrorLogFilePath(string fileName)
+            /// <summary>
+            /// returns file path for <paramref name="errorLogFileName"/>.
+            /// </summary>
+            /// <param name="errorLogFileName"></param>
+            /// <returns>
+            /// file path for <paramref name="errorLogFileName"/>
+            /// </returns>
+            private string getErrorLogFilePath(string errorLogFileName)
             {
-                return fileName + ERROR_LOG_FILE_EXTENSION;
+                return errorLogFileName + ERROR_LOG_FILE_EXTENSION;
             }
 
+            /// <summary>
+            /// synchronously writes <paramref name="content"/> to file at location <paramref name="filePath"/>.
+            /// if file at <paramref name="filePath"/> does not exist,
+            /// creates a new file containing <paramref name="content"/>.
+            /// if file exists, overrwrites existing file safely.
+            /// </summary>
+            /// <seealso cref="FileIOUtils.WriteTextToFile(string, string, string)"/>
+            /// <param name="filePathWithoutExtension"></param>
+            /// <param name="fileExtension"></param>
+            /// <param name="content"></param>
+            /// <exception cref="BackupFileCreateException">
+            /// <seealso cref="FileIOUtils.WriteTextToFile(string, string, string)"/>
+            /// </exception>
+            /// <exception cref="FileRenameException">
+            /// <seealso cref="FileIOUtils.WriteTextToFile(string, string, string)"/>
+            /// </exception>
+            /// <exception cref="BackupFileDeleteException">
+            /// <seealso cref="FileIOUtils.WriteTextToFile(string, string, string)"/>
+            /// </exception>
             private void writeTextToFile(string filePathWithoutExtension, string fileExtension, string content)
             {
                 string filePath = filePathWithoutExtension + fileExtension;
@@ -107,14 +214,21 @@ namespace CryptoBlock
                     }
                     else
                     {
-                        throw fileWriteException;
+                        throw fileWriteException; // throw original exception
                     }
                 }
             }
 
+            /// <summary>
+            /// returns file path for back file at <paramref name="filePathWithoutExtension"/>.
+            /// </summary>
+            /// <param name="filePathWithoutExtension"></param>
+            /// <returns>
+            /// file path for back file at <paramref name="filePathWithoutExtension"/>
+            /// </returns>
             private string getBackupFilePath(string filePathWithoutExtension)
             {
-                return filePathWithoutExtension + TempSaveFileId + TEMP_FILE_EXTENSION;
+                return filePathWithoutExtension + TempWriteFileId + TEMP_FILE_EXTENSION;
             }
         }
     }

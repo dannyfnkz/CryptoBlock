@@ -23,23 +23,39 @@ namespace CryptoBlock
             }
 
             /// <summary>
-            /// logs a notice message to console.
+            /// logs notice message to console, replacing each format item in <paramref name="format"/> with 
+            /// the string representation of the corresponding object in <paramref name="args"/>.
             /// </summary>
-            /// <exception cref="ObjectDisposedException"><see cref="ConsoleIOHandler.QueueOutput(string, bool)"/>
+            /// <param name="flushOutputBuffer"></param>
+            /// <param name="format">a composite format string</param>
+            /// <param name="args">object array containing zero or more objects to format</param>
+            /// <exception cref="ArgumentNullException">
+            /// <seealso cref="string.Format(string, object[])"/>
             /// </exception>
+            /// <exception cref="FormatException">
+            /// <seealso cref="string.Format(string, object[])"/>
+            /// </exception>
+            /// <exception cref="ObjectDisposedException">
+            /// <seealso cref="LogNotice(string, bool)"/>
+            /// </exception>
+            public void LogNoticeFormat(bool flushOutputBuffer, string format, params object[] args)
+            {
+                string message = string.Format(format, args);
+                LogNotice(message, flushOutputBuffer);
+            }
+
+            /// <summary>
+            /// logs a notice <paramref name="message"/> to console.
+            /// </summary>
             /// <seealso cref="ConsoleIOHandler.QueueOutput(string, bool)"/> 
             /// <param name="message"></param>
             /// <param name="flushOutputBuffer"></param>
+            /// <exception cref="ObjectDisposedException"><see cref="ConsoleIOHandler.QueueOutput(string, bool)"/>
+            /// </exception>
             public void LogNotice(string message, bool flushOutputBuffer = false)
             {
                 string outputString = getLogMessage(message);
                 QueueOutput(outputString, flushOutputBuffer);
-            }
-
-            public void LogNoticeFormat(bool flushOutputBuffer, string str, params object[] args)
-            {
-                string message = string.Format(str, args);
-                LogNotice(message, flushOutputBuffer);
             }
 
             /// <summary>
@@ -56,39 +72,73 @@ namespace CryptoBlock
                 QueueOutput(outputString, flushOutputBuffer);
             }
 
-            public void LogErrorFormat(bool flushOutputBuffer, string str, params object[] args)
+            /// <summary>
+            /// logs error message to console, replacing each format item in <paramref name="format"/> with 
+            /// the string representation of the corresponding object in <paramref name="args"/>.
+            /// </summary>
+            /// <param name="flushOutputBuffer"></param>
+            /// <param name="format">a composite format string</param>
+            /// <param name="args">object array containing zero or more objects to format</param>
+            /// <exception cref="ArgumentNullException">
+            /// <seealso cref="string.Format(string, object[])"/>
+            /// </exception>
+            /// <exception cref="FormatException">
+            /// <seealso cref="string.Format(string, object[])"/>
+            /// </exception>
+            /// <exception cref="ObjectDisposedException">
+            /// <seealso cref="LogError(string, bool)"/>
+            /// </exception> 
+            public void LogErrorFormat(bool flushOutputBuffer, string format, params object[] args)
             {
-                string message = string.Format(str, args);
+                string message = string.Format(format, args);
                 LogError(message, flushOutputBuffer);
             }
 
             /// <summary>
-            /// logs a data message to console.
+            /// prints <paramref name="data"/> to console.
             /// </summary>
-            /// <exception cref="ObjectDisposedException"><see cref="ConsoleIOHandler.QueueOutput(string, bool)"/>
-            /// </exception>
             /// <seealso cref="ConsoleIOHandler.QueueOutput(string, bool)"/> 
             /// <param name="message"></param>
             /// <param name="flushOutputBuffer"></param>
-            public void PrintData(string message, bool flushOutputBuffer = false)
+            /// <exception cref="ObjectDisposedException">
+            /// <see cref="ConsoleIOHandler.QueueOutput(string, bool)"/>
+            /// </exception> 
+            /// <exception cref="ObjectDisposedException">
+            /// <seealso cref="QueueOutput(string,bool)"/>
+            /// </exception>
+            public void PrintData(string data, bool flushOutputBuffer = false)
             {
-                string outputString = message + Environment.NewLine;
+                string outputString = data + Environment.NewLine;
                 QueueOutput(outputString, flushOutputBuffer);
             }
 
             /// <summary>
             /// prints a new line char sequence to Console.
             /// </summary>
-            /// <exception cref="ObjectDisposedException"><see cref="ConsoleIOHandler.QueueOutput(string, bool)"/>
-            /// </exception>
             /// <seealso cref="ConsoleIOHandler.QueueOutput(string, bool)"/> 
             /// <param name="flushOutputBuffer"></param>
+            /// <exception cref="ObjectDisposedException">
+            /// <see cref="ConsoleIOHandler.QueueOutput(string, bool)"/>
+            /// </exception>
             public void PrintNewLine(bool flushOutputBuffer = false)
             {
                 string outputString = Environment.NewLine;
                 QueueOutput(outputString, flushOutputBuffer);
             }
 
+            /// <summary>
+            /// synchroniously displays a confirmation dialog with <paramref name="promptMessage"/>, allowing user
+            /// to choose either 'yes' or 'no', and returns user choice.
+            /// </summary>
+            /// <seealso cref="ConsoleIOHandler.ReadLine()"/>
+            /// <param name="promptMessage"></param>
+            /// <returns>
+            /// true if user chose 'yes',
+            /// else false
+            /// </returns>
+            /// <exception cref="ObjectDisposedException">
+            /// <seealso cref="LogNotice(string, bool)"/>
+            /// </exception>
             public bool ShowConfirmationDialog(string promptMessage)
             {
                 bool userChoice;

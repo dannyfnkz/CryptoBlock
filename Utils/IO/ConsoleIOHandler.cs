@@ -455,8 +455,8 @@ namespace CryptoBlock
             }
 
             /// <summary>
-            /// inserts <paramref name="str"/>to the output buffer if <see cref="registerOutput"/>is true.
-            /// if <paramref name="requestFlush"/>is true, requests output buffer flush after inserting
+            /// inserts <paramref name="str"/> to the output buffer if <see cref="registerOutput"/> is true.
+            /// if <paramref name="requestFlush"/> is true, requests output buffer flush after inserting 
             /// <paramref name="str"/>.
             /// </summary>
             /// <exception cref="ObjectDisposedException"><see cref="assertNotDisposed()"/></exception>
