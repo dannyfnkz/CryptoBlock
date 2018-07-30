@@ -29,6 +29,23 @@ namespace CryptoBlock
             /// <summary>
             /// thrown if an exception occurs while trying to deserialize a JSON string.
             /// </summary>
+            public class JsonSerializationException : JsonException
+            {
+                public JsonSerializationException(Exception innerException)
+                    : base(formatExceptionMessage(), innerException)
+                {
+
+                }
+
+                private static string formatExceptionMessage()
+                {
+                    return "An exception occurred while trying to serialize JSON object.";
+                }
+            }
+
+            /// <summary>
+            /// thrown if an exception occurs while trying to deserialize a JSON string.
+            /// </summary>
             public class JsonDeserializationException : JsonException
             {
                 public JsonDeserializationException(Exception innerException)
@@ -70,9 +87,36 @@ namespace CryptoBlock
             }
 
             /// <summary>
+            /// serializess <paramref name="obj"/> into a JSON string.
+            /// </summary>
+            /// <seealso cref="JsonConvert.SerializeObject(object)"/>
+            /// <param name="obj"></param>
+            /// <returns>
+            /// JSON string serialization of <paramref name="obj"/>
+            /// </returns>
+            /// <exception cref="JsonSerializationException">
+            /// thrown if serialization was unsuccessful
+            /// </exception>
+            public static string SerializeObject(object obj)
+            {
+                try
+                {
+                    // try serializing obj into a json string
+                    string jsonString = JsonConvert.SerializeObject(obj);
+
+                    return jsonString;
+                }
+                catch(JsonException jsonException) // serialization unsuccessful
+                {
+                    throw new JsonSerializationException(jsonException);
+                }
+            }
+
+            /// <summary>
             /// deserializes <paramref name="jsonObjectString"/> into an object of type <typeparamref name="T"/>,
             /// and returns said object. 
             /// </summary>
+            /// <seealso cref="JsonConvert.DeserializeObject{T}(string)"/>
             /// <typeparam name="T"></typeparam>
             /// <param name="jsonObjectString">
             /// a string in JSON format representing an object of type <typeparamref name="T"/>.
@@ -80,6 +124,9 @@ namespace CryptoBlock
             /// <returns>
             /// object of type <typeparamref name="T"/> deserialized from <paramref name="jsonObjectString"/>
             /// </returns>
+            /// <exception cref="JsonDeserializationException">
+            /// thrown if deserialization was unsuccessful
+            /// </exception>
             public static T DeserializeObject<T>(string jsonObjectString)
             {
                 try
@@ -89,7 +136,7 @@ namespace CryptoBlock
 
                     return deserializeObject;
                 }
-                catch(JsonException jsonException) // deserialization not successful
+                catch(JsonException jsonException) // deserialization unsuccessful
                 {
                     throw new JsonDeserializationException(jsonException);
                 }
