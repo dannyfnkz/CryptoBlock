@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 
 namespace CryptoBlock
@@ -8,10 +9,45 @@ namespace CryptoBlock
         public static class JsonUtils
         {
             /// <summary>
+            /// thrown if an error occurs while handling a JSON operation.
+            /// </summary>
+            public class JsonException : Exception
+            {
+                public JsonException(string message, Exception innerException)
+                    : base(message, innerException)
+                {
+
+                }
+
+                public JsonException(string message)
+                    : base(message)
+                {
+
+                }
+            }
+
+            /// <summary>
+            /// thrown if an exception occurs while trying to deserialize a JSON string.
+            /// </summary>
+            public class JsonDeserializationException : JsonException
+            {
+                public JsonDeserializationException(Exception innerException)
+                    : base(formatExceptionMessage(), innerException)
+                {
+
+                }
+
+                private static string formatExceptionMessage()
+                {
+                    return "An exception occurred while trying to deserialize JSON object.";
+                }
+            }
+
+            /// <summary>
             /// thrown if a requested JSON property does not exist in specified JToken, or has a different
             /// type than expected.
             /// </summary>
-            public class JsonPropertyParseException : Exception
+            public class JsonPropertyParseException : JsonException
             {
                 public JsonPropertyParseException(string propertyName)
                     : base(formatExceptionMessage(propertyName))
@@ -30,6 +66,32 @@ namespace CryptoBlock
                     return string.Format(
                         "JSON Property does not exist in JToken or had an unexpected type: {0}.",
                         propertyName);
+                }
+            }
+
+            /// <summary>
+            /// deserializes <paramref name="jsonObjectString"/> into an object of type <typeparamref name="T"/>,
+            /// and returns said object. 
+            /// </summary>
+            /// <typeparam name="T"></typeparam>
+            /// <param name="jsonObjectString">
+            /// a string in JSON format representing an object of type <typeparamref name="T"/>.
+            /// </param>
+            /// <returns>
+            /// object of type <typeparamref name="T"/> deserialized from <paramref name="jsonObjectString"/>
+            /// </returns>
+            public static T DeserializeObject<T>(string jsonObjectString)
+            {
+                try
+                {
+                    // try deserializing jsonObjectString into an object of type T
+                    T deserializeObject = JsonConvert.DeserializeObject<T>(jsonObjectString);
+
+                    return deserializeObject;
+                }
+                catch(JsonException jsonException) // deserialization not successful
+                {
+                    throw new JsonDeserializationException(jsonException);
                 }
             }
 
