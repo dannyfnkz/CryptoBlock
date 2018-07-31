@@ -7,8 +7,14 @@ namespace CryptoBlock
 {
     namespace SystemManagement
     {
+        /// <summary>
+        /// handles executing system commands.
+        /// </summary>
         public class SystemCommandExecutor : CommandExecutor
         {
+            /// <summary>
+            /// represents an executable system command.
+            /// </summary>
             private abstract class SystemCommand : Command
             {
                 internal SystemCommand(string prefix, int minNumberOfArguments, int maxNumberOfArguments)
@@ -18,6 +24,9 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// represents an executable status command.
+            /// </summary>
             private abstract class StatusCommand : Command
             {
                 private const int MIN_NUMBER_OF_ARGUMENTS = 0;
@@ -25,28 +34,51 @@ namespace CryptoBlock
 
                 private const string PREFIX = "status";
 
-                internal StatusCommand(string subPrefix)
-                    : base(formatPrefix(subPrefix), MIN_NUMBER_OF_ARGUMENTS, MAX_NUMBER_OF_ARGUMENTS)
+                internal StatusCommand(string inheritingCommandPrefix)
+                    : base(formatPrefix(inheritingCommandPrefix), MIN_NUMBER_OF_ARGUMENTS, MAX_NUMBER_OF_ARGUMENTS)
                 {
 
                 }
 
-                private static string formatPrefix(string subPrefix)
+                /// <summary>
+                /// returns prefix formulated by concatenating <paramref name="inheritingCommandPrefix"/> to
+                /// <see cref="Command.Prefix"/>.
+                /// </summary>
+                /// <param name="inheritingCommandPrefix"></param>
+                /// <returns>
+                /// prefix formulated by concatenating <paramref name="inheritingCommandPrefix"/> to
+                /// <see cref="Command.Prefix"/>.
+                /// </returns>
+                private static string formatPrefix(string inheritingCommandPrefix)
                 {
-                    return PREFIX + " " + subPrefix;
+                    return PREFIX + " " + inheritingCommandPrefix;
                 }
             }
 
-            private class ConnectivityStatusCommand : StatusCommand
+            /// <summary>
+            /// <para>
+            /// prints internet connectivity status.
+            /// </para>
+            /// <para>
+            /// syntax: status connection
+            /// </para>
+            /// </summary>
+            private class InternetConnectivityStatusCommand : StatusCommand
             {
+                // command sub-prefix
                 private const string PREFIX = "connection";
 
-                internal ConnectivityStatusCommand()
+                internal InternetConnectivityStatusCommand()
                     : base(PREFIX)
                 {
 
                 }
 
+                /// <summary>
+                /// prints internet connectivity status
+                /// </summary>
+                /// <seealso cref="InternetUtils.IsConnectedToInternet"/>
+                /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
                     // handle case where number of arguments is invalid
@@ -75,7 +107,7 @@ namespace CryptoBlock
             {
                 // add associations between commands and their prefixes
                 AddCommandPrefixToCommandPair(
-                    new ConnectivityStatusCommand());
+                    new InternetConnectivityStatusCommand());
             }
 
             public override string CommandType
