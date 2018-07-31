@@ -238,8 +238,7 @@ namespace CryptoBlock
             }
 
             /// <summary>
-            /// adds a new <see cref="Row"/> with <paramref name="portfolioEntry"/>'s data to
-            /// <see cref="PortfolioEntryTable"/>.
+            /// adds a new <see cref="Row"/> with <paramref name="portfolioEntry"/>'s data to table.
             /// </summary>
             /// <seealso cref="PropertyTable.AddRow(PropertyRow)"/>
             /// <param name="portfolioEntry"></param>
@@ -253,11 +252,11 @@ namespace CryptoBlock
 
             /// <summary>
             /// <para>
-            /// removes <see cref="Row"/> with <paramref name="portfolioEntry"/>'s data from 
+            /// removes <see cref="Row"/> corresponding to <paramref name="portfolioEntry"/> from 
             /// table, if it exists there.
             /// </para>
             /// <para>
-            /// returns whether <see cref="Row"/> with <paramref name="portfolioEntry"/>'s data existed in table
+            /// returns whether <see cref="Row"/> corresponding to <paramref name="portfolioEntry"/> existed in table
             /// prior to being removed.
             /// </para>
             /// </summary>

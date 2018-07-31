@@ -3,11 +3,15 @@ using CryptoBlock.TableDisplay;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static CryptoBlock.TableDisplay.PropertyTable;
 
 namespace CryptoBlock
 {
     namespace ServerDataManagement
     {
+        /// <summary>
+        /// handles table display functionality for <see cref="CoinData"/> properties. 
+        /// </summary>
         public static class CoinDataDisplay
         {
             public enum eDisplayProperty
@@ -17,10 +21,12 @@ namespace CryptoBlock
                 Symbol
             }
 
+            // common Type of CoinData column properties
             public static readonly Type COLUMN_PROPERTY_TYPE = typeof(CoinData);
 
-            private static readonly Dictionary<eDisplayProperty, PropertyTable.Property>
-                displayPropertyToProperty = new Dictionary<eDisplayProperty, PropertyTable.Property>
+            // eDisplayProperty to Property mapping
+            private static readonly Dictionary<eDisplayProperty, Property>
+                displayPropertyToProperty = new Dictionary<eDisplayProperty, Property>
                 {
                     {
                         eDisplayProperty.Id,
@@ -42,11 +48,13 @@ namespace CryptoBlock
                     }
                 };
 
+            // array containing all properties associated with CoinData 
             private static readonly PropertyTable.Property[] properties =
                 displayPropertyToProperty.Values.ToArray();
 
-            private static Dictionary<eDisplayProperty, PropertyTable.PropertyColumn>
-                displayPropertyToPropertyColumn = new Dictionary<eDisplayProperty, PropertyTable.PropertyColumn>
+            // eDisplayProperty to PropertyColumn mapping 
+            private static Dictionary<eDisplayProperty, PropertyColumn>
+                displayPropertyToPropertyColumn = new Dictionary<eDisplayProperty, PropertyColumn>
                 {
                     {
                         eDisplayProperty.Id,
@@ -71,18 +79,34 @@ namespace CryptoBlock
                     }
                 };
 
-            public static PropertyTable.Property[] Properties
+            /// <summary>
+            ///  array containing all <see cref="CoinData"/> properties.
+            /// </summary>
+            public static Property[] Properties
             {
                 get { return properties; }
             }
 
-            public static PropertyTable.Property GetProperty(eDisplayProperty displayProperty)
+            /// <summary>
+            /// returns <see cref="Property"/> corresponding to <paramref name="displayProperty"/>.
+            /// </summary>
+            /// <param name="displayProperty"></param>
+            /// <returns>
+            /// <see cref="Property"/> corresponding to <paramref name="displayProperty"/>
+            /// </returns>
+            public static Property GetProperty(eDisplayProperty displayProperty)
             {
                 return displayPropertyToProperty[displayProperty];
             }
 
-
-            public static PropertyTable.PropertyColumn GetPropertyColumn(eDisplayProperty displayProperty)
+            /// <summary>
+            /// returns <see cref="PropertyColumn"/> corresponding to <paramref name="displayProperty"/>.
+            /// </summary>
+            /// <param name="displayProperty"></param>
+            /// <returns>
+            /// <see cref="PropertyColumn"/> corresponding to <paramref name="displayProperty"/>
+            /// </returns>
+            public static PropertyColumn GetPropertyColumn(eDisplayProperty displayProperty)
             {
                 return displayPropertyToPropertyColumn[displayProperty];
             }

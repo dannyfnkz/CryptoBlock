@@ -39,7 +39,8 @@ namespace CryptoBlock
             }
 
             /// <summary>
-            /// thrown if an operation is performed before <see cref="PortfolioManager"/> is initialized.
+            /// thrown if an operation on <see cref="PortfolioManager"/> is attempted to be performed before
+            /// manager has been initialized.
             /// </summary>
             public class ManagerNotInitializedException : PortfolioManagerException
             {

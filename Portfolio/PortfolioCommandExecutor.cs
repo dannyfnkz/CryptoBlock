@@ -134,9 +134,9 @@ namespace CryptoBlock
                             ConsoleIOManager.Instance.LogError(errorMessage);
                         }
                     }
-                    catch (CoinListingManager.NoSuchCoinNameOrSymbolException noSuchCoinNameOrSymbolException)
+                    catch (CoinListingManager.CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                     {
-                        ConsoleIOManager.Instance.LogError(noSuchCoinNameOrSymbolException.Message);
+                        ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
                     }
                 }
             }
@@ -195,10 +195,10 @@ namespace CryptoBlock
                             "'{0}' successfully added to portfolio.",                       
                             coinName);
                     }
-                    catch (NoSuchCoinNameOrSymbolException noSuchCoinNameOrSymbolException)
+                    catch (CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                     {
                         // coin with specified name / symbol not found in listing repository
-                        ConsoleIOManager.Instance.LogError(noSuchCoinNameOrSymbolException.Message);
+                        ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
                     }
                     catch (CoinAlreadyInPortfolioException coinAlreadyInPortfolioException)
                     {
@@ -268,10 +268,10 @@ namespace CryptoBlock
                             "'{0}' successfully removed from portfolio.",                          
                             coinName);
                     }
-                    catch (NoSuchCoinNameOrSymbolException noSuchCoinNameOrSymbolException)
+                    catch (CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                     {
                         // coin with specified name / symbol not found in listing repository
-                        ConsoleIOManager.Instance.LogError(noSuchCoinNameOrSymbolException.Message);
+                        ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
                     }
                     catch (CoinNotInPortfolioException coinNotInPortfolioException)
                     {
@@ -405,10 +405,10 @@ namespace CryptoBlock
                             coinName,
                             buyPricePerCoin);
                     }
-                    catch (NoSuchCoinNameOrSymbolException noSuchCoinNameOrSymbolException)
+                    catch (CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                     {
                         // coin with specified name / symbol not found in listing repository
-                        ConsoleIOManager.Instance.LogError(noSuchCoinNameOrSymbolException.Message);
+                        ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
                     }
                 }
             }
@@ -526,10 +526,10 @@ namespace CryptoBlock
                             coinName,
                             sellPrice);
                     }
-                    catch (NoSuchCoinNameOrSymbolException noSuchCoinNameOrSymbolException)
+                    catch (CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                     {
                         // coin with specified name / symbol not found in listing repository
-                        ConsoleIOManager.Instance.LogError(noSuchCoinNameOrSymbolException.Message);
+                        ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
                     }
                 }
             }

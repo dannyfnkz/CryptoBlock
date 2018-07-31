@@ -608,7 +608,7 @@ namespace CryptoBlock
             /// removes <paramref name="propertyRow"/> from <see cref="PropertyTable"/>'s row list if it exists there.
             /// </para>
             /// <para>
-            /// returns whether <paramref name="propertyRow"/> existed in <see cref="PropertyTable"/>'s row list
+            /// returns whether <paramref name="propertyRow"/> existed in table
             /// prior to being removed.
             /// </para>
             /// </summary>
@@ -665,9 +665,12 @@ namespace CryptoBlock
             }
 
             /// <summary>
-            /// 
+            /// adds <paramref name="propertyColumns"/> to table column list.
             /// </summary>
             /// <param name="propertyColumns"></param>
+            /// <exception cref="OperationRequiresEmptyTableException">
+            /// <seealso cref="Table.AddColumnRange{T}(IList{T})"/>
+            /// </exception>
             public void AddColumnRange(IList<PropertyColumn> propertyColumns)
             {
                 table.AddColumnRange(propertyColumns);

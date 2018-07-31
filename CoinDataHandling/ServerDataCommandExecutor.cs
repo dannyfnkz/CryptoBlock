@@ -2,14 +2,19 @@
 using CryptoBlock.IOManagement;
 using CryptoBlock.Utils;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace CryptoBlock
 {
     namespace ServerDataManagement
     {
+        /// <summary>
+        /// handles executing server data commands.
+        /// </summary>
         public class ServerDataCommandExecutor : CommandExecutor
         {
+            /// <summary>
+            /// represents an executable server data command.
+            /// </summary>
             private abstract class ServerDataCommand : Command
             {
                 private const int MIN_NUMBER_OF_ARGUMENTS = 1;
@@ -22,6 +27,14 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// <para>
+            /// prints <see cref="CoinListing"/> data in tabular format.
+            /// </para>
+            /// <para>
+            /// syntax: listing [coin0 name/symbol] ?[coin1 name/symbol] ?[coin2 name/symbol] ...
+            /// </para>
+            /// </summary>
             private class CoinListingCommand : ServerDataCommand
             {
                 private const string PREFIX = "listing";
@@ -32,6 +45,13 @@ namespace CryptoBlock
 
                 }
 
+                /// <summary>
+                /// prints <see cref="CoinListing"/> data corresponding to coin name / symbols
+                /// contained in <paramref name="commandArguments"/> in tabular format.
+                /// </summary>
+                /// <seealso cref="CoinListingManager.FetchCoinIds(string[])"/>
+                /// <seealso cref="CoinListingManager.GetCoinListingTableDisplayString(int[])"/>
+                /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
                     // handle case where number of arguments is invalid
@@ -50,16 +70,24 @@ namespace CryptoBlock
                         // print coin listing display table containing coin listings corresponding
                         // to fetched coin ids
                         string coinListingTableString =
-                            CoinListingManager.Instance.GetCoinListingDisplayTableString(coinIds);
+                            CoinListingManager.Instance.GetCoinListingTableDisplayString(coinIds);
                         ConsoleIOManager.Instance.PrintData(coinListingTableString);
                     }
-                    catch (CoinListingManager.NoSuchCoinNameOrSymbolException noSuchCoinNameOrSymbolException)
+                    catch (CoinListingManager.CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                     {
-                        ConsoleIOManager.Instance.LogError(noSuchCoinNameOrSymbolException.Message);
+                        ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
                     }
                 }
             }
 
+            /// <summary>
+            /// <para>
+            /// prints <see cref="CoinTicker"/> data in tabular format.
+            /// </para>
+            /// <para>
+            /// syntax: ticker [coin0 name/symbol] ?[coin1 name/symbol] ?[coin2 name/symbol] ...
+            /// </para>
+            /// </summary>
             private class CoinTickerCommmand : ServerDataCommand
             {
                 private const string PREFIX = "ticker";
@@ -70,9 +98,16 @@ namespace CryptoBlock
 
                 }
 
+                /// <summary>
+                /// prints <see cref="CoinTicker"/> data corresponding to coin name / symbols
+                /// contained in <paramref name="commandArguments"/> in tabular format.
+                /// </summary>
+                /// <seealso cref="CoinListingManager.FetchCoinIds(string[])"/>
+                /// <seealso cref="CoinTickerManager.GetCoinTickerDisplayTableString(int[])"/>
+                /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
-                    // handle where number of arguments is invalid
+                    // handle case where number of arguments is invalid
                     HandleWrongNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
 
                     if (invalidNumberOfArguments)
@@ -119,39 +154,17 @@ namespace CryptoBlock
                         if (coinNamesWithoutInitalizedTicker.Count > 0)
                         {
                             string errorMessage = StringUtils.Append(
-                                "Ticker Data for the following coin(s) was not yet initialized: ",
+                                "Coin ticker data for the following coin(s) was not yet initialized: ",
                                 ", ",
                                 coinNamesWithoutInitalizedTicker.ToArray())
                                 + ".";
                             ConsoleIOManager.Instance.LogError(errorMessage);
                         }
                     }
-                    catch (CoinListingManager.NoSuchCoinNameOrSymbolException noSuchCoinNameOrSymbolException)
+                    catch (CoinListingManager.CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                     {
-                        ConsoleIOManager.Instance.LogError(noSuchCoinNameOrSymbolException.Message);
+                        ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
                     }
-
-                    //// coin id associated with given coin name / symbol does not exist in ticker repository
-                    //catch (CoinTickerManager.CoinIdNotFoundException coinIdNotFoundException)
-                    //{
-                    //    // coin ticker repository not initialized yet
-                    //    if (!CoinTickerManager.Instance.RepositoryInitialized)
-                    //    {
-                    //        ConsoleIOManager.Instance.LogError("Coin ticker repository is not fully" +
-                    //            " initialized yet. Please try again a bit later.");
-                    //    }
-                    //    else
-                    //    {
-                    //        // coin ticker repository initialized and coin id not found - 
-                    //        // this means an error occurred during ticker repository update thread run
-                    //        // while trying to fetch ticker data for the coin id associated with the specified
-                    //        // name / symbol
-                    //        ConsoleIOManager.Instance.LogError("An unexpected error has occurred.");
-                    //        ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
-
-                    //        ExceptionManager.Instance.LogException(coinIdNotFoundException);
-                    //    }
-                    //}
                 }
             }
 
@@ -164,6 +177,9 @@ namespace CryptoBlock
                 AddCommandPrefixToCommandPair(new CoinListingCommand());
             }
 
+            /// <summary>
+            /// returns <see cref="ServerDataCommandExecutor"/> command type.
+            /// </summary>
             public override string CommandType
             {
                 get { return COMMAND_TYPE; }

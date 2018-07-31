@@ -5,11 +5,15 @@ using CryptoBlock.Utils.CollectionUtils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static CryptoBlock.TableDisplay.PropertyTable;
 
 namespace CryptoBlock
 {
     namespace ServerDataManagement
     {
+        /// <summary>
+        /// represents a table displaying <see cref="CoinTicker"/> data.
+        /// </summary>
         public class CoinTickerTable
         {
             public enum eDisplayProperty
@@ -20,34 +24,38 @@ namespace CryptoBlock
                 PricePercentChange24hUsd
             }
 
-            private static readonly PropertyTable.Property[] COIN_DATA_PROPERTIES =
-                new PropertyTable.Property[]
+            // Properties associated with CoinData
+            private static readonly Property[] COIN_DATA_PROPERTIES =
+                new Property[]
             {
                 CoinDataDisplay.GetProperty(CoinDataDisplay.eDisplayProperty.Name),
                 CoinDataDisplay.GetProperty(CoinDataDisplay.eDisplayProperty.Symbol)
             };
 
-            private static readonly PropertyTable.PropertyColumn[] COIN_DATA_PROPERTY_COLUMNS =
-                new PropertyTable.PropertyColumn[]
+            // PropertyColumns associated with CoinData
+            private static readonly PropertyColumn[] COIN_DATA_PROPERTY_COLUMNS =
+                new PropertyColumn[]
             {
                 CoinDataDisplay.GetPropertyColumn(CoinDataDisplay.eDisplayProperty.Name),
                 CoinDataDisplay.GetPropertyColumn(CoinDataDisplay.eDisplayProperty.Symbol)
             };
 
+            // type of CoinTicker class
             private static readonly Type COIN_TICKER_PROPERTY_TYPE = typeof(CoinTicker);
 
-            private static readonly Dictionary<eDisplayProperty, PropertyTable.Property>
-                displayPropertyToProperty = new Dictionary<eDisplayProperty, PropertyTable.Property>
+            // eDisplayProperty to Property mapping
+            private static readonly Dictionary<eDisplayProperty, Property>
+                displayPropertyToProperty = new Dictionary<eDisplayProperty, Property>
                 {
                     {
                         eDisplayProperty.CirculatingSupply,
-                        new PropertyTable.Property(
+                        new Property(
                             COIN_TICKER_PROPERTY_TYPE,
                             "CirculatingSupply")
                     },
                     {
                         eDisplayProperty.PriceUsd,
-                        new PropertyTable.Property(
+                        new Property(
                             COIN_TICKER_PROPERTY_TYPE,
                             "PriceUsd")
                     },
@@ -59,35 +67,37 @@ namespace CryptoBlock
                     },
                     {
                         eDisplayProperty.PricePercentChange24hUsd,
-                        new PropertyTable.Property(
+                        new Property(
                             COIN_TICKER_PROPERTY_TYPE,
                             "PricePercentChange24hUsd")
                     },
                 };
 
-            private static readonly PropertyTable.Property[] coinTickerProperties = 
+            // array of Properties associated with CoinTicker
+            private static readonly Property[] coinTickerProperties = 
                 displayPropertyToProperty.Values.ToArray();
 
-            private static readonly Dictionary<eDisplayProperty, PropertyTable.PropertyColumn>
+            // eDisplayProperty to PropertyColumn mapping
+            private static readonly Dictionary<eDisplayProperty, PropertyColumn>
                 displayPropertyToPropertyColumn = new Dictionary<eDisplayProperty, PropertyTable.PropertyColumn>
                 {
                     {
                         eDisplayProperty.CirculatingSupply,
-                        new PropertyTable.PropertyColumn(
+                        new PropertyColumn(
                             "Circ. Supply",
                             15,
                             displayPropertyToProperty[eDisplayProperty.CirculatingSupply])
                     },
                     {
                         eDisplayProperty.PriceUsd,
-                        new PropertyTable.PropertyColumn(
+                        new PropertyColumn(
                             "Price USD",
                             14,
                             displayPropertyToProperty[eDisplayProperty.PriceUsd])
                     },
                     {
                         eDisplayProperty.Volume24hUsd,
-                        new PropertyTable.PropertyColumn(
+                        new PropertyColumn(
                             "Volume 24h (USD)",
                             18,
                             displayPropertyToProperty[eDisplayProperty.Volume24hUsd])
@@ -101,6 +111,7 @@ namespace CryptoBlock
                     }
                 };
 
+            // underlying PropertyTable
             private PropertyTable propertyTable = new PropertyTable();
 
             public CoinTickerTable()
@@ -109,35 +120,77 @@ namespace CryptoBlock
                 initTableColumns();
             }
 
-            public void AddCoinTickerRow(CoinTicker coinTicker)
+            /// <summary>
+            /// adds a new <see cref="Row"/> with <paramref name="coinTicker"/>'s data to table.
+            /// </summary>
+            /// <seealso cref="PropertyTable.AddRow(PropertyRow)"/>
+            /// <param name="coinTicker"></param>
+            public void AddRow(CoinTicker coinTicker)
             {
                 PropertyTable.PropertyRow propertyRow = getPropertyRow(coinTicker);
 
                 propertyTable.AddRow(propertyRow);
             }
 
-            public bool RemoveCoinListingRow(CoinTicker coinTicker)
+            /// <para>
+            /// removes <see cref="Row"/> corresponding to <paramref name="coinTicker"/> from 
+            /// table, if it exists there.
+            /// </para>
+            /// <para>
+            /// returns whether <see cref="Row"/> corresponding to <paramref name="coinTicker"/> existed in table
+            /// prior to being removed.
+            /// </para>
+            /// <param name="coinTicker"></param>
+            /// <returns>
+            /// true if <see cref="Row"/> corresponding to <paramref name="coinTicker"/> existed in table
+            /// prior to being removed,
+            /// else false
+            /// </returns>
+            public bool RemoveRow(CoinTicker coinTicker)
             {
-                PropertyTable.PropertyRow propertyRow = getPropertyRow(coinTicker);
+                PropertyRow propertyRow = getPropertyRow(coinTicker);
 
                 return propertyTable.RemoveRow(propertyRow);
             }
 
+            /// <summary>
+            /// returns a string representation of the table.
+            /// </summary>
+            /// <returns>
+            /// string representation of the table
+            /// </returns>
             public string GetTableDisplayString()
             {
                 return propertyTable.GetTableDisplayString();
             }
 
-            public static PropertyTable.Property GetProperty(eDisplayProperty displayProperty)
+            /// <summary>
+            /// returns <see cref="Property"/> corresponding to <paramref name="displayProperty"/>.
+            /// </summary>
+            /// <param name="displayProperty"></param>
+            /// <returns>
+            /// <see cref="Property"/> corresponding to <paramref name="displayProperty"/>.
+            /// </returns>
+            public static Property GetProperty(eDisplayProperty displayProperty)
             {
                 return displayPropertyToProperty[displayProperty];
             }
 
-            public static PropertyTable.PropertyColumn GetPropertyColumn(eDisplayProperty displayProperty)
+            /// <summary>
+            /// returns <see cref="PropertyColumn"/> corresponding to <paramref name="displayProperty"/>.
+            /// </summary>
+            /// <param name="displayProperty"></param>
+            /// <returns>
+            /// <see cref="PropertyColumn"/> corresponding to <paramref name="displayProperty"/>.
+            /// </returns>
+            public static PropertyColumn GetPropertyColumn(eDisplayProperty displayProperty)
             {
                 return displayPropertyToPropertyColumn[displayProperty];
             }
 
+            /// <summary>
+            /// adds <see cref="PropertyColumn"/>s to table.
+            /// </summary>
             private void initTableColumns()
             {
                 // add columns shared with CoinData
@@ -147,28 +200,42 @@ namespace CryptoBlock
                 initCoinTickerPropertyColumns();
             }
 
+            /// <summary>
+            /// adds <see cref="PropertyColumn"/>s corresponding to <see cref="CoinData"/> to table.
+            /// </summary>
             private void initCoinDataPropertyColumns()
             {
                 propertyTable.AddColumnRange(COIN_DATA_PROPERTY_COLUMNS);
             }
 
+            /// <summary>
+            /// adds <see cref="PropertyColumn"/>s corresponding to <see cref="CoinTicker"/> to table.
+            /// </summary>
             private void initCoinTickerPropertyColumns()
             {
+                // add PropertyColumns corresponding to CoinTicker to table
                 foreach (eDisplayProperty displayProperty in displayPropertyToPropertyColumn.Keys)
                 {
-                    PropertyTable.PropertyColumn propertyColumn =
+                    PropertyColumn propertyColumn =
                         displayPropertyToPropertyColumn[displayProperty];
 
                     propertyTable.AddColumn(propertyColumn);
                 }
             }
 
-            private PropertyTable.PropertyRow getPropertyRow(CoinTicker coinTicker)
+            /// <summary>
+            /// returns a new <see cref="PropertyRow"/> constructed from <paramref name="coinTicker"/>.
+            /// </summary>
+            /// <param name="coinTicker"></param>
+            /// <returns>
+            /// new <see cref="PropertyRow"/> constructed from <paramref name="coinTicker"/>
+            /// </returns>
+            private PropertyRow getPropertyRow(CoinTicker coinTicker)
             {
                 // construct row property list
 
                 // merge coin data properties with coin ticker properties
-                PropertyTable.Property[] rowProperties = CollectionUtils.MergeToArray(
+                Property[] rowProperties = CollectionUtils.MergeToArray(
                     COIN_DATA_PROPERTIES,
                     coinTickerProperties);
 
@@ -189,7 +256,7 @@ namespace CryptoBlock
                 object[] rowObjects = CollectionUtils.MergeToArray(coinDataObjectArray, coinTickerObjectArray);
 
                 // construct property row
-                return new PropertyTable.PropertyRow(rowObjects, rowProperties);
+                return new PropertyRow(rowObjects, rowProperties);
             }
         }
     }

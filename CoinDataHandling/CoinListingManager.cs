@@ -1,13 +1,20 @@
 ﻿using CryptoBlock.CMCAPI;
 using System;
 using System.Collections.Generic;
+using static CryptoBlock.CMCAPI.RequestHandler;
 
 namespace CryptoBlock
 {
     namespace ServerDataManagement
     {
+        /// <summary>
+        /// manages application's <see cref="CoinListing"/> repository.
+        /// </summary>
         public class CoinListingManager
         {
+            /// <summary>
+            /// thrown if an exception occurs while performing a <see cref="CoinListingManager"/> operation.
+            /// </summary>
             public class ManagerException : Exception
             {
                 public ManagerException(string message, Exception innerException)
@@ -34,11 +41,33 @@ namespace CryptoBlock
                 }
             }
 
-            public class RepositoryNotInitializedException : ManagerException
+            /// <summary>
+            /// thrown if <see cref="CoinListingManager"/> is attempted to be initialized after already being
+            /// initialized before.
+            /// </summary>
+            public class ManagerAlreadyInitializedException : ManagerException
+            {
+                public ManagerAlreadyInitializedException()
+                    : base(formatExceptionMessage())
+                {
+
+                }
+
+                private static string formatExceptionMessage()
+                {
+                    return "Coin listing manager has already been initialized.";
+                }
+            }
+
+            /// <summary>
+            /// thrown if an operation on <see cref="CoinListingManager"/> is attempted to be performed before
+            /// manager has been initialized.
+            /// </summary>
+            public class ManagerNotInitializedException : ManagerException
             {
                 private string requestedPropertyName;
 
-                public RepositoryNotInitializedException(string requestedPropertyName)
+                public ManagerNotInitializedException(string requestedPropertyName)
                     : base(formatExceptionMessage(requestedPropertyName))
                 {
                     this.requestedPropertyName = requestedPropertyName;
@@ -52,24 +81,31 @@ namespace CryptoBlock
                 private static string formatExceptionMessage(string requestedPropertyName)
                 {
                     return string.Format(
-                        "Coin listing repository must be initialized before the following property / operation is" +
-                        " requested: {0}.",
+                        "Coin listing manager must be initialized before the following property / operation is" +
+                        " requested / performed: {0}.",
                         requestedPropertyName);
                 }
             }
 
+            /// <summary>
+            /// thrown in an exception occurs while coin listing repository is being updated.
+            /// </summary>
             public class RepositoryUpdateException : ManagerException
             {
                 public RepositoryUpdateException(Exception innerException)
-                    : base("Could not update static data respository.", innerException)
+                    : base("Could not update coin listing respository.", innerException)
                 {
 
                 }
             }
 
-            public class NoSuchCoinNameException : ManagerException
+            /// <summary>
+            /// thrown if a <see cref="CoinListing"/> with specified coin name was not found
+            /// in coin listing repository.
+            /// </summary>
+            public class CoinNameNotFoundException : ManagerException
             {
-                public NoSuchCoinNameException(string coinName) : base(formatExceptionMessage(coinName))
+                public CoinNameNotFoundException(string coinName) : base(formatExceptionMessage(coinName))
                 {
 
                 }
@@ -80,9 +116,13 @@ namespace CryptoBlock
                 }
             }
 
-            public class NoSuchCoinSymbolException : ManagerException
+            /// <summary>
+            /// thrown if a <see cref="CoinListing"/> with specified coin symbol was not found
+            /// in coin listing repository.
+            /// </summary>
+            public class CoinSymbolNotFoundException : ManagerException
             {
-                public NoSuchCoinSymbolException(string coinSymbol) : base(formatExceptionMessage(coinSymbol))
+                public CoinSymbolNotFoundException(string coinSymbol) : base(formatExceptionMessage(coinSymbol))
                 {
 
                 }
@@ -93,9 +133,13 @@ namespace CryptoBlock
                 }
             }
 
-            public class NoSuchCoinNameOrSymbolException : ManagerException
+            /// <summary>
+            /// thrown if a <see cref="CoinListing"/> with specified coin name or symbol was not found in coin
+            /// listing repository.
+            /// </summary>
+            public class CoinNameOrSymbolNotFoundException : ManagerException
             {
-                public NoSuchCoinNameOrSymbolException(string coinNameOrSymbol) 
+                public CoinNameOrSymbolNotFoundException(string coinNameOrSymbol) 
                     : base(formatExceptionMessage(coinNameOrSymbol))
                 {
 
@@ -109,9 +153,13 @@ namespace CryptoBlock
                 }
             }
 
-            public class NoSuchCoinIdException : ManagerException
+            /// <summary>
+            /// thrown if a <see cref="CoinListing"/> with specified coin ID was not found in
+            /// coin listing repository.
+            /// </summary>
+            public class CoinIdNotFoundException : ManagerException
             {
-                public NoSuchCoinIdException(int coinId) : base(formatExceptionMessage(coinId))
+                public CoinIdNotFoundException(int coinId) : base(formatExceptionMessage(coinId))
                 {
 
                 }
@@ -129,8 +177,8 @@ namespace CryptoBlock
                 get { return instance; }
             }
 
-            private CoinListing[] coinListingArray;
-            private bool repositoryInitialized;
+            // listing repository was initialized
+            private bool managerInitialized;
 
             private Dictionary<int, CoinListing> coinIdToCoinListing =
                 new Dictionary<int, CoinListing>();
@@ -143,51 +191,123 @@ namespace CryptoBlock
             private Dictionary<string, CoinListing> coinSymbolToCoinListing =
                 new Dictionary<string, CoinListing>();
 
-            public bool RepositoryInitialized
+            /// <summary>
+            /// whether <see cref="CoinListing"/> respository was initialized.
+            /// </summary>
+            public bool ManagerInitialized
             {
                 get
                 {
-                    return repositoryInitialized;
+                    return managerInitialized;
                 }
             }
-
+            
+            /// <summary>
+            ///  count of <see cref="CoinListing"/>s in repository.
+            /// </summary>
             public int RepositoryCount
             {
                 get
                 {
-                    assertRepositoryInitialized("Count");
+                    assertManagerInitialized("Count");
 
-                    return coinListingArray.Length;
+                    return coinIdToCoinListing.Count;
                 }
             }
 
+            /// <summary>
+            /// initializes <see cref="CoinListingManager"/>.
+            /// </summary>
+            /// <seealso cref="UpdateRepository"/>
+            /// <exception cref="ManagerAlreadyInitializedException">
+            /// <seealso cref="assertManagerNotYetInitialized"/>
+            /// </exception>
             public void Initialize()
             {
-                UpdateRepository();
+                assertManagerNotYetInitialized();
 
-                repositoryInitialized = true;
+                UpdateRepository();
+                managerInitialized = true;
             }
 
-
+            /// <summary>
+            /// returns whether a <see cref="CoinListing"/> having specified <paramref name="coinId"/>
+            /// exists in repository.
+            /// </summary>
+            /// <param name="coinId"></param>
+            /// <returns>
+            /// true if a <see cref="CoinListing"/> having specified <paramref name="coinId"/>
+            /// exists in repository, else false
+            /// </returns>
+            /// <exception cref="ManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
             public bool CoinIdExists(int coinId)
             {
-                assertRepositoryInitialized("CoinIdExists");
+                assertManagerInitialized("CoinIdExists");
 
                 return coinIdToCoinListing.ContainsKey(coinId);
             }
 
+            /// <summary>
+            /// returns whether a <see cref="CoinListing"/> having specified <paramref name="coinName"/>
+            /// exists in repository.
+            /// </summary>
+            /// <param name="coinName"></param>
+            /// <returns>
+            /// true if a <see cref="CoinListing"/> having specified <paramref name="coinName"/>
+            /// exists in repository, else false
+            /// </returns>
+            /// <exception cref="ManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
             public bool CoinNameExists(string coinName)
             {
-                assertRepositoryInitialized("CoinNameExists");
+                assertManagerInitialized("CoinNameExists");
 
                 string lowercaseCoinMame = coinName.ToLower();
 
                 return coinNameToCoinListing.ContainsKey(lowercaseCoinMame);
             }
 
+            /// <summary>
+            /// returns whether a <see cref="CoinListing"/> having specified <paramref name="coinSymbol"/>
+            /// exists in repository.
+            /// </summary>
+            /// <param name="coinSymbol"></param>
+            /// <returns>
+            /// true if a <see cref="CoinListing"/> having specified <paramref name="coinSymbol"/>
+            /// exists in repository, else false
+            /// </returns>
+            /// <exception cref="ManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
+            public bool CoinSymbolExists(string coinSymbol)
+            {
+                assertManagerInitialized("CoinSymbolExists");
+
+                string lowercaseCoinSymbol = coinSymbol.ToLower();
+
+                return coinSymbolToCoinListing.ContainsKey(lowercaseCoinSymbol);
+            }
+
+            /// <summary>
+            /// returns coin id corresponding to <paramref name="coinName"/>.
+            /// </summary>
+            /// <param name="coinName"></param>
+            /// <returns>
+            /// coin id corresponding to <paramref name="coinName"/>
+            /// </returns>
+            /// <exception cref="ManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
+            /// <exception cref="CoinNameNotFoundException">
+            /// thrown if a <see cref="CoinListing"/> having <paramref name="coinName"/> does not exist in
+            /// repository
+            /// </exception>
             public int GetCoinIdByName(string coinName)
             {
-                assertRepositoryInitialized("GetCoinIdByName");
+                assertManagerInitialized("GetCoinIdByName");
 
                 string lowercaseCoinName = coinName.ToLower();
 
@@ -197,22 +317,27 @@ namespace CryptoBlock
                 }
                 else
                 {
-                    throw new NoSuchCoinNameException(coinName);
+                    throw new CoinNameNotFoundException(coinName);
                 }
             }
 
-            public bool CoinSymbolExists(string coinSymbol)
-            {
-                assertRepositoryInitialized("CoinSymbolExists");
-
-                string lowercaseCoinSymbol = coinSymbol.ToLower();
-
-                return coinSymbolToCoinListing.ContainsKey(lowercaseCoinSymbol);
-            }
-
+            /// <summary>
+            /// returns coin id corresponding to <paramref name="coinSymbol"/>.
+            /// </summary>
+            /// <param name="coinSymbol"></param>
+            /// <returns>
+            /// coin id corresponding to <paramref name="coinSymbol"/>
+            /// </returns>
+            /// <exception cref="ManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
+            /// <exception cref="CoinSymbolNotFoundException">
+            /// thrown if a <see cref="CoinListing"/> having <paramref name="coinSymbol"/> does not exist in
+            /// repository
+            /// </exception>
             public int GetCoinIdBySymbol(string coinSymbol)
             {
-                assertRepositoryInitialized("GetCoinIdBySymbol");
+                assertManagerInitialized("GetCoinIdBySymbol");
 
                 string lowercaseCoinSymbol = coinSymbol.ToLower();
 
@@ -222,13 +347,27 @@ namespace CryptoBlock
                 }
                 else
                 {
-                    throw new NoSuchCoinSymbolException(coinSymbol);
+                    throw new CoinSymbolNotFoundException(coinSymbol);
                 }
             }
 
+            /// <summary>
+            /// returns coin id corresponding to <paramref name="coinNameOrSymbol"/>.
+            /// </summary>
+            /// <param name="coinNameOrSymbol"></param>
+            /// <returns>
+            /// coin id corresponding to <paramref name="coinNameOrSymbol"/>
+            /// </returns>
+            /// <exception cref="ManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
+            /// <exception cref="CoinNameOrSymbolNotFoundException">
+            /// thrown if a <see cref="CoinListing"/> having <paramref name="coinNameOrSymbol"/> does not exist in
+            /// repository
+            /// </exception>
             public int GetCoinIdByNameOrSymbol(string coinNameOrSymbol)
             {
-                assertRepositoryInitialized("GetCoinIdByNameOrSymbol");
+                assertManagerInitialized("GetCoinIdByNameOrSymbol");
 
                 string lowercaseCoinNameOrSymbol = coinNameOrSymbol.ToLower();
 
@@ -242,23 +381,68 @@ namespace CryptoBlock
                 }
                 else // neither name nor symbol exist in listing repository
                 {
-                    throw new NoSuchCoinNameOrSymbolException(coinNameOrSymbol);
+                    throw new CoinNameOrSymbolNotFoundException(coinNameOrSymbol);
                 }
             }
 
+            /// <summary>
+            /// returns coin name corresponding to <paramref name="coinId"/>.
+            /// </summary>
+            /// <param name="coinId"></param>
+            /// <returns>
+            /// coin name corresponding to <paramref name="coinId"/>
+            /// </returns>
+            /// <exception cref="ManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
+            /// <exception cref="CoinIdNotFoundException">
+            /// <seealso cref="GetCoinListing(int)"/>
+            /// </exception>
             public string GetCoinNameById(int coinId)
             {
+                assertManagerInitialized("GetCoinNameById");
+
                 return GetCoinListing(coinId).Name;
             }
 
+            /// <summary>
+            /// returns coin symbol corresponding to <paramref name="coinId"/>.
+            /// </summary>
+            /// <param name="coinId"></param>
+            /// <returns>
+            /// coin symbol corresponding to <paramref name="coinId"/>
+            /// </returns>
+            /// <exception cref="ManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
+            /// <exception cref="CoinIdNotFoundException">
+            /// <seealso cref="GetCoinListing(int)"/>
+            /// </exception>
             public string GetCoinSymbolById(int coinId)
             {
+                assertManagerInitialized("GetCoinSymbolById");
+
                 return GetCoinListing(coinId).Symbol;
             }
 
+            /// <summary>
+            /// returns <see cref="CoinListing"/> corresponding to <paramref name="coinId"/>.
+            /// </summary>
+            /// <seealso cref="CoinIdExists(int)"/>
+            /// <param name="coinId"></param>
+            /// <returns>
+            /// <see cref="CoinListing"/> corresponding to <paramref name="coinId"/>
+            /// </returns>
+            /// <exception cref="ManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
+            /// <exception cref="CoinIdNotFoundException">
+            /// thrown if <see cref="CoinLisiting"/> corresponding to <paramref name="coinId"/> does
+            /// not exist in repository
+            /// </exception>
             public CoinListing GetCoinListing(int coinId)
             {
-                assertRepositoryInitialized("GetCoinListing");
+                assertManagerInitialized("GetCoinListing");
 
                 if (CoinIdExists(coinId))
                 {
@@ -266,12 +450,29 @@ namespace CryptoBlock
                 }
                 else
                 {
-                    throw new NoSuchCoinIdException(coinId);
+                    throw new CoinIdNotFoundException(coinId);
                 }
             }
 
-            public string GetCoinListingDisplayTableString(params int[] coinIds)
-            {              
+            /// <summary>
+            /// returns display string of <see cref="CoinListingTable"/> with
+            /// rows corresponding to <paramref name="coinIds"/>. 
+            /// </summary>
+            /// <param name="coinIds"></param>
+            /// <returns>
+            /// display string of <see cref="CoinListingTable"/> with
+            /// rows corresponding to <paramref name="coinIds"/>.  
+            /// </returns>
+            /// <exception cref="ManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
+            /// <exception cref="CoinIdDoesNotExistException">
+            /// <seealso cref="GetCoinListing(int)"/>
+            /// </exception>
+            public string GetCoinListingTableDisplayString(params int[] coinIds)
+            {
+                assertManagerInitialized("GetCoinListingTableDisplayString");
+
                 // init coin listing table
                 CoinListingTable coinListingTable = new CoinListingTable();
 
@@ -279,7 +480,7 @@ namespace CryptoBlock
                 {
                     // add row corresponding to each coin listing associated with specified id
                     CoinListing coinListing = GetCoinListing(coinId);
-                    coinListingTable.AddCoinListingRow(coinListing);
+                    coinListingTable.AddRow(coinListing);
                 }
 
                 // return table display string
@@ -288,6 +489,22 @@ namespace CryptoBlock
                 return coinListingTableString;
             }
 
+            /// <summary>
+            /// returns array of coin IDs, corresponding to coin names / symbols in
+            /// <paramref name="coinNameOrSymbolArray"/>.
+            /// </summary>
+            /// <seealso cref="GetCoinIdByNameOrSymbol(string)"/>
+            /// <param name="coinNameOrSymbolArray"></param>
+            /// <returns>
+            /// array of coin IDs, corresponding to coin names / symbols in
+            /// <paramref name="coinNameOrSymbolArray"/>.
+            /// </returns>
+            /// <exception cref="ManagerNotInitializedException">
+            /// <seealso cref="GetCoinIdByNameOrSymbol(string)"/>
+            /// </exception>
+            /// <exception cref="CoinNameOrSymbolNotFoundException">
+            /// <seealso cref="GetCoinIdByNameOrSymbol(string)"/>
+            /// </exception>
             public int[] FetchCoinIds(string[] coinNameOrSymbolArray)
             {
                 int[] coinIds = new int[coinNameOrSymbolArray.Length];
@@ -296,43 +513,71 @@ namespace CryptoBlock
                 {
                     // try fetching coin id corresponding to i'th coin name / symbol
                     string coinNameOrSymbol = coinNameOrSymbolArray[i];
-                    coinIds[i] = CoinListingManager.Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
+                    coinIds[i] = Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
                 }
 
                 return coinIds;
             }
 
+            /// <summary>
+            /// synchroniously updates <see cref="CoinListing"/> repository with data from server.
+            /// </summary>
             public void UpdateRepository()
             {
                 try
                 {
-                    coinListingArray = RequestHandler.RequestCoinListings();
+                    CoinListing[] coinListingArray = RequestHandler.RequestCoinListings();
 
-                    // update name-to-StaticCoinData, symbol-to-StaticCoinData dictionaries
+                    // update id-to-CoinListing, name-to-CoinListing, symbol-to-CoinListing dictionaries
                     for (int i = 0; i < coinListingArray.Length; i++)
                     {
-                        CoinListing currentStaticCoinData = coinListingArray[i];
+                        CoinListing curCoinListing = coinListingArray[i];
 
-                        int id = currentStaticCoinData.Id;
-                        string lowercaseName = currentStaticCoinData.Name.ToLower();
-                        string lowercaseSymbol = currentStaticCoinData.Symbol.ToLower();
+                        // get CoinListing fields in lowercase
+                        int id = curCoinListing.Id;
+                        string lowercaseName = curCoinListing.Name.ToLower();
+                        string lowercaseSymbol = curCoinListing.Symbol.ToLower();
 
-                        coinIdToCoinListing[id] = currentStaticCoinData;
-                        coinNameToCoinListing[lowercaseName] = currentStaticCoinData;
-                        coinSymbolToCoinListing[lowercaseSymbol] = currentStaticCoinData;
+                        // update dictionaries
+                        coinIdToCoinListing[id] = curCoinListing;
+                        coinNameToCoinListing[lowercaseName] = curCoinListing;
+                        coinSymbolToCoinListing[lowercaseSymbol] = curCoinListing;
                     }
                 }
-                catch (RequestHandler.DataRequestException dataRequestException)
+                catch (DataRequestException dataRequestException) // request unsuccessful
                 {
                     throw new RepositoryUpdateException(dataRequestException);
                 }
             }
 
-            private void assertRepositoryInitialized(string requestedPropertyOrOperation)
+            /// <summary>
+            /// asserts that <see cref="CoinListingManager"/> is yet to be initialized.
+            /// </summary>
+            /// <exception cref="ManagerAlreadyInitializedException">
+            /// thrown if <see cref="CoinListingManager"/> has already been initialized
+            /// </exception>
+            private void assertManagerNotYetInitialized()
             {
-                if (!repositoryInitialized)
+                if(managerInitialized)
                 {
-                    throw new RepositoryNotInitializedException(requestedPropertyOrOperation);
+                    throw new ManagerAlreadyInitializedException();
+                }
+            }
+
+            /// <summary>
+            /// asserts that <see cref="CoinListingManager"/> has been initialized.
+            /// </summary>
+            /// <param name="requestedPropertyOrOperation">
+            /// property or operation that was attempted to be requested / performed
+            /// </param>
+            /// <exception cref="ManagerNotInitializedException">
+            /// thrown if <see cref="CoinListingManager"/> has not yet been initialized
+            /// </exception>
+            private void assertManagerInitialized(string requestedPropertyOrOperation)
+            {
+                if (!managerInitialized)
+                {
+                    throw new ManagerNotInitializedException(requestedPropertyOrOperation);
                 }
             }
         }
