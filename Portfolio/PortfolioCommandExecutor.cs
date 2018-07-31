@@ -134,7 +134,7 @@ namespace CryptoBlock
                         if (coinNamesWithoutPortfolioEntry.Count > 0)
                         {
                             string errorMessage = StringUtils.Append(
-                                "Following coin(s) are not in portfolio: ",
+                                "Following coin(s) were not in portfolio: ",
                                 ", ",
                                 coinNamesWithoutPortfolioEntry.ToArray())
                                 + ".";

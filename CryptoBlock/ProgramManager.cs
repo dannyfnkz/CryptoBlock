@@ -75,7 +75,7 @@ namespace CryptoBlock
                 }
             }
 
-            ConsoleIOManager.Instance.LogNotice("Coin listings repository initialized successfully.");
+            ConsoleIOManager.Instance.LogNotice("Coin listing repository initialized successfully.");
         }
 
         private void initializeCoinTickerManager(int numberOfCoins)

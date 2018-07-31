@@ -270,6 +270,10 @@ namespace CryptoBlock
                 }
                 else // data file not available
                 {
+                    // notify user
+                    ConsoleIOManager.Instance.LogNotice("Portfolio data file not found.");
+                    ConsoleIOManager.Instance.LogNotice("Initializing an empty portfolio.");
+
                     // initialize an empty portfolio
                     instance = new PortfolioManager();
                 }
