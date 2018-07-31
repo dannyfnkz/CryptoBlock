@@ -67,8 +67,12 @@ namespace CryptoBlock
                 }
 
                 /// <summary>
-                /// executes command with given <paramref name="commandArguments"/>.
+                /// prints portfolio data corresponding to coin name / symbols
+                /// contained in <paramref name="commandArguments"/> (or all coins in portfolio if
+                /// <paramref name="commandArguments"/>.Length == 0) in tabular format.
                 /// </summary>
+                /// <seealso cref="CoinListingManager.FetchCoinIds(string[])"/>
+                /// <seealso cref="PortfolioManager.GetPortfolioEntryDisplayTableString(int[])"/>
                 /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
@@ -164,8 +168,11 @@ namespace CryptoBlock
                 }
 
                 /// <summary>
-                /// executes command with given <paramref name="commandArguments"/>.
+                /// adds new <see cref="PortfolioEntry"/> to portfolio, corresponding to coin id
+                /// specified in <paramref name="commandArguments"/>[0].
                 /// </summary>
+                /// <seealso cref="CoinListingManager.GetCoinIdByNameOrSymbol(string)"/>
+                /// <seealso cref="PortfolioManager.AddCoin(int)"/>
                 /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
@@ -237,8 +244,11 @@ namespace CryptoBlock
                 }
 
                 /// <summary>
-                /// executes command with given <paramref name="commandArguments"/>.
+                /// removes <see cref="PortfolioEntry"/> corresponding to coin id
+                /// specified in <paramref name="commandArguments"/>[0] from portfolio.
                 /// </summary>
+                /// <seealso cref="CoinListingManager.GetCoinIdByNameOrSymbol(string)"/>
+                /// <seealso cref="PortfolioManager.RemoveCoin(int)"/>
                 /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
@@ -310,8 +320,13 @@ namespace CryptoBlock
                 }
 
                 /// <summary>
-                /// executes command with given <paramref name="commandArguments"/>.
+                /// buys coin corresponding to name / symbol specified in <paramref name="commandArguments"/>[0],
+                /// where buy amount is specified in <paramref name="commandArguments"/>[1]
+                /// and buy price per coin is specified in <paramref name="commandArguments"/>[2].
                 /// </summary>
+                /// <seealso cref="CoinListingManager.GetCoinIdByNameOrSymbol(string)"/>
+                /// <seealso cref="ConsoleIOManager.ShowConfirmationDialog(string)"/>
+                /// <seealso cref="PortfolioManager.BuyCoin(int, double, double, long)"/>
                 /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
@@ -435,8 +450,13 @@ namespace CryptoBlock
                 }
 
                 /// <summary>
-                /// executes command with given <paramref name="commandArguments"/>.
+                /// sells coin corresponding to name / symbol specified in <paramref name="commandArguments"/>[0],
+                /// where sell amount is specified in <paramref name="commandArguments"/>[1]
+                /// and sell price per coin is specified in <paramref name="commandArguments"/>[2].
                 /// </summary>
+                /// <seealso cref="CoinListingManager.GetCoinIdByNameOrSymbol(string)"/>
+                /// <seealso cref="PortfolioManager.GetCoinHoldings(int)"/>
+                /// <seealso cref="PortfolioManager.SellCoin(int, double, double, long)"/>
                 /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
