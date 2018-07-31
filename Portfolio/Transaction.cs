@@ -9,8 +9,14 @@ namespace CryptoBlock
 {
     namespace PortfolioManagement
     {
+        /// <summary>
+        /// represents a coin transaction.
+        /// </summary>
         internal class Transaction
         {
+            /// <summary>
+            /// type of <see cref= "Transaction"/>.
+            /// </summary>
             internal enum eType
             {
                 Buy, Sell
@@ -21,37 +27,49 @@ namespace CryptoBlock
             [JsonProperty]
             private double amount;
             [JsonProperty]
-            private double price;
+            private double pricePerCoin;
             [JsonProperty]
             private long unixTimestamp;
 
             [JsonConstructor]
-            internal Transaction(eType type, double amount, double price, long unixTimestamp)
+            internal Transaction(eType type, double amount, double pricePerCoin, long unixTimestamp)
             {
                 this.type = type;
                 this.amount = amount;
-                this.price = price;
+                this.pricePerCoin = pricePerCoin;
                 this.unixTimestamp = unixTimestamp;
             }
 
+            /// <summary>
+            /// type of <see cref="Transaction"/>.
+            /// </summary>
             [JsonIgnore]
             internal eType Type
             {
                 get { return type; }
             }
-
+            
+            /// <summary>
+            /// amount of coin.
+            /// </summary>
             [JsonIgnore]
             internal double Amount
             {
                 get { return amount; }
             }
 
+            /// <summary>
+            /// price per coin.
+            /// </summary>
             [JsonIgnore]
-            internal double Price
+            internal double PricePerCoin
             {
-                get { return price; }
+                get { return pricePerCoin; }
             }
 
+            /// <summary>
+            /// <see cref="Transaction"/> timestamp.
+            /// </summary>
             [JsonIgnore]
             internal long UnixTimestamp
             {

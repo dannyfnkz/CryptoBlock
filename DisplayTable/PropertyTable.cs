@@ -488,7 +488,8 @@ namespace CryptoBlock
             }
 
             /// <summary>
-            /// thrown if <see cref="PropertyRow"/> has a column whose <see cref="Property"/> is different
+            /// thrown if a <see cref="PropertyRow"/> was attempted to be added,
+            /// which has a column whose <see cref="Property"/> is different
             /// from the corresponding <see cref="PropertyColumn"/> in column list of <see cref="PropertyTable"/>.
             /// </summary>
             public class RowAndColumnPropertyMismatchException : MismatchException

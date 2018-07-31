@@ -5,7 +5,7 @@ namespace CryptoBlock
     namespace CommandHandling
     {
         /// <summary>
-        /// thrown when an exception occurs during the execution of a command.
+        /// thrown if an exception occurs during the execution of a command.
         /// </summary>
         public class CommandExecutionException : Exception
         {

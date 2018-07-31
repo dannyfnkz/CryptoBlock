@@ -1,51 +1,75 @@
 ﻿using CryptoBlock.CommandHandling;
 using CryptoBlock.IOManagement;
-using CryptoBlock.PortfolioManagement;
 using CryptoBlock.ServerDataManagement;
 using CryptoBlock.Utils;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static CryptoBlock.PortfolioManagement.PortfolioManager;
 using static CryptoBlock.ServerDataManagement.CoinListingManager;
-using static CryptoBlock.ServerDataManagement.CoinTickerManager;
 
 namespace CryptoBlock
 {
     namespace PortfolioManagement
     {
+        /// <summary>
+        /// handles executing portfolio commands.
+        /// </summary>
         public class PortfolioCommandExecutor : CommandExecutor
         {
+            /// <summary>
+            /// represents an executable portfolio command.
+            /// </summary>
             private abstract class PortfolioCommand : Command
             {
+                // command prefix
                 private const string PREFIX = "portfolio";
 
-                internal PortfolioCommand(string subPrefix, int minNumberOfArguments, int maxNumberOfArguments)
-                    : base(formatPrefix(subPrefix), minNumberOfArguments, maxNumberOfArguments)
+                internal PortfolioCommand(
+                    string inheritingCommandPrefix,
+                    int minNumberOfArguments,
+                    int maxNumberOfArguments)
+                    : base(formatPrefix(inheritingCommandPrefix), minNumberOfArguments, maxNumberOfArguments)
                 {
 
                 }
 
-                private static string formatPrefix(string subPrefix)
+                /// <summary>
+                /// returns prefix formulated by concatenating <paramref name="inheritingCommandPrefix"/> to
+                /// <see cref="Command.Prefix"/>.
+                /// </summary>
+                /// <param name="subPrefix"></param>
+                /// <returns></returns>
+                private static string formatPrefix(string inheritingCommandPrefix)
                 {
-                    return PREFIX + " " + subPrefix;
+                    return PREFIX + " " + inheritingCommandPrefix;
                 }
             }
 
+            /// <summary>
+            /// <para>
+            /// prints portfolio data in a tabular form.
+            /// </para>
+            /// <para>
+            /// syntax: portfolio view ?[coin0 name/symbol] ?[coin1 name/symbol] ...
+            /// </para>
+            /// </summary>
             private class PortfolioViewCommand : PortfolioCommand
             {
                 private const int MIN_NUMBER_OF_ARGUMENTS = 0;
                 private const int MAX_NUMBER_OF_ARGUMENTS = 20;
-                private const string PREFIX = "view";
+
+                // command sub-prefix
+                private const string SUBPREFIX = "view";
 
                 internal PortfolioViewCommand()
-                    : base(PREFIX, MIN_NUMBER_OF_ARGUMENTS, MAX_NUMBER_OF_ARGUMENTS)
+                    : base(SUBPREFIX, MIN_NUMBER_OF_ARGUMENTS, MAX_NUMBER_OF_ARGUMENTS)
                 {
 
                 }
 
+                /// <summary>
+                /// executes command with given <paramref name="commandArguments"/>.
+                /// </summary>
+                /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
                     // handle case where number of arguments is invalid
@@ -117,18 +141,32 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// <para>
+            /// adds specified coin to portfolio.
+            /// </para>
+            /// <para>
+            /// command syntax: portfolio add [coin name / symbol]
+            /// </para>
+            /// </summary>
             private class PortfolioAddCommand : PortfolioCommand
             {
                 private const int MIN_NUMBER_OF_ARGUMENTS = 1;
                 private const int MAX_NUMBER_OF_ARGUMENTS = 1;
-                private const string PREFIX = "add";
+
+                // command sub-prefix
+                private const string SUBPREFIX = "add";
 
                 internal PortfolioAddCommand()
-                    : base(PREFIX, MIN_NUMBER_OF_ARGUMENTS, MAX_NUMBER_OF_ARGUMENTS)
+                    : base(SUBPREFIX, MIN_NUMBER_OF_ARGUMENTS, MAX_NUMBER_OF_ARGUMENTS)
                 {
 
                 }
 
+                /// <summary>
+                /// executes command with given <paramref name="commandArguments"/>.
+                /// </summary>
+                /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
                     // handle case where number of arguments is invalid
@@ -147,7 +185,7 @@ namespace CryptoBlock
                         int coinId = CoinListingManager.Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
 
                         // add coin to portfolio
-                        PortfolioManager.Instance.CreatePortfolioEntry(coinId);
+                        PortfolioManager.Instance.AddCoin(coinId);
 
                         // coin successfully added to portfolio
                         string coinName = CoinListingManager.Instance.GetCoinNameById(coinId);
@@ -162,10 +200,10 @@ namespace CryptoBlock
                         // coin with specified name / symbol not found in listing repository
                         ConsoleIOManager.Instance.LogError(noSuchCoinNameOrSymbolException.Message);
                     }
-                    catch (CoinIdAlreadyInPortfolioException coinIdAlreadyInPortfolioManagerException)
+                    catch (CoinAlreadyInPortfolioException coinAlreadyInPortfolioException)
                     {
                         // coin id is already in portfolio
-                        int coinId = coinIdAlreadyInPortfolioManagerException.CoinId;
+                        int coinId = coinAlreadyInPortfolioException.CoinId;
                         string coinName = CoinListingManager.Instance.GetCoinNameById(coinId);
 
                         ConsoleIOManager.Instance.LogErrorFormat(
@@ -176,18 +214,32 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// <para>
+            /// removes specified coin from portfolio.
+            /// </para>
+            /// <para>
+            /// command syntax: portfolio remove [coin name / symbol]
+            /// </para>
+            /// </summary>
             private class PortfolioRemoveCommand : PortfolioCommand
             {
                 private const int MIN_NUMBER_OF_ARGUMENTS = 1;
                 private const int MAX_NUMBER_OF_ARGUMENTS = 1;
-                private const string PREFIX = "remove";
+
+                // command sub-prefix
+                private const string SUB_PREFIX = "remove";
 
                 internal PortfolioRemoveCommand()
-                    : base(PREFIX, MIN_NUMBER_OF_ARGUMENTS, MAX_NUMBER_OF_ARGUMENTS)
+                    : base(SUB_PREFIX, MIN_NUMBER_OF_ARGUMENTS, MAX_NUMBER_OF_ARGUMENTS)
                 {
 
                 }
 
+                /// <summary>
+                /// executes command with given <paramref name="commandArguments"/>.
+                /// </summary>
+                /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
                     // handle case where number of arguments is invalid
@@ -206,7 +258,7 @@ namespace CryptoBlock
                         int coinId = CoinListingManager.Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
 
                         // remove portfolio entry corresponding to coin id from portfolio
-                        PortfolioManager.Instance.RemovePortfolioEntry(coinId);
+                        PortfolioManager.Instance.RemoveCoin(coinId);
 
                         // coin successfully removed from portfolio
                         string coinName = CoinListingManager.Instance.GetCoinNameById(coinId);
@@ -221,10 +273,10 @@ namespace CryptoBlock
                         // coin with specified name / symbol not found in listing repository
                         ConsoleIOManager.Instance.LogError(noSuchCoinNameOrSymbolException.Message);
                     }
-                    catch (CoinIdNotInPortfolioException coinIdNotInPortfolioManagerException)
+                    catch (CoinNotInPortfolioException coinNotInPortfolioException)
                     {
                         // coin id corresponding to given name / symbol does not exist in portfolio manager
-                        int coinId = coinIdNotInPortfolioManagerException.CoinId;
+                        int coinId = coinNotInPortfolioException.CoinId;
                         string coinName = CoinListingManager.Instance.GetCoinNameById(coinId);
 
                         ConsoleIOManager.Instance.LogErrorFormat(
@@ -235,18 +287,32 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// <para>
+            /// buys specified amount of specified coin, for a specified price per coin.
+            /// </para>
+            /// <para>
+            /// command syntax: portfolio buy [coin name / symbol] [buy amount] [buy price per coin]
+            /// </para>
+            /// </summary>
             private class PortfolioBuyCommand : PortfolioCommand
             {
                 private const int MIN_NUMBER_OF_ARGUMENTS = 3;
                 private const int MAX_NUMBER_OF_ARGUMENTS = 3;
-                private const string PREFIX = "buy";
+
+                // command sub-prefix
+                private const string SUB_PREFIX = "buy";
 
                 internal PortfolioBuyCommand()
-                    : base(PREFIX, MIN_NUMBER_OF_ARGUMENTS, MAX_NUMBER_OF_ARGUMENTS)
+                    : base(SUB_PREFIX, MIN_NUMBER_OF_ARGUMENTS, MAX_NUMBER_OF_ARGUMENTS)
                 {
 
                 }
 
+                /// <summary>
+                /// executes command with given <paramref name="commandArguments"/>.
+                /// </summary>
+                /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
                     // handle case where number of arguments is invalid
@@ -258,16 +324,20 @@ namespace CryptoBlock
                     }
                     try
                     {
+                        // price coin name or symbol from command argument 0
                         string coinNameOrSymbol = commandArguments[0];
 
-                        bool buyAmountParseResult = Utils.NumberUtils.TryParseDouble(
+                        // parse buy amount from command argument 1
+                        bool buyAmountParseResult = NumberUtils.TryParseDouble(
                             commandArguments[1],
                             out double buyAmount,
                             0,
                             PortfolioManager.MaxNumericalValueAllowed);
-                        bool buyPriceParseResult = Utils.NumberUtils.TryParseDouble(
+
+                        // price buy price from command argument 2
+                        bool buyPriceParseResult = NumberUtils.TryParseDouble(
                             commandArguments[2],
-                            out double buyPrice,
+                            out double buyPricePerCoin,
                             0,
                             PortfolioManager.MaxNumericalValueAllowed);
 
@@ -276,7 +346,7 @@ namespace CryptoBlock
                             // user entered a non-numeric or out-of-bounds value as buy price or buy amount
                             ConsoleIOManager.Instance.LogErrorFormat(
                                 false,
-                                "Invalid format: buy price and amount must be numeric values larget than {0}" +
+                                "Invalid format: buy price and amount must be numeric values larger than {0}" +
                                 " and smaller than {1}.",             
                                 0,
                                 PortfolioManager.MaxNumericalValueAllowed);
@@ -310,7 +380,7 @@ namespace CryptoBlock
                             if(createNewPortfolioEntry) // user chose to create a new portfolio entry
                             {
                                 // create a new entry before proceeding to execute buy command 
-                                PortfolioManager.Instance.CreatePortfolioEntry(coinId);
+                                PortfolioManager.Instance.AddCoin(coinId);
 
                                 ConsoleIOManager.Instance.LogNoticeFormat(
                                     false,
@@ -325,7 +395,7 @@ namespace CryptoBlock
                         }
 
                         // execute buy command
-                        PortfolioManager.Instance.BuyCoin(coinId, buyAmount, buyPrice, unixTimestamp);
+                        PortfolioManager.Instance.BuyCoin(coinId, buyAmount, buyPricePerCoin, unixTimestamp);
 
                         // purchase performed successfully
                         ConsoleIOManager.Instance.LogNoticeFormat(
@@ -333,7 +403,7 @@ namespace CryptoBlock
                             "Successfully purchased {0} {1} for {2}$ each.",
                             buyAmount,
                             coinName,
-                            buyPrice);
+                            buyPricePerCoin);
                     }
                     catch (NoSuchCoinNameOrSymbolException noSuchCoinNameOrSymbolException)
                     {
@@ -343,18 +413,31 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// <para>
+            /// sells specified amount of specified coin, for a specified price per coin.
+            /// </para>
+            /// <para>
+            /// command syntax: portfolio sell [coin name / symbol] [sell amount] [sell price per coin]
+            /// </para>
+            /// </summary>
             private class PortfolioSellCommand : PortfolioCommand
             {
                 private const int MIN_NUMBER_OF_ARGUMENTS = 3;
                 private const int MAX_NUMBER_OF_ARGUMENTS = 3;
-                private const string PREFIX = "sell";
+
+                private const string SUB_PREFIX = "sell";
 
                 internal PortfolioSellCommand()
-                    : base(PREFIX, MIN_NUMBER_OF_ARGUMENTS, MAX_NUMBER_OF_ARGUMENTS)
+                    : base(SUB_PREFIX, MIN_NUMBER_OF_ARGUMENTS, MAX_NUMBER_OF_ARGUMENTS)
                 {
 
                 }
 
+                /// <summary>
+                /// executes command with given <paramref name="commandArguments"/>.
+                /// </summary>
+                /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
                     // handle case where number of arguments is invalid
@@ -366,13 +449,17 @@ namespace CryptoBlock
                     }
                     try
                     {
+                        // price coin name or symbol from command argument 0
                         string coinNameOrSymbol = commandArguments[0];
 
+                        // parse sell amount from command argument 1
                         bool sellAmountParseResult = Utils.NumberUtils.TryParseDouble(
                             commandArguments[1],
                             out double sellAmount,
                             0,
                             PortfolioManager.MaxNumericalValueAllowed);
+
+                        // parse sell price from command argument 2
                         bool sellPriceParseResult = Utils.NumberUtils.TryParseDouble(
                             commandArguments[2],
                             out double sellPrice,
