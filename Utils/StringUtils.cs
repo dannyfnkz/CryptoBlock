@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using System.Text;
+using static CryptoBlock.Utils.ExceptionUtils;
 
 namespace CryptoBlock
 {
@@ -236,6 +237,73 @@ namespace CryptoBlock
                 }
 
                 return null;
+            }
+
+            /// <summary>
+            /// if <paramref name="inputString"/> is longer than <paramref name="maxStringLength"/>,
+            /// shorten string to its first <paramref name="maxStringLength"/> characters,
+            /// where the last <paramref name="cutSuffix"/>.Length characters are replaced by 
+            /// <paramref name="cutSuffix"/>.
+            /// </summary>
+            /// <param name="inputString"></param>
+            /// <param name="maxStringLength">maximum allowed string length</param>
+            /// <param name="cutSuffix">appended to end of <paramref name="inputString"/> if it is shortened</param>
+            /// <returns>
+            /// inputString shortened to its first <paramref name="maxStringLength"/> -
+            /// <paramref name="cutSuffix"/>.Length characters, with <paramref name="cutSuffix"/>
+            /// appended to ending
+            /// </returns>
+            /// <exception cref="ArgumentNullException">
+            /// <seealso cref="ExceptionUtils.AssertMethodParametersNotNull(MethodParameter[])"/>
+            /// </exception>
+            /// <exception cref="ArgumentOutOfRangeException">
+            /// <seealso cref="NumberUtils.AssertAtLeast(int, int)"/>
+            /// </exception>
+            public static string ShortenIfLongerThan(
+                string inputString,
+                int maxStringLength,
+                string cutSuffix = "..")
+            {
+                ExceptionUtils.AssertMethodParametersNotNull(
+                    new MethodParameter(inputString, "inputString"));
+
+                // maxStringLength must be at least cutSuffix.Length
+                NumberUtils.AssertAtLeast(maxStringLength, cutSuffix.Length);
+
+                string resultString;
+
+                if(inputString.Length > maxStringLength) // inputString longer than maxStringLength
+                {
+                    // cut inputString to maxStringLength, replacing its ending with cutSuffix
+                    int resultStringLength = maxStringLength - cutSuffix.Length;
+                    resultString = inputString.Substring(0, resultStringLength) + cutSuffix;
+                }
+                else // inputString not longer than maxStringLength - inputString remains unchanged
+                {
+                    resultString = inputString;
+                }
+
+                return resultString;
+            }
+
+            /// <summary>
+            /// asserts that all string lengths in <paramref name="stringLengths"/> are non-negative.
+            /// </summary>
+            /// <param name="stringLengths"></param>
+            /// <exception cref="ArgumentOutOfRangeException">
+            /// thrown if a string length in <paramref name="stringLengths"/> is negative
+            /// </exception>
+            private static void assertValidStringLengths(params int[] stringLengths)
+            {
+                foreach(int stringLength in stringLengths)
+                {
+                    if(stringLength < 0)
+                    {
+                        throw new ArgumentOutOfRangeException(
+                            "string length must be non-negative.",
+                            (Exception)null);
+                    }
+                }
             }
         }
     }

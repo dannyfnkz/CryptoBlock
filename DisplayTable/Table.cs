@@ -163,7 +163,10 @@ namespace CryptoBlock
 
                 public override string ToString()
                 {
-                    return header.PadRight(width);
+                    // shorten header if it is longer than column width
+                    string shortenedHeader = StringUtils.ShortenIfLongerThan(header, width);
+                     
+                    return shortenedHeader.PadRight(width);
                 }
 
                 /// <summary>
@@ -274,7 +277,7 @@ namespace CryptoBlock
                 {
                     return CollectionUtils.GetHashCode(this);
                 }
-                // 
+
                 /// <summary>
                 /// returns the string representation of row,
                 /// consisting of row column values, where the i'th column value is aligned to the right
@@ -296,9 +299,18 @@ namespace CryptoBlock
                     // append all column values to create the row string
                     for(int i = 0; i < columnValues.Length; i++)
                     {
-                        // append the current column value padded according to column width
-                        string columnValuePadded = columnValues[i].PadRight(columns[i].Width);
-                        rowStringBuilder.Append(columnValuePadded);
+                        string columnValue = columnValues[i];
+
+                        // shorten current column value if it is longer than current column width
+                        string columnValueDisplayString = StringUtils.ShortenIfLongerThan(
+                            columnValue,
+                            columns[i].Width);
+
+                        // pad columnValueDisplayString according to column width
+                        columnValueDisplayString = columnValueDisplayString.PadRight(columns[i].Width);
+
+                        // append columnValueDisplayString
+                        rowStringBuilder.Append(columnValueDisplayString);
                     }
 
                     return rowStringBuilder.ToString();

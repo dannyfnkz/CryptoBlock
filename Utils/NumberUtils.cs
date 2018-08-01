@@ -40,6 +40,47 @@ namespace CryptoBlock
 
                 return parseSuccessAndWithinBounds;
             }
+
+            /// <summary>
+            /// asserts that <paramref name="value"/> is within range [<paramref name="lo"/>, <paramref name="hi"/>].
+            /// </summary>
+            /// <param name="value"></param>
+            /// <param name="lo"></param>
+            /// <param name="hi"></param>
+            /// <exception cref="ArgumentOutOfRangeException">
+            /// thrown if <paramref name="value"/> is out of range [<paramref name="lo"/>, <paramref name="hi"/>]
+            /// </exception>
+            public static void AssertInRange(int value, int lo, int hi)
+            {
+                if(value < lo || value > hi)
+                {
+                    string exceptionMessage = string.Format(
+                        "int value was out of range [{0},{1}]",
+                        lo,
+                        hi);
+                    throw new ArgumentOutOfRangeException(exceptionMessage, (Exception)null);
+                }
+            }
+
+            /// <summary>
+            /// asserts that <paramref name="value"/> is larger than or equal to <paramref name="lo"/>.
+            /// </summary>
+            /// <param name="value"></param>
+            /// <param name="lo"></param>
+            /// <param name="hi"></param>
+            /// <exception cref="ArgumentOutOfRangeException">
+            /// thrown if <paramref name="value"/> is smaller than <paramref name="lo"/>
+            /// </exception>
+            public static void AssertAtLeast(int value, int lo)
+            {
+                if (value < lo)
+                {
+                    string exceptionMessage = string.Format(
+                        "int value was smaller than {0}",
+                        lo);
+                    throw new ArgumentOutOfRangeException(exceptionMessage, (Exception)null);
+                }
+            }
         }
     }
 }

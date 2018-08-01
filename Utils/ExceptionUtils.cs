@@ -14,6 +14,40 @@ namespace CryptoBlock
         public static class ExceptionUtils
         {
             /// <summary>
+            /// represents a method parameter.
+            /// </summary>
+            /// <example>
+            /// in case where '3' is passed to method defined as void foo(char ch),
+            /// then MethodParameter.Name = "ch" and MethodParameter.value = '3'.
+            /// </example>
+            public class MethodParameter
+            {
+                private readonly object value;
+                private readonly string name;
+
+                public MethodParameter(object value, string name)
+                {
+                    this.value = value;
+                    this.name = name;
+                }
+
+                /// <summary>
+                /// parameter value.
+                /// </summary>
+                public object Value
+                {
+                    get { return value; }
+                }
+
+                /// <summary>
+                /// parameter name.
+                /// </summary>
+                public string Name
+                {
+                    get { return name; }
+                }
+            }
+            /// <summary>
             /// converts <paramref name="aggregateException"/> into an <see cref="System.Exception"/>,
             /// having <paramref name="exceptionMessage"/> as part of its exception message.
             /// </summary>
@@ -162,6 +196,25 @@ namespace CryptoBlock
                         exception.InnerException,
                         exceptionMessageStringBuilder,
                         exceptionInnerLevel + 1);
+                }
+            }
+
+            /// <summary>
+            /// asserts that all <see cref="MethodParameter"/> in <paramref name="methodParameters"/>
+            /// are not null.
+            /// </summary>
+            /// <param name="methodParameters"></param>
+            /// <exception cref="ArgumentNullException">
+            /// thrown if a <see cref="MethodParameter"/> in <paramref name="methodParameters"/> is null
+            /// </exception>
+            public static void AssertMethodParametersNotNull(params MethodParameter[] methodParameters)
+            {
+                foreach(MethodParameter methodParameter in methodParameters)
+                {
+                    if(methodParameter.Value == null)
+                    {
+                        throw new ArgumentNullException(methodParameter.Name);
+                    }
                 }
             }
         }
