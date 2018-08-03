@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO;
-using static CryptoBlock.Utils.IO.FileUtils.FileWriteException;
+using static CryptoBlock.Utils.IO.FileIO.FileWriteException;
 
 namespace CryptoBlock
 {
-    namespace Utils.IO.FileUtils
+    namespace Utils.IO.FileIO
     {
         // note: still need exception handling for actions other than write text
         public static class FileIOUtils

@@ -1,5 +1,5 @@
 ﻿using CryptoBlock.Utils;
-using CryptoBlock.Utils.IOUtils;
+using CryptoBlock.Utils.IO.ConsoleIO;
 using System;
 
 namespace CryptoBlock

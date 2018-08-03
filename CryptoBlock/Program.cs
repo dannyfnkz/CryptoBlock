@@ -11,8 +11,9 @@ namespace CryptoBlock
     {
         static void Main(string[] args)
         {
-            
-                new ProgramManager().StartProgram();
+
+           new ProgramManager().StartProgram();
+
         }
     }
 }

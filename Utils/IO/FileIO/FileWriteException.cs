@@ -2,7 +2,7 @@
 
 namespace CryptoBlock
 {
-    namespace Utils.IO.FileUtils
+    namespace Utils.IO.FileIO
     {
         /// <summary>
         /// thrown if an exception occurs while trying to perform a file write operation.

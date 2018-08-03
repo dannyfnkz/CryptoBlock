@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CryptoBlock
 {
-    namespace Utils.IOUtils
+    namespace Utils.IO.ConsoleIO
     {
         /// <summary>
         /// contains methods which provide additional utility for <see cref="System.Console"/>.
@@ -33,6 +33,12 @@ namespace CryptoBlock
                 set { Console.CursorTop = value; }
             }
 
+            public static int WindowWidth
+            {
+                get { return Console.WindowWidth; }
+                set { Console.WindowWidth = value; }
+            }
+
             // returns default(ConsoleKeyInfo) if no key is available
             /// <summary>
             /// returns the most recent <see cref="ConsoleKeyInfo"/>from console input buffer, if available.
@@ -53,25 +59,11 @@ namespace CryptoBlock
             /// </returns>
             public static ConsoleKeyInfo ReadKey(out bool keyAvailable)
             {
-                ConsoleKeyInfo consoleKeyInfo;
-
                 keyAvailable = Console.KeyAvailable;
 
-                if (keyAvailable)
-                {
-                    // read key
-                    consoleKeyInfo = Console.ReadKey(true);
-
-                    // write key to console if it has a textual representation
-                    if (IsTextualKey(consoleKeyInfo)) 
-                    {
-                        Console.Write(consoleKeyInfo.KeyChar);
-                    }
-                }
-                else // no key available in Console input buffer
-                {
-                    consoleKeyInfo = default(ConsoleKeyInfo);
-                }
+                // read key from console input buffer if available
+                const bool interceptKey = true; // don't write obtained key to console
+                ConsoleKeyInfo consoleKeyInfo = keyAvailable ? Console.ReadKey(interceptKey): default(ConsoleKeyInfo);
 
                 return consoleKeyInfo;
             }
@@ -80,17 +72,17 @@ namespace CryptoBlock
             /// clears the console line currently pointed to by the cursor.
             /// </summary>
             /// <seealso cref="System.Console.SetCursorPosition(int, int)"/>
-            /// <seealso cref="System.Console.Write(string)"/>
+            /// <seealso cref="ConsoleWrite(string)"/>
             public static void ClearCurrentConsoleLine()
             {
                 // save current cursor horizontal position
                 int cursorLeft = Console.CursorLeft;
 
                 // set cursor to beginning of line
-                Console.SetCursorPosition(0, Console.CursorTop);
+                Console.SetCursorPosition(0, CursorTop);
 
                 // clear current line
-                Console.Write(new string(' ', Console.WindowWidth));
+                ConsoleWrite(new string(' ', WindowWidth));
 
                 // restore cursor position
                 Console.SetCursorPosition(cursorLeft, Console.CursorTop - 1);
@@ -216,7 +208,7 @@ namespace CryptoBlock
 
             /// <summary>
             /// writes <paramref name="output"/> to the line cursor is currently pointing to.
-            /// if <paramref name="output"/> is a compsite format string, formats string according to
+            /// if <paramref name="output"/> is a composite format string, formats string according to
             /// <paramref name="args"/>.
             /// <seealso cref="System.Console.Write(string, params object[])"/>
             /// </summary>
@@ -224,7 +216,30 @@ namespace CryptoBlock
             /// <param name="args">an object array which contains zero or more objects to format</param>
             public static void ConsoleWrite(string output, params object[] args)
             {
-                Console.Write(output, args);
+                string formattedOutput = string.Format(output, args);
+                Console.Write(formattedOutput);
+            }
+
+            public static void ConsoleWrite(char ch)
+            {
+                ConsoleWrite(ch.ToString());
+            }
+
+            public static void ReplaceCharacter(int horizontalCursorPosition, char replacementCharacter)
+            {
+                // move cursor to speicfied horizontal position
+                CursorLeft = horizontalCursorPosition;
+
+                // replace current character
+                ConsoleWrite(replacementCharacter.ToString());
+
+                // revert forward moved caused by ConsoleWrite
+                MoveCursorHorizontal(-1);
+            }
+
+            public static void ReplaceCurrentCharacter(char replacementCharacter)
+            {
+                ReplaceCharacter(CursorLeft, replacementCharacter);
             }
 
             /// <summary>
@@ -232,12 +247,13 @@ namespace CryptoBlock
             /// formatting <paramref name="output"/> according to <paramref name="args"/>
             /// if it is a composite format string.
             /// </summary>
-            /// <seealso cref="System.Console.Write(string, params object[])"/>
+            /// <seealso cref="ConsoleWrite(string, params object[])"/>
             /// <param name="output">plain output string or a composite format string</param>
             /// <param name="args">an object array which contains zero or more objects to format</param>
             public static void ConsoleWriteLine(string output, params object[] args)
             {
-                Console.WriteLine(output, args);
+                string outputWithNewline = output + Environment.NewLine;
+                ConsoleWrite(outputWithNewline, args);
             }
 
             /// <summary>

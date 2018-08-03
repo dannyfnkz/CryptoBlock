@@ -1,5 +1,4 @@
 ﻿using CryptoBlock.Utils.CollectionUtils;
-using CryptoBlock.Utils.IOUtils;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -9,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace CryptoBlock
 {
-    namespace Utils.IOUtils
+    namespace Utils.IO.ConsoleIO
     {
         /// <summary>
         /// handles Console input / output.
@@ -188,7 +187,7 @@ namespace CryptoBlock
 
                         // set input buffer to selected input entry
                         consoleIOHandler.FlushInputBuffer();
-                        consoleIOHandler.AppendToInputBuffer(selectedInputEntry);
+                        consoleIOHandler.appendToInputBuffer(selectedInputEntry);
                     }
                 }
             }
@@ -481,10 +480,6 @@ namespace CryptoBlock
                 }
             }
 
-            // synchroniously reads input until user presses the return key, returns said input
-            // note that input is not registered by the input listen thread and
-            // is therefore not inserted into input buffer
-
             /// <summary>
             /// synchroniously reads user console input until 'Enter' key is pressed, then returns said input.
             /// </summary>
@@ -523,26 +518,35 @@ namespace CryptoBlock
             /// writes output string <paramref name="str"/> to Console.
             /// </summary>
             /// <remarks>
-            /// default implementation writes output string as-is to Console.
-            /// override to modify output string before write to Console.
+            /// default implementation writes <paramref name="output"/> string as-is to Console.
             /// </remarks>
             /// <seealso cref="System.Console.Write(string)"/>
-            /// <param name="str"></param>
-            protected virtual void WriteOutput(string str)
+            /// <param name="output"></param>
+            protected virtual void WriteOutput(string output)
             {
-                 Console.Write(str);
+                ConsoleGraphicsHandler.HandleOutput(output);
             }
 
             [MethodImpl(MethodImplOptions.Synchronized)]
-            private void AppendToInputBuffer(string input)
+            private void appendToInputBuffer(string input)
             {
                 inputBuffer.Append(input);
             }
 
-            [MethodImpl(MethodImplOptions.Synchronized)]
-            private void AppendToInputBuffer(char input)
+            private void appendToInputBuffer(char input)
             {
-                inputBuffer.Append(input);
+                appendToInputBuffer(input.ToString());
+            }
+
+            [MethodImpl(MethodImplOptions.Synchronized)]
+            private void insertToInputBuffer(int index, string input)
+            {
+                inputBuffer.Insert(index, input);
+            }
+
+            private void insertToInputBuffer(int index, char input)
+            {
+                insertToInputBuffer(index, input.ToString());
             }
 
             [MethodImpl(MethodImplOptions.Synchronized)]
@@ -623,25 +627,29 @@ namespace CryptoBlock
             /// <remarks>
             /// asynchronous operation (returns immediately if no key is available in Console input buffer).
             /// </remarks>
-            /// <seealso cref="Utils.ConsoleUtils.ClearConsoleInputBuffer()"/>
+            /// <seealso cref="ConsoleIOUtils.ReadKey(out bool)"/>
+            /// <seealso cref="handleInputConsoleKey(ConsoleKeyInfo)"/>
             /// <seealso cref="handleEndOfInputKey()"/>
             /// <seealso cref="handleInputBackspaceKey()"/>
             [MethodImpl(MethodImplOptions.Synchronized)]
             private void readKeyIfAvailable()
             {
-                if (!registerInput)
-                {
-                    // discard Console input
-                    ConsoleIOUtils.ClearConsoleInputBuffer();
-                    return;
-                }
-
                 ConsoleKeyInfo consoleKeyInfo = ConsoleIOUtils.ReadKey(out bool keyAvailable);
 
                 // key available in console input buffer
                 if (keyAvailable)
-                {
-                    handleConsoleKey(consoleKeyInfo);
+                {           
+                    if (registerInput)
+                    {
+                        handleInputConsoleKey(consoleKeyInfo);
+                    }
+                    else
+                    {
+                        // discard Console input
+                        ConsoleIOUtils.ClearConsoleInputBuffer();
+                    }
+
+                    ConsoleGraphicsHandler.HandleInputKey(consoleKeyInfo);
                 }                    
             }
 
@@ -658,7 +666,7 @@ namespace CryptoBlock
             /// <seealso cref="handleInputBackspaceKey"/>
             /// <seealso cref="AppendToInputBuffer"/>
             /// <param name="consoleKeyInfo">a user-pressed console key</param>
-            private void handleConsoleKey(ConsoleKeyInfo consoleKeyInfo)
+            private void handleInputConsoleKey(ConsoleKeyInfo consoleKeyInfo)
             {
                 // handle input browsing
                 this.inputHistoryManager.HandleInputHistoryBrowsing(consoleKeyInfo);
@@ -671,14 +679,6 @@ namespace CryptoBlock
                 {
                     handleInputBackspaceKey();
                 }
-                else if (consoleKeyInfo.Key == ConsoleKey.LeftArrow) // key represents left-arrow
-                {
-                    handleInputLeftArrowKey();
-                }
-                else if (consoleKeyInfo.Key == ConsoleKey.RightArrow) // key represents right-arrow
-                {
-                    handleInputRightArrowKey();
-                }
                 // only keys with textual representation are inserted to input buffer
                 else if (ConsoleIOUtils.IsTextualKey(consoleKeyInfo))
                 {
@@ -688,8 +688,8 @@ namespace CryptoBlock
                     }
                     else
                     {
-                        // append to input buffer
-                        AppendToInputBuffer(consoleKeyInfo.KeyChar);
+                        // insert to input buffer at current cursor position
+                        insertToInputBuffer(ConsoleIOUtils.CursorLeft, consoleKeyInfo.KeyChar);
                     }
                 }
             }
@@ -721,9 +721,6 @@ namespace CryptoBlock
             {
                 // raise EndOfInputKeyRegistered event
                 onEndOfInputKeyRegistered();
-
-                // move cursor to beginning of next line
-                ConsoleIOUtils.SetCursorToBeginningOfNextLine();
             }
 
             /// <summary>
@@ -733,40 +730,10 @@ namespace CryptoBlock
             /// </summary>
             private void handleInputBackspaceKey()
             {
-                // remove character from input buffer if not empty
-                if (GetInputBufferCount() > 0)
+                // remove character to left of cursor from input buffer if not empty
+                if (ConsoleIOUtils.CursorLeft > 0)
                 {
-                    RemoveFromInputBuffer(inputBuffer.Length - 1, 1);
-                }
-
-                // remove character at current cursor position
-                ConsoleIOUtils.ConsoleWrite(" ");
-
-                // move cursor one character backwards
-                ConsoleIOUtils.MoveCursorHorizontal(-1);
-            }
-
-            /// <summary>
-            /// handles right arrow key user key press.
-            /// </summary>
-            private void handleInputRightArrowKey()
-            {
-                // if not at end of line, move cursor one character forwards
-                if (!ConsoleIOUtils.IsCursorPointingToEndOfLine())
-                {
-                    ConsoleIOUtils.MoveCursorHorizontal(1);
-                }
-            }
-
-            /// <summary>
-            /// handles left arrow key user key press.
-            /// </summary>
-            private void handleInputLeftArrowKey()
-            {
-                // if not at beginning of line, move cursor one character backwards
-                if (!ConsoleIOUtils.IsCursorPointingToBeginningOfLine())
-                {
-                    ConsoleIOUtils.MoveCursorHorizontal(-1);
+                    RemoveFromInputBuffer(ConsoleIOUtils.CursorLeft - 1, 1);
                 }
             }
 
@@ -801,8 +768,7 @@ namespace CryptoBlock
                 if (!ConsoleIOUtils.IsCursorPointingToBeginningOfLine())
                 {
                     // clear the current console line (holding user input)
-                    ConsoleIOUtils.ClearCurrentConsoleLine();
-                    ConsoleIOUtils.PointCursorToBeginningOfLine();
+                    ConsoleGraphicsHandler.ClearCurrentLine();
 
                     // restore user input after flush
                     restoreInputToConsoleFlag = true;

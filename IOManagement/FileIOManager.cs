@@ -1,6 +1,6 @@
-﻿using CryptoBlock.Utils.IO.FileUtils;
+﻿using CryptoBlock.Utils.IO.FileIO;
 using System.IO;
-using static CryptoBlock.Utils.IO.FileUtils.FileWriteException;
+using static CryptoBlock.Utils.IO.FileIO.FileWriteException;
 
 namespace CryptoBlock
 {

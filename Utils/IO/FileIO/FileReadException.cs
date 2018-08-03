@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CryptoBlock
 {
-    namespace Utils.IO.FileUtils
+    namespace Utils.IO.FileIO
     {
         /// <summary>
         /// thrown if an error occurs while trying to read text from file.
