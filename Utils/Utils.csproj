@@ -61,6 +61,7 @@
     <Compile Include="IO\FileUtils\FileReadException.cs" />
     <Compile Include="IO\FileUtils\FileWriteException.cs" />
     <Compile Include="JsonUtils.cs" />
+    <Compile Include="MathUtils.cs" />
     <Compile Include="MismatchException.cs" />
     <Compile Include="NumberUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
