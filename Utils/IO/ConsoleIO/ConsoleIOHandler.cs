@@ -101,17 +101,15 @@ namespace CryptoBlock
                         handleBrowsingKey(consoleKeyInfo);
                     }
 
-                    // pressed key was not a browsing key, and browsing procedure is active
-                    else if (browsingActive)
+                    // pressed key is a textual key (i.e it changes the input),
+                    // and browsing procedure is active
+                    else if (ConsoleIOUtils.IsTextualKey(consoleKeyInfo) && browsingActive)
                     {
                         // set browsing procedure state to inactive
                         browsingActive = false;
 
-                        // pop all recent input entries up to and including original user input
-                        for (int i = 0; i < selectedEntryIndex + 1; i++)
-                        {
-                            recentInputEntries.Pop();
-                        }
+                        // pop original user input (from before browsing started)
+                        recentInputEntries.Pop();
 
                         // reset selected entry index 
                         selectedEntryIndex = 0;
@@ -185,7 +183,7 @@ namespace CryptoBlock
                         // overwrite current console input line
                         ConsoleGraphicsHandler.OverwriteInputLine(selectedInputEntry);
 
-                        // set input buffer to selected input entry
+                        // overwrite input buffer
                         consoleIOHandler.FlushInputBuffer();
                         consoleIOHandler.appendToInputBuffer(selectedInputEntry);
                     }
