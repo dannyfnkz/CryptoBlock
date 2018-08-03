@@ -182,8 +182,8 @@ namespace CryptoBlock
                         string selectedInputEntry =
                             recentInputEntries.ElementAt(selectedEntryIndex);
 
-                        // write selected entry to console
-                        ConsoleIOUtils.ClearCurrentConsoleLineAndWrite(selectedInputEntry);
+                        // overwrite current console input line
+                        ConsoleGraphicsHandler.OverwriteInputLine(selectedInputEntry);
 
                         // set input buffer to selected input entry
                         consoleIOHandler.FlushInputBuffer();
@@ -688,8 +688,11 @@ namespace CryptoBlock
                     }
                     else
                     {
-                        // insert to input buffer at current cursor position
-                        insertToInputBuffer(ConsoleIOUtils.CursorLeft, consoleKeyInfo.KeyChar);
+                        if(GetInputBufferCount() < ConsoleIOUtils.WindowWidth - 1) // input line is not full
+                        {
+                            // insert to input buffer at current cursor position
+                            insertToInputBuffer(ConsoleIOUtils.CursorLeft, consoleKeyInfo.KeyChar);
+                        }                       
                     }
                 }
             }

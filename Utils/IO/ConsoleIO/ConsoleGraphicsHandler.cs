@@ -31,12 +31,14 @@ namespace CryptoBlock
                     handleInputRightArrowKey();
                 }
                 // key has textual representation
-                else if (ConsoleIOUtils.IsTextualKey(consoleKeyInfo))
+                else if (
+                    ConsoleIOUtils.IsTextualKey(consoleKeyInfo) 
+                    && ConsoleIOUtils.CursorLeft < ConsoleIOUtils.WindowWidth - 1)
                 {
                     // insert key char representation to line buffer
                     insertToLineBufferAtCurrentPosition(consoleKeyInfo.KeyChar.ToString());
 
-                    if(ConsoleIOUtils.CursorLeft == inputLineBuffer.Length - 1)  // insert at end of line
+                    if(ConsoleIOUtils.CursorLeft == inputLineBuffer.Length - 1)  // append to end of line
                     {
                         Console.Write(consoleKeyInfo.KeyChar.ToString());
                     }
@@ -54,19 +56,13 @@ namespace CryptoBlock
             internal static void HandleOutput(string output)
             {
                 ConsoleIOUtils.ConsoleWrite(output);
-
-                //if (ConsoleIOUtils.CursorLeft == lineBuffer.Length)
-                //{
-                //    ConsoleIOUtils.ConsoleWrite(output);
-                //}
-                //else
-                //{
-                //    insertToLineBufferAtCurrentPosition(output);
-                //    rewriteCurrentLine();
-                //    lineBuffer.Clear();
-                //}
-
                 setLineBufferToOutputLastLine(output);
+            }
+
+            internal static void OverwriteInputLine(string newInput)
+            {
+                ClearCurrentLine();
+                HandleOutput(newInput);
             }
 
             private static void setLineBufferToOutputLastLine(string output)
