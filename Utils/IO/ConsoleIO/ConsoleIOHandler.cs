@@ -191,7 +191,8 @@ namespace CryptoBlock
             }
 
             // sleep time for input & output listen threads
-            private const int LISTEN_THREAD_SLEEP_TIME_MILLIS = 10;
+            private const int INPUT_LISTEN_DELAY_TIME_MILLIS = 10;
+            private const int OUTPUT_FLUSH_DELAY_TIME_MILLIS = 10;
 
             // input
             private StringBuilder inputBuffer = new StringBuilder();
@@ -576,7 +577,14 @@ namespace CryptoBlock
                 while (consoleInputListenThreadRunning)
                 {
                     readKeyIfAvailable();
-                    Thread.Sleep(LISTEN_THREAD_SLEEP_TIME_MILLIS);
+                    try
+                    {
+                        Task.Delay(INPUT_LISTEN_DELAY_TIME_MILLIS).Wait();
+                    }
+                    catch(AggregateException) // thrown by Task.Delay(int).wait()
+                    {
+
+                    }
                 }
             }
 
@@ -597,7 +605,14 @@ namespace CryptoBlock
                             flushOutputBuffer();
                             outputFlushRequested = false;
 
-                            Thread.Sleep(LISTEN_THREAD_SLEEP_TIME_MILLIS);
+                            try
+                            {
+                                Task.Delay(OUTPUT_FLUSH_DELAY_TIME_MILLIS).Wait();
+                            }
+                            catch (AggregateException) // thrown by Task.Delay(int).wait()
+                            {
+
+                            }
                         }
                     }
                 });

@@ -9,7 +9,7 @@ namespace CryptoBlock
 {
     internal class ProgramManager
     {
-        private bool userHitReturnKey;
+        private readonly EventWaitHandle userHitReturnKeyWaitHandle = new AutoResetEvent(false);
 
         internal void StartProgram()
         {
@@ -29,19 +29,23 @@ namespace CryptoBlock
 
             while (true)
             {
-                if(userHitReturnKey)
-                {
-                    string userCommand = ConsoleIOManager.Instance.FlushInputBuffer();
-                    CommandParser.ParseCommand(userCommand);
+                // wait till user hits return key
+                userHitReturnKeyWaitHandle.WaitOne();
+               
+                // user hit return key
 
-                    userHitReturnKey = false;
-                }
+                // read and parse user command
+                string userCommand = ConsoleIOManager.Instance.FlushInputBuffer();
+                CommandParser.ParseCommand(userCommand);
+
+                // reset return key wait handle
+                userHitReturnKeyWaitHandle.Reset();
             }
         }
 
         private void consoleIOManager_EndOfInputKeyRegistered(string inputLine)
         {
-            userHitReturnKey = true;
+            userHitReturnKeyWaitHandle.Set();
         }
 
         private void coinDataManager_RepositoryInitialized(CoinTickerManager coinDataManager)

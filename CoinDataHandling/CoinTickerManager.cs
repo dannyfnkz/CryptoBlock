@@ -4,7 +4,6 @@ using CryptoBlock.IOManagement;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Threading.Tasks;
 using static CryptoBlock.CMCAPI.RequestHandler;
 
@@ -142,8 +141,8 @@ namespace CryptoBlock
             public event Action<CoinTickerManager> RepositoryInitializedEvent;
             public event Action<Range> RepositoryUpdatedEvent;
 
-            private const int COIN_TICKER_UPDATE_THREAD_SLEEP_TIME_UNTIL_NEXT_RUN = 1000 * 120; // in millis
-            private const int COIN_TICKER_UPDATE_THREAD_SLEEP_TIME_AFTER_EXCEPTION = 1000 * 15; // in millis
+            private const int COIN_TICKER_UPDATE_DELAY_TIME_UNTIL_NEXT_RUN = 1000 * 120; // in millis
+            private const int COIN_TICKER_UPDATE_DELAY_TIME_AFTER_EXCEPTION = 1000 * 15; // in millis
 
             private static CoinTickerManager instance;
 
@@ -504,15 +503,32 @@ namespace CryptoBlock
                                 repositoryInitialized = true;
                                 onRepositoryInitialized();
                             }
+                            else // notify user that update run is complete
+                            {
+                                ConsoleIOManager.Instance.LogNotice("Coin ticker repository updated.");
+                            }
 
-                            // sleep until next update run
-                            Thread.Sleep(COIN_TICKER_UPDATE_THREAD_SLEEP_TIME_UNTIL_NEXT_RUN);
+                            // wait until next update run
+                            Task.Delay(COIN_TICKER_UPDATE_DELAY_TIME_UNTIL_NEXT_RUN).Wait();
                         }
                     }
-                    catch (DataRequestException dataRequestException) // exception during update
+                    // exception while requesting CoinTicker data from server
+                    catch (DataRequestException dataRequestException) 
                     {
                         handleCoinTickerRepositoryUpdateException(dataRequestException);
-                        Thread.Sleep(COIN_TICKER_UPDATE_THREAD_SLEEP_TIME_AFTER_EXCEPTION);
+
+                        try
+                        {
+                            Task.Delay(COIN_TICKER_UPDATE_DELAY_TIME_AFTER_EXCEPTION).Wait();
+                        }
+                        catch(AggregateException) // thrown by Task.Delay(int).wait()
+                        {
+
+                        }
+                    }
+                    catch(AggregateException) // thrown by Task.Delay(int).wait()
+                    {
+
                     }
                 }
             }
