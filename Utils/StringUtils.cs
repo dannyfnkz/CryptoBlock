@@ -137,9 +137,13 @@ namespace CryptoBlock
             /// <param name="str"></param>
             /// <param name="prefix"></param>
             /// <returns>
-            /// <para></para>substring of <paramref name="str"/>, starting immediately after <paramref name="prefix"/>, 
-            /// if <paramref name="prefix"/> exists in in <paramref name="str"/>.</para>
-            /// <para>else, <paramref name="str"/>.</para>
+            /// <para>
+            /// substring of <paramref name="str"/>, starting immediately after <paramref name="prefix"/>, 
+            /// if <paramref name="prefix"/> exists in in <paramref name="str"/>.
+            /// </para>
+            /// <para>
+            /// else, <paramref name="str"/>.
+            /// </para>
             /// </returns>
             public static string Substring(string str, string prefix)
             {
