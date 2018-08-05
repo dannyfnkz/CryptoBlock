@@ -207,13 +207,6 @@ namespace CryptoBlock
 
             private static PortfolioManager instance;
 
-            private Task fileDataSaveTask;
-
-            // true if portfolio state had been changed and was not yet saved
-            private bool unsavedStateChange = false;
-
-            private bool fileDataSaveThreadRunning;
-
             [JsonProperty]
             private readonly Dictionary<int, PortfolioEntry> coinIdToPortfolioEntry 
                 = new Dictionary<int, PortfolioEntry>();
@@ -280,9 +273,6 @@ namespace CryptoBlock
 
                 // initialize portfolio entries with their corresponding coin tickers 
                 initializePortfolioEntryCoinTickers();
-
-                // start data file save thread
-                instance.StartFileDataSaveThreadThread();
             }
 
             /// <summary>
@@ -300,40 +290,6 @@ namespace CryptoBlock
 
                     return coinIdToPortfolioEntry.Keys.ToArray();
                 }
-            }
-
-            /// <summary>
-            /// whether a change made to portfolio was not yet saved to data file.
-            /// </summary>
-            [JsonIgnore] 
-            private bool UnsavedStateChange
-            {
-                [MethodImpl(MethodImplOptions.Synchronized)]
-                get { return unsavedStateChange; }
-                [MethodImpl(MethodImplOptions.Synchronized)]
-                set { unsavedStateChange = value; }
-            }
-
-            /// <summary>
-            /// starts the file data save thread.
-            /// </summary>
-            [MethodImpl(MethodImplOptions.Synchronized)]
-            public void StartFileDataSaveThreadThread()
-            {
-                fileDataSaveThreadRunning = true;
-
-                // init and start file data save task
-                fileDataSaveTask = new Task(new Action(fileDataSaveTask_Target));
-                fileDataSaveTask.Start();
-            }
-
-            /// <summary>
-            /// stops the file data save thread.
-            /// </summary>
-            [MethodImpl(MethodImplOptions.Synchronized)]
-            public void StopFileDataSaveThread()
-            {
-                fileDataSaveThreadRunning = false;
             }
 
             /// <summary>
@@ -522,43 +478,23 @@ namespace CryptoBlock
                 return portfolioEntryTableString;
             }
 
-            /// <summary>
-            /// <para>
-            /// if <see cref="fileDataSaveThreadRunning"/> is true, checks <see cref="UnsavedStateChange"/>
-            /// at regular intervals.
-            /// </para>
-            /// <para>
-            /// if <see cref="UnsavedStateChange"/> is true, saves portfolio data to file,
-            /// and sets <see cref="UnsavedStateChange"/> to false.
-            /// </para>
-            /// </summary>
             private void fileDataSaveTask_Target()
             {
-                while(fileDataSaveThreadRunning)
+                try
                 {
-                    if (UnsavedStateChange) // unsaved change to portfolio
-                    {
-                        try
-                        {
-                            string jsonString = JsonUtils.SerializeObject(this);
-                            FileIOManager.Instance.WriteTextToDataFile(DATA_SAVE_FILE_NAME, jsonString);
+                    string jsonString = JsonUtils.SerializeObject(this);
+                    FileIOManager.Instance.WriteTextToDataFile(DATA_SAVE_FILE_NAME, jsonString);
+                }
+                catch (Exception exception) // serialization or write to file failed
+                {
+                    // notify user about exception
+                    ConsoleIOManager.Instance.LogError(
+                        "An error occurred while trying to save portfolio data to file.");
+                    ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
 
-                            UnsavedStateChange = false;
-                        }
-                        catch (Exception exception) // serialization or write to file failed
-                        {
-                            // notify user about exception
-                            ConsoleIOManager.Instance.LogError(
-                                "An error occurred while trying to save portfolio data to file.");
-                            ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
-
-                            // log exception to error log file
-                            DataFileSaveException dataFileSaveException = new DataFileSaveException(exception);
-                            ExceptionManager.Instance.LogToErrorFile(dataFileSaveException);
-                        }
-                    }
-
-                    Thread.Sleep(FILE_DATA_SAVE_THREAD_SLEEP_TIME_MILLIS);
+                    // log exception to error log file
+                    DataFileSaveException dataFileSaveException = new DataFileSaveException(exception);
+                    ExceptionManager.Instance.LogToErrorFile(dataFileSaveException);
                 }
             }
 
@@ -658,7 +594,9 @@ namespace CryptoBlock
             /// </summary>
             private void onPortfolioStateChanged()
             {
-                UnsavedStateChange = true;
+                // init and start file data save task
+                Task fileDataSaveTask = new Task(new Action(fileDataSaveTask_Target));
+                fileDataSaveTask.Start();
             }
 
             /// <summary>
