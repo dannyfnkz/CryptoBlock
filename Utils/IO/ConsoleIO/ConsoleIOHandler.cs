@@ -653,8 +653,9 @@ namespace CryptoBlock
                 if (keyAvailable)
                 {           
                     if (registerInput)
-                    {
+                    {                        
                         handleInputConsoleKey(consoleKeyInfo);
+                        ConsoleGraphicsHandler.HandleInputKey(consoleKeyInfo);
                     }
                     else
                     {
@@ -662,7 +663,7 @@ namespace CryptoBlock
                         ConsoleIOUtils.ClearConsoleInputBuffer();
                     }
 
-                    ConsoleGraphicsHandler.HandleInputKey(consoleKeyInfo);
+                    
                 }                    
             }
 
