@@ -150,6 +150,30 @@ namespace CryptoBlock
                 return str.Substring(prefix.Length);
             }
 
+            public static string CharactersAtIndicesToUpper(string str, params int[] indices)
+            {
+                char[] stringCharArray = str.ToCharArray();
+
+                for(int i = 0; i < indices.Length; i++)
+                {
+                    char.ToUpper(stringCharArray[i]);
+                }
+
+                return new string(stringCharArray);
+            }
+
+            public static string CharactersAtIndicesToLower(string str, params int[] indices)
+            {
+                char[] stringCharArray = str.ToCharArray();
+
+                for (int i = 0; i < indices.Length; i++)
+                {
+                    char.ToLower(stringCharArray[i]);
+                }
+
+                return new string(stringCharArray);
+            }
+
             /// <summary>
             /// returns a string representation of <paramref name="obj"/>, including all properties and their
             /// corrosponding values.
@@ -161,7 +185,7 @@ namespace CryptoBlock
             /// <returns>
             /// a string representation of an object in the format:  class namespace.name [field1=value1, field2=value2, ...]
             /// </returns>
-            public static string ToString(object obj)
+            public static string ObjectToString(object obj)
             {
                 StringBuilder stringBuilder = new StringBuilder();
 

@@ -145,7 +145,7 @@ namespace CryptoBlock
 
             public override string ToString()
             {
-                return StringUtils.ToString(this);
+                return StringUtils.ObjectToString(this);
             }
         }
     }
