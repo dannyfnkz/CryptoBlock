@@ -156,7 +156,7 @@ namespace CryptoBlock
 
                 for(int i = 0; i < indices.Length; i++)
                 {
-                    char.ToUpper(stringCharArray[i]);
+                    stringCharArray[i] = char.ToUpper(stringCharArray[i]);
                 }
 
                 return new string(stringCharArray);
@@ -168,7 +168,7 @@ namespace CryptoBlock
 
                 for (int i = 0; i < indices.Length; i++)
                 {
-                    char.ToLower(stringCharArray[i]);
+                    stringCharArray[i] = char.ToLower(stringCharArray[i]);
                 }
 
                 return new string(stringCharArray);
