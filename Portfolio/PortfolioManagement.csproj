@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="PortfolioCommandExecutor.cs" />
+    <Compile Include="PortfolioDatabaseManager.cs" />
     <Compile Include="PortfolioEntry.cs" />
     <Compile Include="PortfolioEntryTable.cs" />
     <Compile Include="PortfolioManager.cs" />
@@ -82,6 +83,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="DatabaseTableSchema.txt" />
+    <EmbeddedResource Include="TransactionTypeTableData.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DatabaseSchema.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

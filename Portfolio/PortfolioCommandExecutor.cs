@@ -1,10 +1,12 @@
 ﻿using CryptoBlock.CommandHandling;
+using CryptoBlock.ExceptionManagement;
 using CryptoBlock.IOManagement;
 using CryptoBlock.ServerDataManagement;
 using CryptoBlock.Utils;
 using System.Collections.Generic;
 using static CryptoBlock.PortfolioManagement.PortfolioManager;
 using static CryptoBlock.ServerDataManagement.CoinListingManager;
+using static CryptoBlock.Utils.IO.SqLite.SQLiteDatabaseHandler;
 
 namespace CryptoBlock
 {
@@ -30,6 +32,15 @@ namespace CryptoBlock
                     : base(formatPrefix(inheritingCommandPrefix), minNumberOfArguments, maxNumberOfArguments)
                 {
 
+                }
+
+                protected void HandleDatabaseCommunicationException(
+                    DatabaseCommunicationException databaseCommunicationException)
+                {
+                    ConsoleIOManager.Instance.LogError(
+                        "An error occurred while trying to access portfolio database.");
+                    ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
+                    ExceptionManager.Instance.LogToErrorFile(databaseCommunicationException);
                 }
 
                 /// <summary>
@@ -90,19 +101,19 @@ namespace CryptoBlock
                     try
                     {
                         // only coin ids which have a corresponding portfolio entry are displayed
-                        List<int> coinIdsWithPortfolioEntry = new List<int>();
+                        List<long> coinIdsWithPortfolioEntry = new List<long>();
                         List<string> coinNamesWithoutPortfolioEntry = new List<string>();
 
                         if(commandArguments.Length == 0) 
                         {
                             // if no command args are provided, display all entries in portfolio
-                            int[] allCoinIdsInPortfolio = PortfolioManager.Instance.CoinIds;
+                            long[] allCoinIdsInPortfolio = PortfolioManager.Instance.CoinIds;
                             coinIdsWithPortfolioEntry.AddRange(allCoinIdsInPortfolio);
                         }
                         else // command args are provided
                         {
                             // fetch coin ids corresponding to coin names / symbols
-                            int[] coinIds = CoinListingManager.Instance.FetchCoinIds(commandArguments);
+                            long[] coinIds = CoinListingManager.Instance.FetchCoinIds(commandArguments);
 
                             // get coin ids with initialized ticker data
                             foreach (int coinId in coinIds)
@@ -141,9 +152,13 @@ namespace CryptoBlock
                             ConsoleIOManager.Instance.LogError(errorMessage);
                         }
                     }
-                    catch (CoinListingManager.CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
+                    catch (CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                     {
                         ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
+                    }
+                    catch (DatabaseCommunicationException databaseCommunicationException)
+                    {
+                        HandleDatabaseCommunicationException(databaseCommunicationException);
                     }
                 }
             }
@@ -192,7 +207,7 @@ namespace CryptoBlock
                     try
                     {
                         // get coin id by name or symbol
-                        int coinId = CoinListingManager.Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
+                        long coinId = CoinListingManager.Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
 
                         // add coin to portfolio
                         PortfolioManager.Instance.AddCoin(coinId);
@@ -210,10 +225,14 @@ namespace CryptoBlock
                         // coin with specified name / symbol not found in listing repository
                         ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
                     }
+                    catch (DatabaseCommunicationException databaseCommunicationException)
+                    {
+                        HandleDatabaseCommunicationException(databaseCommunicationException);
+                    }
                     catch (CoinAlreadyInPortfolioException coinAlreadyInPortfolioException)
                     {
                         // coin id is already in portfolio
-                        int coinId = coinAlreadyInPortfolioException.CoinId;
+                        long coinId = coinAlreadyInPortfolioException.CoinId;
                         string coinName = CoinListingManager.Instance.GetCoinNameById(coinId);
 
                         ConsoleIOManager.Instance.LogErrorFormat(
@@ -268,7 +287,7 @@ namespace CryptoBlock
                     try
                     {
                         // get coin id by name or symbol
-                        int coinId = CoinListingManager.Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
+                        long coinId = CoinListingManager.Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
 
                         // remove portfolio entry corresponding to coin id from portfolio
                         PortfolioManager.Instance.RemoveCoin(coinId);
@@ -281,6 +300,10 @@ namespace CryptoBlock
                             "'{0}' successfully removed from portfolio.",                          
                             coinName);
                     }
+                    catch (DatabaseCommunicationException databaseCommunicationException)
+                    {
+                        HandleDatabaseCommunicationException(databaseCommunicationException);
+                    }
                     catch (CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                     {
                         // coin with specified name / symbol not found in listing repository
@@ -289,7 +312,7 @@ namespace CryptoBlock
                     catch (CoinNotInPortfolioException coinNotInPortfolioException)
                     {
                         // coin id corresponding to given name / symbol does not exist in portfolio manager
-                        int coinId = coinNotInPortfolioException.CoinId;
+                        long coinId = coinNotInPortfolioException.CoinId;
                         string coinName = CoinListingManager.Instance.GetCoinNameById(coinId);
 
                         ConsoleIOManager.Instance.LogErrorFormat(
@@ -373,7 +396,7 @@ namespace CryptoBlock
                         }
 
                         // get coin id by name or symbol
-                        int coinId = CoinListingManager.Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
+                        long coinId = CoinListingManager.Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
 
                         // get coin name
                         string coinName = CoinListingManager.Instance.GetCoinNameById(coinId);
@@ -427,6 +450,10 @@ namespace CryptoBlock
                     {
                         // coin with specified name / symbol not found in listing repository
                         ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
+                    }
+                    catch (DatabaseCommunicationException databaseCommunicationException)
+                    {
+                        HandleDatabaseCommunicationException(databaseCommunicationException);
                     }
                 }
             }
@@ -503,7 +530,7 @@ namespace CryptoBlock
                         }
 
                         // get coin id by name or symbol
-                        int coinId = CoinListingManager.Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
+                        long coinId = CoinListingManager.Instance.GetCoinIdByNameOrSymbol(coinNameOrSymbol);
 
                         // get coin name & symbol
                         string coinName = CoinListingManager.Instance.GetCoinNameById(coinId);
@@ -525,9 +552,10 @@ namespace CryptoBlock
                         }
 
                         // check if there are enough funds for sell operation
-                        double coinHoldings = PortfolioManager.Instance.GetCoinHoldings(coinId);
+                        PortfolioEntry portfolioEntry = PortfolioManager.Instance.GetPortfolioEntry(coinId);
+                        double coinHoldings = portfolioEntry.Holdings;
 
-                        if(coinHoldings < sellAmount) // not enough funds to sell requested amount
+                        if (coinHoldings < sellAmount) // not enough funds to sell requested amount
                         {
                             ConsoleIOManager.Instance.LogErrorFormat(
                                 false,
@@ -553,6 +581,10 @@ namespace CryptoBlock
                     {
                         // coin with specified name / symbol not found in listing repository
                         ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
+                    }
+                    catch (DatabaseCommunicationException databaseCommunicationException)
+                    {
+                        HandleDatabaseCommunicationException(databaseCommunicationException);
                     }
                 }
             }

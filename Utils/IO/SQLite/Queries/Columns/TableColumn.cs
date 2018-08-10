@@ -31,9 +31,18 @@ namespace CryptoBlock
                 get { return fullyQualifiedName; }
             }
 
+            public virtual string QueryString
+            {
+                get { return FullyQualifiedName; }
+            }
+
             private static string buildFullyQualifiedName(string columnName, string tableName)
             {
-                return string.Format("{0}.{1}", tableName, columnName);
+                string fullyQualifiedName =
+                    columnName == null && tableName == null ? string.Empty
+                    : string.Format("{0}.{1}", tableName, columnName);
+
+                return fullyQualifiedName;
             }
         }
     }

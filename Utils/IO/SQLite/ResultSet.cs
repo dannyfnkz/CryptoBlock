@@ -7,12 +7,63 @@ using System.Threading.Tasks;
 using System.Web.Configuration;
 using System.Collections.Specialized;
 using System.Collections;
+using CryptoBlock.Utils.IO.SQLite.Queries.Columns;
 
 namespace Utils.IO.SQLite
 {
     public class ResultSet
     {
-        private readonly List<OrderedDictionary> fieldRows = new List<OrderedDictionary>();
+        public class Row
+        {
+            private readonly OrderedDictionary columnNameToColumnValue;
+            private readonly int columnCount;          
+
+            public Row(ValuedColumn[] valuedColumns)
+            {
+                this.columnCount = valuedColumns.Length;
+            }
+
+            public Row(OrderedDictionary columnNameToColumnValue)
+            {
+                this.columnNameToColumnValue = columnNameToColumnValue;
+                this.columnCount = columnNameToColumnValue.Count;
+            }
+
+            public int ColumnCount
+            {
+                get { return columnCount; }
+            }
+
+            public string GetColumnName(int columnIndex)
+            {
+                return columnNameToColumnValue.Cast<DictionaryEntry>().ElementAt(columnIndex).Key.ToString();
+            }
+
+            public object GetColumnValue(int columnIndex)
+            {
+                object columnValue = columnNameToColumnValue[columnIndex];
+                return IsNullColumnValue(columnValue) ? null : columnValue;
+            }
+
+            public T GetColumnValue<T>(int columnIndex)
+            {
+                return (T)GetColumnValue(columnIndex);
+            }
+
+            public object GetColumnValue(string columnName)
+            {
+                object columnValue = columnNameToColumnValue[columnName];
+
+                return IsNullColumnValue(columnValue) ? null : columnValue;
+            }
+
+            public T GetColumnValue<T>(string columnName)
+            {
+                return (T)GetColumnValue(columnName);
+            }
+        }
+
+        private readonly List<Row> rowList = new List<Row>();
 
         public ResultSet(SQLiteDataReader sqliteDataReader)
         {
@@ -20,34 +71,49 @@ namespace Utils.IO.SQLite
             {
                 OrderedDictionary fieldRowDictionary = new OrderedDictionary();
 
-                // OrderedDictionary indexes inserts in reverse order, so run from last column to first
-                for (int i = sqliteDataReader.FieldCount - 1; i >= 0; i--)
+                for (int i = 0; i < sqliteDataReader.FieldCount; i++)
                 {
                     fieldRowDictionary.Add(sqliteDataReader.GetName(i), sqliteDataReader.GetValue(i));
                 }
 
-                fieldRows.Add(fieldRowDictionary);
+                Row row = new Row(fieldRowDictionary);
+                rowList.Add(row);
             }
         }
 
         public int RowCount
         {
-            get { return fieldRows.Count; }
+            get { return rowList.Count; }
+        }
+
+        public Row[] Rows
+        {
+            get { return rowList.ToArray(); }
         }
 
         public int ColumnCount
         {
-            get { return fieldRows[0].Count; }
+            get { return rowList[0].ColumnCount; }
+        }
+
+        public static bool IsNullColumnValue(object columnValue)
+        {
+            return columnValue.GetType() == typeof(DBNull);
         }
 
         public string GetColumnName(int columnIndex)
         {
-            return fieldRows[0].Cast<DictionaryEntry>().ElementAt(columnIndex).Key.ToString();
+            return rowList[0].GetColumnName(columnIndex);
         }
 
         public object GetColumnValue(int rowIndex, int columnIndex)
         {
-            return fieldRows[rowIndex][columnIndex];
+            return rowList[rowIndex].GetColumnValue(columnIndex);
+        }
+
+        public Row GetRow(int rowIndex)
+        {
+            return rowList[rowIndex];
         }
 
         public T GetColumnValue<T>(int rowIndex, int columnIndex)
@@ -55,9 +121,18 @@ namespace Utils.IO.SQLite
             return (T)GetColumnValue(rowIndex, columnIndex);
         }
 
+        public bool IsNullColumnValue(int rowIndex, int ColumnIndex)
+        {
+            return GetColumnValue(rowIndex, ColumnIndex).GetType() == typeof(DBNull);
+        }
+
+        // note that SQLite's INTEGER is equivlent to .NET's long (int64),
+        // SQLite's REAL is equivlent to .NET's double,
+        // SQLite's NULL is equivlent to .NET's DBNull.
+        // returns null for DBNull
         public object GetColumnValue(int rowIndex, string columnName)
         {
-            return fieldRows[rowIndex][columnName];
+            return rowList[rowIndex].GetColumnValue(columnName);
         }
 
         public T GetColumnValue<T>(int rowIndex, string columnName)

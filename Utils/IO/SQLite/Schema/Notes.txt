@@ -1,5 +1,5 @@
 ﻿last update: 08/05/18
 
-1.	There is a problem with column AUTO_INCREMENT on non-primary key column.
+1.	There is a problem with column AUTO_INCREMENT on non-primary key columns.
 	works fine for primary-key columns, just specify that column is primary-key with all other attributes 
 	(UNIQUE, NOT NULL, AUTO_INCREMENT) set to false.

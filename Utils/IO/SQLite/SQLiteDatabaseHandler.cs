@@ -1,12 +1,11 @@
-﻿using CryptoBlock.Utils.IO.SQLite.Queries;
+﻿using CryptoBlock.Utils.IO.SQLite;
+using CryptoBlock.Utils.IO.SQLite.Queries;
 using CryptoBlock.Utils.IO.SQLite.Schema;
+using CryptoBlock.Utils.IO.SQLite.Xml;
 using System;
-using System.Collections.Generic;
 using System.Data.SQLite;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Utils.IO.SQLite;
+using static CryptoBlock.Utils.IO.SQLite.Xml.XMLParser;
 
 namespace CryptoBlock
 {
@@ -79,13 +78,97 @@ namespace CryptoBlock
                 }
             }
 
+            public class TransactionAlreadyUnderwayException : SQLiteDatabaseHandlerException
+            {
+                public TransactionAlreadyUnderwayException(
+                    string databaseFilePath)
+                    : base(databaseFilePath, formatExceptionMessage())
+                {
+
+                }
+
+                private static string formatExceptionMessage()
+                {
+                    return "Cannot begin a new transaction before calling rollback or commit on existing"
+                        + " one";
+                }
+            }
+
+            public class TransactionNotStartedException : SQLiteDatabaseHandlerException
+            {
+                public TransactionNotStartedException(
+                    string databaseFilePath,
+                    string operationName)
+                    : base(databaseFilePath, formatExceptionMessage(operationName))
+                {
+
+                }
+
+                private static string formatExceptionMessage(string operationName)
+                {
+                    return string.Format(
+                        "A transaction must be started before prior to performing following operation: '{0}'.",
+                        operationName);
+                }
+            }
+
+            private const string SQLITE_FILE_EXTENSION = ".sqlite";
+
             private readonly string filePath;
 
             private SQLiteConnection connection;
+            private bool transactionUnderway;
 
-            public SQLiteDatabaseHandler(string filePath)
+            public SQLiteDatabaseHandler(string filePath, bool createNewEmptyFile = false)
             {
                 this.filePath = filePath;
+
+                if(createNewEmptyFile)
+                {
+                    // try creating a new db file
+                    try
+                    {
+                        SQLiteConnection.CreateFile(filePath);
+                    }
+                    catch (SQLiteException sqliteException)
+                    {
+                        throw new SQLiteDatabaseHandlerException(filePath, null, sqliteException);
+                    }
+                }
+            }
+
+            public SQLiteDatabaseHandler(FileXmlDocument databaseSchemaXmlDocument, string filePath = null)
+            {
+                try
+                {
+                    DatabaseSchema databaseSchema = XMLParser.ParseDatabaseSchema(databaseSchemaXmlDocument);
+
+                    if(filePath != null)
+                    {
+                        this.filePath = filePath;
+                    }
+                    else
+                    {
+                        this.filePath = databaseSchema.DatabaseName + SQLITE_FILE_EXTENSION;
+                    }
+                    
+                    OpenConnection();
+
+                    BeginTransaction();
+
+                    foreach(TableSchema tableSchema in databaseSchema.TableSchemas)
+                    {
+                        CreateTable(tableSchema);
+                    }
+
+                    CommitTransaction();
+
+                    CloseConnection();
+                }
+                catch (XmlDocumentParseException xmlDocumentParseException)
+                {
+                    throw new SQLiteDatabaseHandlerException(filePath, null, xmlDocumentParseException);
+                }
             }
 
             public string FilePath
@@ -104,7 +187,7 @@ namespace CryptoBlock
 
                 string connectionString = string.Format("Data Source={0}", filePath);
 
-                // try opening a Sqlite connection 
+                // try opening an SQLite connection 
                 try
                 {
                     connection = new SQLiteConnection(connectionString);
@@ -121,7 +204,7 @@ namespace CryptoBlock
             {
                 assertConnectionToDatabaseOpen("CloseConnection()");
 
-                // try closing Sqlite connection 
+                // try closing SQLite connection 
                 try
                 {
                     connection.Close();
@@ -133,53 +216,54 @@ namespace CryptoBlock
                 }
             }
 
-            // creates a new db file, overwriting old one if exists
-            public void CreateNewFile()
+            public void BeginTransaction()
             {
-                assertConnectionToDatabaseNotAlreadyOpen("CreateNewFile()");
+                assertTransactionNotAlreadyUnderway();
 
-                // try creating a new db file
-                try
-                {
-                    SQLiteConnection.CreateFile(filePath);
-                }
-                catch (SQLiteException sqliteException)
-                {
-                    throw new SQLiteDatabaseHandlerException(filePath, null, sqliteException);
-                }
+                string queryString = "BEGIN TRANSACTION";
+
+                executeWriteQuery(queryString);
+
+                this.transactionUnderway = true;
+            }
+
+            public void CommitTransaction()
+            {
+                assertTransactionStarted("CommitTransaction");
+
+                string queryString = "COMMIT TRANSACTION";
+
+                executeWriteQuery(queryString);
+
+                this.transactionUnderway = false;
+            }
+
+            public void RollbackTransaction()
+            {
+                assertTransactionStarted("RollbackTransaction");
+
+                string queryString = "ROLLBACK TRANSACTION";
+
+                executeWriteQuery(queryString);
+
+                this.transactionUnderway = false;
             }
 
             public void CreateTable(TableSchema tableSchema)
             {
                 // build query string
-                string queryString = string.Format("CREATE {0}", tableSchema.GetQueryString());
+                string queryString = string.Format("CREATE {0}", tableSchema.QueryString);
 
                 // execute query
-                try
-                {
-                    executeWriteQuery(queryString);
-                }
-                catch (SQLiteException sqliteException)
-                {
-                    throw new SQLiteDatabaseHandlerException(filePath, null, sqliteException);                    
-                }
+                executeWriteQuery(queryString);             
             }
 
-            public int UpdateTable(UpdateQuery updateQuery)
+            public int ExecuteUpdateQuery(UpdateQuery updateQuery)
             {
-                int numAffectedRows;
-
                 // execute query
-                try
-                {
-                    numAffectedRows = executeWriteQuery(updateQuery.QueryString);
+                int numAffectedRows = executeWriteQuery(updateQuery.QueryString);
 
-                    return numAffectedRows;
-                }
-                catch (SQLiteException sqliteException)
-                {
-                    throw new SQLiteDatabaseHandlerException(filePath, null, sqliteException);
-                }         
+                return numAffectedRows;
             }
 
             public void DropTable(string tableName)
@@ -188,67 +272,115 @@ namespace CryptoBlock
                 string queryString = string.Format("DROP TABLE {0}", tableName);
              
                 // execute query
-                try
-                {
-                    executeWriteQuery(queryString);
-                }
-                catch (SQLiteException sqliteException)
-                {
-                    throw new SQLiteDatabaseHandlerException(filePath, null, sqliteException);
-                }
+                executeWriteQuery(queryString);           
             }
 
             public void TruncateTable(string tableName)
             {
+                assertConnectionToDatabaseOpen("TruncateTable");
+
                 // build query string
                 string queryString = string.Format("DELETE FROM {0}", tableName);
 
                 // execute query
-                try
-                {
-                    executeWriteQuery(queryString);
-                }
-                catch (SQLiteException sqliteException)
-                {
-                    throw new SQLiteDatabaseHandlerException(filePath, null, sqliteException);
-                }
+                executeWriteQuery(queryString);
             }
 
-            public int InsertIntoTable(InsertQuery insertQuery)
+            public int ExecuteInsertQuery(InsertQuery insertQuery)
             {
+                assertConnectionToDatabaseOpen("ExecuteInsertQuery");
+
                 // execute query
+                int numAffectedRows = executeWriteQuery(insertQuery.QueryString);
+
+                return numAffectedRows;
+            }
+
+            public int ExecuteInsertQueries(FileXmlDocument tableDataXmlDocument)
+            {
+                assertConnectionToDatabaseOpen("ExecuteInsertQueries");
+
                 try
                 {
-                    int numAffectedRows = executeWriteQuery(insertQuery.QueryString);
+                    int numAffectedRows = 0;
+
+                    // parse InsertQueries from tableDataXmlDocument
+                    InsertQuery[] insertQueries = XMLParser.ParseInsertQueries(tableDataXmlDocument);
+
+                    // execute insert queries
+                    foreach (InsertQuery insertQuery in insertQueries)
+                    {
+                        numAffectedRows += ExecuteInsertQuery(insertQuery);
+                    }
 
                     return numAffectedRows;
                 }
-                catch (SQLiteException sqliteException)
+                catch(XmlDocumentParseException xmlDocumentParseException)
                 {
-                    throw new SQLiteDatabaseHandlerException(filePath, null, sqliteException);
+                    throw new SQLiteDatabaseHandlerException(filePath, null, xmlDocumentParseException);
                 }
             }
 
-            public ResultSet SelectFromTable(SelectQuery selectQuery)
+            public int ExecuteDeleteQuery(DeleteQuery deleteQuery)
+            {
+                assertConnectionToDatabaseOpen("ExecuteDeleteQuery");
+
+                // execute query
+                int numAffectedRows = executeWriteQuery(deleteQuery.QueryString);
+
+                return numAffectedRows;
+            }
+
+            public ResultSet ExecuteSelectQuery(SelectQuery selectQuery)
             {
                 return executeReadQuery(selectQuery.QueryString);
             }
 
             private int executeWriteQuery(string query)
             {
-                SQLiteCommand command = new SQLiteCommand(query, connection);
+                try
+                {
+                    SQLiteCommand command = new SQLiteCommand(query, connection);
 
-                return command.ExecuteNonQuery();
+                    return command.ExecuteNonQuery();
+                }
+                catch (SQLiteException sqliteException)
+                {
+                    throw new SQLiteDatabaseHandlerException(filePath, null, sqliteException);
+                }
             }
 
             private ResultSet executeReadQuery(string query)
             {
-                SQLiteCommand command = new SQLiteCommand(query, connection);
-                SQLiteDataReader sqliteDataReader = command.ExecuteReader();
+                try
+                {
+                    SQLiteCommand command = new SQLiteCommand(query, connection);
+                    SQLiteDataReader sqliteDataReader = command.ExecuteReader();
 
-                ResultSet resultSet = new ResultSet(sqliteDataReader);
+                    ResultSet resultSet = new ResultSet(sqliteDataReader);
 
-                return resultSet;
+                    return resultSet;
+                }
+                catch (SQLiteException sqliteException)
+                {
+                    throw new SQLiteDatabaseHandlerException(filePath, null, sqliteException);
+                }
+            }
+
+            private void assertTransactionNotAlreadyUnderway()
+            {
+                if(transactionUnderway)
+                {
+                    throw new TransactionAlreadyUnderwayException(this.filePath);
+                }
+            }
+
+            private void assertTransactionStarted(string operationName)
+            {
+                if(!transactionUnderway)
+                {
+                    throw new TransactionNotStartedException(this.filePath, operationName);
+                }
             }
 
             private void assertConnectionToDatabaseNotAlreadyOpen(string operationName)

@@ -1,37 +1,41 @@
 ﻿using System.Collections.Generic;
 using System;
 using System.Text;
+using System.Xml;
+using static CryptoBlock.Utils.IO.SQLite.Xml.XMLParser;
 
 namespace CryptoBlock
 {
     namespace Utils.IO.SQLite.Schema
     {
-        public class ColumnSchema
+        public class ColumnSchema : ISchema
         {
-            public enum eType
+            public enum eDataType
             {
-                Integer, Varchar
+                Integer, Varchar, Real
             };
 
-            private string name;
-            private eType type;
-            private int? length;
-            private bool notNull;
-            private bool unique;
-            private bool autoIncrement;
-            private object defaultValue;
+            private readonly string name;
+            private readonly eDataType dataType;
+            private readonly long? length;
+            private readonly bool notNull;
+            private readonly bool unique;
+            private readonly bool autoIncrement;
+            private readonly object defaultValue;
+
+            private string queryString;
 
             internal ColumnSchema(
                 string name,
-                eType type,
+                eDataType dataType,
                 bool notNull = false,
                 bool autoIncrement = false,
                 bool unique = false,
                 object defaultValue = null,
-                int? length = null)
+                long? length = null)
             {
                 this.name = name;
-                this.type = type;
+                this.dataType = dataType;
                 this.notNull = notNull;
                 this.autoIncrement = autoIncrement;
                 this.unique = unique;
@@ -39,14 +43,34 @@ namespace CryptoBlock
                 this.length = length;
             }
 
+            public string QueryString
+            {
+                get
+                {
+                    if(this.queryString == null)
+                    {
+                        this.queryString = buildQueryString(
+                            this.name,
+                            this.dataType,
+                            this.notNull,
+                            this.autoIncrement,
+                            this.unique,
+                            this.defaultValue,
+                            this.length);
+                    }
+
+                    return this.queryString;
+                }
+            }
+
             public string Name
             {
                 get { return name; }
             }
 
-            public eType Type
+            public eDataType DataType
             {
-                get { return type; }
+                get { return dataType; }
             }
 
             public bool NotNull
@@ -69,46 +93,118 @@ namespace CryptoBlock
                 get { return defaultValue; }
             }
 
-            public int? Length
+            public long? Length
             {
                 get { return length; }
             }
 
-            static internal string GetTypeString(eType type)
+            // throws NullReferenceException
+            public static ColumnSchema Parse(XmlNode columnSchemaXmlNode)
             {
-                return Enum.GetName(typeof(eType), type);
+                // get required attributes
+                string name = columnSchemaXmlNode.Attributes["name"].Value;
+                string typeString = columnSchemaXmlNode.Attributes["type"].Value;
+
+                try
+                {
+                    // parse typeString into valid enum format (first letter upper, all others lower)
+                    typeString = typeString.ToLower();
+                    typeString = StringUtils.CharactersAtIndicesToUpper(typeString, 0);
+
+                    eDataType dataType = (eDataType)Enum.Parse(typeof(eDataType), typeString);
+
+                    // get optional attributes
+
+                    bool notNull = false;
+                    bool autoIncrement = false;
+                    bool unique = false;
+                    object defaultValue = null;
+                    long? length = null;
+                   
+                    if (columnSchemaXmlNode.SelectNodes("not_null").Count > 0)
+                    {
+                        notNull = true;
+                    }
+                    if (columnSchemaXmlNode.SelectNodes("auto_increment").Count > 0)
+                    {
+                        autoIncrement = true;
+                    }
+                    if (columnSchemaXmlNode.SelectNodes("unique").Count > 0)
+                    {
+                        unique = true;
+                    }
+                    if (columnSchemaXmlNode.SelectNodes("default").Count > 0)
+                    {
+                        defaultValue = long.Parse(
+                            columnSchemaXmlNode.SelectNodes("default")[0].FirstChild.Value);
+                    }
+                    if (columnSchemaXmlNode.SelectNodes("length").Count > 0)
+                    {
+                        XmlNode m = columnSchemaXmlNode.SelectNodes("length")[0];
+                        length = long.Parse(columnSchemaXmlNode.SelectNodes("length")[0].FirstChild.Value);
+                    }
+
+                    ColumnSchema columnSchema = new ColumnSchema(
+                        name,
+                        dataType,
+                        notNull,
+                        autoIncrement,
+                        unique,
+                        defaultValue,
+                        length);
+
+                    return columnSchema;
+                }
+                catch(ArgumentException argumentException) // invalid typeString (eDataType parse failed)
+                {
+                    string exceptionMessage = string.Format(
+                        "(Column '{0}') Invalid column data type: '{1}'.",
+                        typeString);
+                    throw new XmlNodeParseException(exceptionMessage, argumentException);
+                }
             }
 
-            public string GetQueryString()
+            public static string GetTypeString(eDataType dataType)
             {
-                string typeString = GetTypeString(type);
+                return Enum.GetName(typeof(eDataType), dataType).ToUpper();
+            }
 
-                StringBuilder representationStringBuilder = new StringBuilder();
+            private static string buildQueryString(string name,
+                eDataType dataType,
+                bool notNull,
+                bool autoIncrement,
+                bool unique,
+                object defaultValue,
+                long? length)
+            {
+                string typeString = GetTypeString(dataType);
 
-                representationStringBuilder.AppendFormat("{0} {1}", name, typeString);
+                StringBuilder queryStringBuilder = new StringBuilder();
 
-                if(length != null)
+                queryStringBuilder.AppendFormat("{0} {1}", name, typeString);
+
+                if (length != null)
                 {
-                    representationStringBuilder.AppendFormat("({0})", length.GetValueOrDefault());
+                    queryStringBuilder.AppendFormat("({0})", length.GetValueOrDefault());
                 }
-                if(autoIncrement)
+                if (autoIncrement)
                 {
-                    representationStringBuilder.AppendFormat(" {0}", "AUTO_INCREMENT");
+                    queryStringBuilder.AppendFormat(" {0}", "AUTO_INCREMENT");
                 }
-                if(notNull)
+                if (notNull)
                 {
-                    representationStringBuilder.AppendFormat(" {0}", "NOT NULL");
+                    queryStringBuilder.AppendFormat(" {0}", "NOT NULL");
                 }
-                if(defaultValue != null)
+                if (defaultValue != null)
                 {
-                    representationStringBuilder.AppendFormat(" DEFAULT '{0}'", defaultValue.ToString());
+                    queryStringBuilder.AppendFormat(" DEFAULT '{0}'", defaultValue.ToString());
                 }
-                if(unique)
+                if (unique)
                 {
-                    representationStringBuilder.AppendFormat(" {0}", "UNIQUE");
+                    queryStringBuilder.AppendFormat(" {0}", "UNIQUE");
                 }
 
-                return representationStringBuilder.ToString();
+                return queryStringBuilder.ToString();
             }
         }
     }

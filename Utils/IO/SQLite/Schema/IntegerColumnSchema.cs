@@ -2,16 +2,15 @@
 {
     namespace Utils.IO.SQLite.Schema
     {
-        public class VarcharColumnSchema : ColumnSchema
+        public class IntegerColumnSchema : ColumnSchema
         {
-            public VarcharColumnSchema(
+            public IntegerColumnSchema(
                 string name,
-                int length,
                 bool notNull = false,
                 bool autoIncrement = false,
                 bool unique = false,
-                string defaultValue = null)
-                : base(name, eDataType.Varchar, notNull, autoIncrement, unique, defaultValue, length)
+                int? defaultValue = null)
+                : base(name, eDataType.Integer, notNull, autoIncrement, unique, defaultValue)
             {
 
             }

@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<table name="TransactionType">
+  <row>
+    <column name="name">
+      <value>Buy</value>
+    </column>
+  </row>
+  <row>
+    <column name="name">
+      <value>Sell</value>
+    </column>
+  </row>
+</table>
+

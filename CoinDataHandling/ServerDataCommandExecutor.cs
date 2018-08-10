@@ -65,7 +65,7 @@ namespace CryptoBlock
                     try
                     {
                         // fetch coin ids corresponding to coin names / symbols
-                        int[] coinIds = CoinListingManager.Instance.FetchCoinIds(commandArguments);
+                        long[] coinIds = CoinListingManager.Instance.FetchCoinIds(commandArguments);
 
                         // print coin listing display table containing coin listings corresponding
                         // to fetched coin ids
@@ -118,7 +118,7 @@ namespace CryptoBlock
                     try
                     {
                         // fetch coin ids corresponding to coin names / symbols
-                        int[] coinIds = CoinListingManager.Instance.FetchCoinIds(commandArguments);
+                        long[] coinIds = CoinListingManager.Instance.FetchCoinIds(commandArguments);
 
                         // only coin ids which corresponding ticker entry in ticker manager
                         // has been initialized are displayed

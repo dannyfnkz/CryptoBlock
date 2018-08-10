@@ -159,12 +159,12 @@ namespace CryptoBlock
             /// </summary>
             public class CoinIdNotFoundException : ManagerException
             {
-                public CoinIdNotFoundException(int coinId) : base(formatExceptionMessage(coinId))
+                public CoinIdNotFoundException(long coinId) : base(formatExceptionMessage(coinId))
                 {
 
                 }
 
-                private static string formatExceptionMessage(int coinId)
+                private static string formatExceptionMessage(long coinId)
                 {
                     return string.Format("Coin id does not exist in database: {0}.", coinId);
                 }
@@ -180,8 +180,8 @@ namespace CryptoBlock
             // listing repository was initialized
             private bool managerInitialized;
 
-            private Dictionary<int, CoinListing> coinIdToCoinListing =
-                new Dictionary<int, CoinListing>();
+            private Dictionary<long, CoinListing> coinIdToCoinListing =
+                new Dictionary<long, CoinListing>();
 
             // name key is in lowercase
             private Dictionary<string, CoinListing> coinNameToCoinListing =
@@ -242,7 +242,7 @@ namespace CryptoBlock
             /// <exception cref="ManagerNotInitializedException">
             /// <seealso cref="assertManagerInitialized(string)"/>
             /// </exception>
-            public bool CoinIdExists(int coinId)
+            public bool CoinIdExists(long coinId)
             {
                 assertManagerInitialized("CoinIdExists");
 
@@ -365,7 +365,7 @@ namespace CryptoBlock
             /// thrown if a <see cref="CoinListing"/> having <paramref name="coinNameOrSymbol"/> does not exist in
             /// repository
             /// </exception>
-            public int GetCoinIdByNameOrSymbol(string coinNameOrSymbol)
+            public long GetCoinIdByNameOrSymbol(string coinNameOrSymbol)
             {
                 assertManagerInitialized("GetCoinIdByNameOrSymbol");
 
@@ -396,9 +396,9 @@ namespace CryptoBlock
             /// <seealso cref="assertManagerInitialized(string)"/>
             /// </exception>
             /// <exception cref="CoinIdNotFoundException">
-            /// <seealso cref="GetCoinListing(int)"/>
+            /// <seealso cref="GetCoinListing(long)"/>
             /// </exception>
-            public string GetCoinNameById(int coinId)
+            public string GetCoinNameById(long coinId)
             {
                 assertManagerInitialized("GetCoinNameById");
 
@@ -416,9 +416,9 @@ namespace CryptoBlock
             /// <seealso cref="assertManagerInitialized(string)"/>
             /// </exception>
             /// <exception cref="CoinIdNotFoundException">
-            /// <seealso cref="GetCoinListing(int)"/>
+            /// <seealso cref="GetCoinListing(long)"/>
             /// </exception>
-            public string GetCoinSymbolById(int coinId)
+            public string GetCoinSymbolById(long coinId)
             {
                 assertManagerInitialized("GetCoinSymbolById");
 
@@ -428,7 +428,7 @@ namespace CryptoBlock
             /// <summary>
             /// returns <see cref="CoinListing"/> corresponding to <paramref name="coinId"/>.
             /// </summary>
-            /// <seealso cref="CoinIdExists(int)"/>
+            /// <seealso cref="CoinIdExists(long)"/>
             /// <param name="coinId"></param>
             /// <returns>
             /// <see cref="CoinListing"/> corresponding to <paramref name="coinId"/>
@@ -440,7 +440,7 @@ namespace CryptoBlock
             /// thrown if <see cref="CoinLisiting"/> corresponding to <paramref name="coinId"/> does
             /// not exist in repository
             /// </exception>
-            public CoinListing GetCoinListing(int coinId)
+            public CoinListing GetCoinListing(long coinId)
             {
                 assertManagerInitialized("GetCoinListing");
 
@@ -467,16 +467,16 @@ namespace CryptoBlock
             /// <seealso cref="assertManagerInitialized(string)"/>
             /// </exception>
             /// <exception cref="CoinIdDoesNotExistException">
-            /// <seealso cref="GetCoinListing(int)"/>
+            /// <seealso cref="GetCoinListing(long)"/>
             /// </exception>
-            public string GetCoinListingTableDisplayString(params int[] coinIds)
+            public string GetCoinListingTableDisplayString(params long[] coinIds)
             {
                 assertManagerInitialized("GetCoinListingTableDisplayString");
 
                 // init coin listing table
                 CoinListingTable coinListingTable = new CoinListingTable();
 
-                foreach (int coinId in coinIds)
+                foreach (long coinId in coinIds)
                 {
                     // add row corresponding to each coin listing associated with specified id
                     CoinListing coinListing = GetCoinListing(coinId);
@@ -505,9 +505,9 @@ namespace CryptoBlock
             /// <exception cref="CoinNameOrSymbolNotFoundException">
             /// <seealso cref="GetCoinIdByNameOrSymbol(string)"/>
             /// </exception>
-            public int[] FetchCoinIds(string[] coinNameOrSymbolArray)
+            public long[] FetchCoinIds(string[] coinNameOrSymbolArray)
             {
-                int[] coinIds = new int[coinNameOrSymbolArray.Length];
+                long[] coinIds = new long[coinNameOrSymbolArray.Length];
 
                 for (int i = 0; i < coinNameOrSymbolArray.Length; i++)
                 {

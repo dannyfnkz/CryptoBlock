@@ -116,20 +116,20 @@ namespace CryptoBlock
             /// </summary>
             public class CoinIdNotFoundException : CoinTickerManagerException
             {
-                private int coinId;
+                private long coinId;
 
-                public CoinIdNotFoundException(int coinId)
+                public CoinIdNotFoundException(long coinId)
                     : base(formatExceptionMessage(coinId))
                 {
                     this.coinId = coinId;
                 }
 
-                public int CoinId
+                public long CoinId
                 {
                     get { return coinId; }
                 }
 
-                private static string formatExceptionMessage(int coinId)
+                private static string formatExceptionMessage(long coinId)
                 {
                     return string.Format(
                         "Coin with id {0} does not exist in coin ticker repository." +
@@ -146,7 +146,7 @@ namespace CryptoBlock
 
             private static CoinTickerManager instance;
 
-            private Dictionary<int, CoinTicker> coinIdToCoinTicker = new Dictionary<int, CoinTicker>();
+            private Dictionary<long, CoinTicker> coinIdToCoinTicker = new Dictionary<long, CoinTicker>();
             //   private CoinTicker[] coinDataArray;
             private int numberOfCoinsInRepository;
             private int leastRecentlyUpdatedCoinIndex = 0;
@@ -271,7 +271,7 @@ namespace CryptoBlock
             /// <exception cref="ManagerNotInitializedException">
             /// <seealso cref="assertManagerInitialized(string)"/>
             /// </exception>
-            public bool HasCoinTicker(int coinId)
+            public bool HasCoinTicker(long coinId)
             {
                 assertManagerInitialized("HasCoinTicker");
 
@@ -289,12 +289,12 @@ namespace CryptoBlock
             /// <seealso cref="assertManagerInitialized(string)"/>
             /// </exception>
             /// <exception cref="CoinIdNotFoundException">
-            /// <seealso cref="assertCoinIdExists(int)"/>
+            /// <seealso cref="assertCoinTickerExists(long)"/>
             /// </exception>
-            public CoinTicker GetCoinTicker(int coinId)
+            public CoinTicker GetCoinTicker(long coinId)
             {
                 assertManagerInitialized("GetCoinTicker");
-                assertCoinIdExists(coinId);
+                assertCoinTickerExists(coinId);
 
                 return coinIdToCoinTicker[coinId];
             }
@@ -442,7 +442,7 @@ namespace CryptoBlock
             /// thrown if <see cref="CoinTicker"/> corresponding to <paramref name="coinId"/>
             /// does not exist in coin ticker repository.
             /// </exception>
-            private void assertCoinIdExists(int coinId)
+            private void assertCoinTickerExists(long coinId)
             {
                 if (!coinIdToCoinTicker.ContainsKey(coinId))
                 {

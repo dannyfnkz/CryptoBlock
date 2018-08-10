@@ -5,12 +5,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Utils.IO.SQLite.Queries;
 
 namespace CryptoBlock
 {
     namespace Utils.IO.SQLite.Queries
     {
-        public class SelectQuery
+        public class SelectQuery : Query
         {
             public class Join
             {
@@ -101,6 +102,8 @@ namespace CryptoBlock
                 }
             }
 
+            private const char SELECT_ALL_COLUMNS_WILDCARD = '*';
+
             private readonly string sourceTableName;
             private readonly TableColumn[] tableColumns;
             private readonly Join[] joins;
@@ -109,8 +112,8 @@ namespace CryptoBlock
             private readonly string queryStrying;
 
             public SelectQuery(
-                string sourceTableName,
-                TableColumn[] tableColumns,
+                string sourceTableName = null,
+                TableColumn[] tableColumns = null,
                 Join[] joins = null,
                 Condition queryCondition = null)
             {
@@ -146,7 +149,7 @@ namespace CryptoBlock
                 get { return queryCondition; }
             }
 
-            public string QueryString
+            public override string QueryString
             {
                 get { return queryStrying; }
             }
@@ -162,21 +165,32 @@ namespace CryptoBlock
                 // append command prefix
                 queryStringBuilder.Append("SELECT ");
 
-                for (int i = 0; i < tableColumns.Length; i++)
+                if(tableColumns == null) // if null select all columns in table
                 {
-                    // append Column fully qualified name
-                    TableColumn tableColumn = tableColumns[i];
-                    queryStringBuilder.Append(tableColumn.FullyQualifiedName);
-
-                    if(i < tableColumns.Length - 1)
+                    queryStringBuilder.Append(SELECT_ALL_COLUMNS_WILDCARD);
+                }
+                else // tableColumns != null
+                {
+                    // append fully qualified names of specified columns
+                    for (int i = 0; i < tableColumns.Length; i++)
                     {
-                        queryStringBuilder.Append(", ");
+                        // append Column fully qualified name
+                        TableColumn tableColumn = tableColumns[i];
+                        queryStringBuilder.Append(tableColumn.QueryString);
+
+                        if (i < tableColumns.Length - 1)
+                        {
+                            queryStringBuilder.Append(", ");
+                        }
                     }
                 }
 
                 // append source table name
-                queryStringBuilder.AppendFormat(" FROM {0}", sourceTableName) ;
-
+                if(sourceTableName != null)
+                {
+                    queryStringBuilder.AppendFormat(" FROM {0}", sourceTableName);
+                }
+                
                 // append joins
                 if(joins != null)
                 {

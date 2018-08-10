@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Utils.IO.SQLite.Queries;
 
 namespace CryptoBlock
 {
@@ -13,7 +14,7 @@ namespace CryptoBlock
         {
             public enum eComparisonType
             {
-                Equal, NotEqual, LargerEqual, SmallerEqual, Larger, Smaller
+                Equal, NotEqual, LargerEqual, SmallerEqual, Larger, Smaller, In
             }
 
             private static readonly Dictionary<eComparisonType, string> eComparisonTypeToString =
@@ -25,6 +26,7 @@ namespace CryptoBlock
                     { eComparisonType.SmallerEqual, "<=" },
                     { eComparisonType.Larger, ">" },
                     { eComparisonType.Smaller, "<" },
+                    { eComparisonType.In, "in" }
             };
 
             private readonly ValuedTableColumn valuedTableColumn;
@@ -62,13 +64,22 @@ namespace CryptoBlock
             {
                 string fullyQualifiedColumnName = this.valuedTableColumn.FullyQualifiedName;
                 string comparisonTypeString = ComparisonTypeToString(this.comparisonType);
-                string columnValue = this.valuedTableColumn.Value.ToString();
+                object columnValue = this.valuedTableColumn.Value;
 
-                return string.Format(
-                    "{0} {1} '{2}'",
-                    fullyQualifiedColumnName,
-                    comparisonTypeString,
-                    columnValue);
+                string queryString = columnValue is Query ?
+                    string.Format(
+                        "{0} {1} ({2})",
+                        fullyQualifiedColumnName,
+                        comparisonTypeString,
+                        (columnValue as Query).QueryString)
+
+                    : string.Format(
+                        "{0} {1} '{2}'",
+                        fullyQualifiedColumnName,
+                        comparisonTypeString,
+                        columnValue.ToString());
+
+                return queryString;
             }
         }
     }

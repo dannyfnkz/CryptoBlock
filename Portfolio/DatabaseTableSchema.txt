@@ -1,0 +1,26 @@
+﻿== PortfolioData database table schema ==
+
+1. = PortfolioEntry =
+	_id INTEGER PRIMARY KEY
+	coin_id INTEGER NOT NULL UNIQUE
+	holdings REAL NOT NULL DEFAULT 0
+	average_buy_price REAL
+
+2. = Portfolio_Entry_Transaction = (association between Transactions and PortfolioEntries)
+	_id INTEGER PRIMARY KEY
+	portfoli_entry_id INTEGER NOT NULL
+	transaction_id INTEGER NOT NULL UNIQUE
+
+3. = Transaction_Type =
+	_id INTEGER PRIMARY KEY
+	name VARCHAR(50) NOT NULL UNIQUE
+
+4. = Coin_Transaction = (corresponding to Transaction, named thus due to collision with SQLite's Transaction.)
+	_id INTEGER PRIMARY KEY
+	type_id INTEGER NOT NULL
+	amount REAL NOT NULL
+	price_per_coin REAL NOT NULL
+	unix_timestamp INTEGER NOT NULL
+
+
+(unrelated: max coin name length found was 20 chars)

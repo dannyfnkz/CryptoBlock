@@ -30,7 +30,7 @@ namespace CryptoBlock
                 }
             }
 
-            private const string ERROR_LOG_FILE_NAME = "error_log";
+            private const string ERROR_LOG_FILE_PATH = "error_log.txt";
 
             // positioned at top of error log file
             private static readonly string ERROR_LOG_FILE_HEADER = string.Format(
@@ -81,7 +81,7 @@ namespace CryptoBlock
                     // construct exception log
                     StringBuilder stringBuilder = new StringBuilder();
 
-                    if (!FileIOManager.Instance.ErrorLogFileExists(ERROR_LOG_FILE_NAME))
+                    if (!FileIOManager.Instance.FileExists(ERROR_LOG_FILE_PATH))
                     {
                         // write error log file header
                         stringBuilder.Append(ERROR_LOG_FILE_HEADER);
@@ -104,7 +104,7 @@ namespace CryptoBlock
                     stringBuilder.Append(Environment.NewLine);
 
                     // write log to error log file
-                    FileIOManager.Instance.AppendTextToErrorLogFile(ERROR_LOG_FILE_NAME, stringBuilder.ToString());
+                    FileIOManager.Instance.AppendTextToFile(ERROR_LOG_FILE_PATH, stringBuilder.ToString());
                 }
                 catch (Exception ex) // error occurred while trying to write to error log file
                 {

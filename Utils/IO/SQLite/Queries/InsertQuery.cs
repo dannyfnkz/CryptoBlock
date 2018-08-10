@@ -1,8 +1,10 @@
-﻿using System;
+﻿using CryptoBlock.Utils.IO.SQLite.Queries.Columns;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 using Utils.IO.SQLite.Queries;
 
 namespace CryptoBlock
@@ -11,37 +13,15 @@ namespace CryptoBlock
     {
         public class InsertQuery : Query
         {
-            public class Column
-            {
-                private readonly string name;
-                private readonly object value;
-
-                public Column(string columnName, object columnValue)
-                {
-                    this.name = columnName;
-                    this.value = columnValue;
-                }
-
-                public string Name
-                {
-                    get { return name; }
-                }
-
-                public object Value
-                {
-                    get { return value; }
-                }
-            }
-
             private readonly string tableName;
-            private readonly Column[] columns;
+            private readonly ValuedColumn[] valuedColumns;
 
             private readonly string queryString;
 
-            public InsertQuery(string tableName, Column[] columns)
+            public InsertQuery(string tableName, ValuedColumn[] valuedColumns)
             {
                 this.tableName = tableName;
-                this.columns = columns;
+                this.valuedColumns = valuedColumns;
 
                 this.queryString = buildQueryString();
             }
@@ -51,14 +31,33 @@ namespace CryptoBlock
                 get { return queryString; }
             }
 
-            public string GetColumnName(int columnIndex)
+            public static InsertQuery Parse(XmlNode rowDataXmlNode, string tableName)
             {
-                return this.columns[columnIndex].Name;
+                // get ValuedColumns
+                XmlNodeList valuedColumnsXmlNodeList = rowDataXmlNode.SelectNodes("column");
+
+                // number of specified columns might be zero (?)
+                ValuedColumn[] valuedColumns = new ValuedColumn[valuedColumnsXmlNodeList.Count];
+
+                for(int i = 0; i < valuedColumnsXmlNodeList.Count; i++)
+                {
+                    XmlNode valuedColumnXmlNode = valuedColumnsXmlNodeList[0];
+                    valuedColumns[i] = ValuedColumn.Parse(valuedColumnXmlNode);
+                }
+
+                InsertQuery insertQuery = new InsertQuery(tableName, valuedColumns);
+
+                return insertQuery;
             }
 
-            public object GetColumnValue(int columnIndex)
+            public string GetValuedColumnName(int valuedColumnIndex)
             {
-                return this.columns[columnIndex].Value;
+                return this.valuedColumns[valuedColumnIndex].Name;
+            }
+
+            public object GetValuedColumnValue(int valuedColumnIndex)
+            {
+                return this.valuedColumns[valuedColumnIndex].Value;
             }
 
             private string buildQueryString()
@@ -69,13 +68,13 @@ namespace CryptoBlock
                 // append header
                 queryStringBuilder.AppendFormat("INSERT INTO {0} (", this.tableName);
 
-                // append column names
-                for (int i = 0; i < this.columns.Length; i++)
+                // append valuedColumn names
+                for (int i = 0; i < this.valuedColumns.Length; i++)
                 {
-                    string columnName = this.columns[i].Name;
-                    queryStringBuilder.AppendFormat("{0}", columnName);
+                    string valuedColumnName = this.valuedColumns[i].Name;
+                    queryStringBuilder.AppendFormat("{0}", valuedColumnName);
 
-                    if (i < this.columns.Length - 1)
+                    if (i < this.valuedColumns.Length - 1)
                     {
                         queryStringBuilder.Append(", ");
                     }
@@ -84,12 +83,22 @@ namespace CryptoBlock
                 // append values
                 queryStringBuilder.Append(") VALUES (");
 
-                for (int i = 0; i < this.columns.Length; i++)
+                for (int i = 0; i < this.valuedColumns.Length; i++)
                 {
-                    string columnValue = this.columns[i].Value.ToString();
-                    queryStringBuilder.AppendFormat("'{0}'", columnValue);
+                    object valuedColumnValue = this.valuedColumns[i].Value;
 
-                    if (i < this.columns.Length - 1)
+                    if(valuedColumnValue is Query)
+                    {
+                        string queryString = (valuedColumnValue as Query).QueryString;
+                        queryStringBuilder.AppendFormat("({0})", queryString);
+                    }
+                    else
+                    {
+                        queryStringBuilder.AppendFormat("'{0}'", valuedColumnValue.ToString());
+                    }
+                    
+
+                    if (i < this.valuedColumns.Length - 1)
                     {
                         queryStringBuilder.Append(", ");
                     }

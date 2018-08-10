@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using System.Text;
+using System.Linq;
 using static CryptoBlock.Utils.ExceptionUtils;
 
 namespace CryptoBlock
@@ -312,6 +313,55 @@ namespace CryptoBlock
                 }
 
                 return resultString;
+            }
+
+            public static string PascalCaseToSnakeCase(string pascalCaseString)
+            {
+                if(pascalCaseString == string.Empty)
+                {
+                    return pascalCaseString;
+                }
+
+                if(!char.IsUpper(pascalCaseString[0]))
+                {
+                    throw new ArgumentException(
+                        "a PascalCase string must begin with an uppercase letter.",
+                        "pascalCaseString");
+                }
+
+                // count number of uppercase letters in pascalCaseString
+                int numberOfUpperCaseLetters = pascalCaseString.Count(c => char.IsUpper(c));
+
+                // add one underscore for each uppercase letter, except first letter in string
+                char[] snakeCaseCharArray = 
+                    new char[pascalCaseString.Length + numberOfUpperCaseLetters - 1];
+
+                int snakeCaseCharArrayIndex = 0;
+
+                foreach(char pascalCaseStringCharacter in pascalCaseString)
+                {
+                    // uppercase character in pascalCaseString
+                    if (char.IsUpper(pascalCaseStringCharacter)) 
+                    {
+                        // not first character in pascalCaseString
+                        if (snakeCaseCharArrayIndex != 0)
+                        {
+                            // add underscore before an inner uppercase letter
+                            snakeCaseCharArray[snakeCaseCharArrayIndex++] = '_';
+                        }
+
+                        // convert character to lowercase
+                        snakeCaseCharArray[snakeCaseCharArrayIndex++] =
+                            char.ToLower(pascalCaseStringCharacter);
+                    }
+                    else // lowercase character in pascalCaseString
+                    {
+                        // copy to snakeCaseCharArray as is
+                        snakeCaseCharArray[snakeCaseCharArrayIndex++] = pascalCaseStringCharacter;
+                    }
+                }
+
+                return new string(snakeCaseCharArray);
             }
 
             /// <summary>

@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Xml;
+using static CryptoBlock.Utils.IO.SQLite.Xml.XMLParser;
 
 namespace CryptoBlock
 {
     namespace Utils.IO.SQLite.Schema
     {
-        public class TableSchema
+        public class TableSchema : ISchema
         {
             public class PrimaryKeyColumnSchemaNotInColumnSchemaListException : Exception
             {
@@ -33,9 +32,11 @@ namespace CryptoBlock
                 }
             }
 
-            private string tableName;
-            private ColumnSchema[] columnSchemas;
-            private ColumnSchema primaryKeyColumnSchema;
+            private readonly string tableName;
+            private readonly ColumnSchema[] columnSchemas;
+            private readonly ColumnSchema primaryKeyColumnSchema;
+
+            private string queryString;
 
             public TableSchema(
                 string tableName,
@@ -59,6 +60,22 @@ namespace CryptoBlock
                 this.primaryKeyColumnSchema = primaryKeyColumnSchema;  
             }
 
+            public string QueryString
+            {
+                get
+                { 
+                    if(this.queryString == null)
+                    {
+                        this.queryString = buildQueryString(
+                            this.tableName,
+                            this.columnSchemas,
+                            this.primaryKeyColumnSchema);
+                    }
+
+                    return this.queryString;
+                }
+            }
+
             public string TableName
             {
                 get { return tableName; }
@@ -74,25 +91,74 @@ namespace CryptoBlock
                 get { return primaryKeyColumnSchema; }
             }
 
-            public string GetQueryString()
+            // throws NullReferenceException
+            public static TableSchema Parse(XmlNode tableSchemaXmlNode)
+            {
+                // get table name
+                string tableName = tableSchemaXmlNode.Attributes["name"].Value;
+
+                // get table columns
+                XmlNodeList columnSchemaXmlNodeList = tableSchemaXmlNode.SelectNodes("column");
+
+                if(columnSchemaXmlNodeList.Count == 0) // table has no columns
+                {
+                    // table must have at least one column
+                    string exceptionMessage = string.Format(
+                        "(Table '{0}') Table cannot have less than one column",
+                        tableName);
+                    throw new XmlNodeParseException(exceptionMessage);
+                }
+
+                ColumnSchema[] columnSchemas = new ColumnSchema[columnSchemaXmlNodeList.Count];
+
+                for(int i = 0; i < columnSchemaXmlNodeList.Count; i++)
+                {
+                    XmlNode columnSchemaXmlNode = columnSchemaXmlNodeList[i];
+                    columnSchemas[i] = ColumnSchema.Parse(columnSchemaXmlNode);
+                }
+
+                // get primary key, if specified
+                ColumnSchema primaryKeyColumnSchema = null;
+
+                if(tableSchemaXmlNode.SelectNodes("primary_key").Count > 0) // primary key specified
+                {
+                    int primaryKeyColumnIndex =
+                        int.Parse(
+                            tableSchemaXmlNode.SelectNodes("primary_key")[0]
+                            .Attributes["column_index"].Value);
+                    primaryKeyColumnSchema = columnSchemas[primaryKeyColumnIndex];
+                }
+
+                TableSchema tableSchema = new TableSchema(
+                    tableName,
+                    columnSchemas,
+                    primaryKeyColumnSchema);
+
+                return tableSchema;
+            }
+
+            private static string buildQueryString(
+                string tableName,
+                ColumnSchema[] columnSchemas,
+                ColumnSchema primaryKeyColumnSchema)
             {
                 StringBuilder representationStringBuilder = new StringBuilder();
 
                 representationStringBuilder.AppendFormat("TABLE {0} (", tableName);
 
                 // append table columns query representations
-                for(int i = 0; i < this.columnSchemas.Length; i++)
+                for (int i = 0; i < columnSchemas.Length; i++)
                 {
-                    ColumnSchema tableColumn = this.columnSchemas[i];
-                    representationStringBuilder.Append(tableColumn.GetQueryString());
+                    ColumnSchema tableColumn = columnSchemas[i];
+                    representationStringBuilder.Append(tableColumn.QueryString);
 
-                    if(i < this.columnSchemas.Length - 1)
+                    if (i < columnSchemas.Length - 1)
                     {
                         representationStringBuilder.Append(", ");
                     }
                 }
 
-                if(primaryKeyColumnSchema != null) // append primary key if defined for this table
+                if (primaryKeyColumnSchema != null) // append primary key if defined for this table
                 {
                     representationStringBuilder.AppendFormat(", PRIMARY KEY({0})", primaryKeyColumnSchema.Name);
                 }
