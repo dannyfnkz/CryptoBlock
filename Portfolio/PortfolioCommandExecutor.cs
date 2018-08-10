@@ -132,24 +132,29 @@ namespace CryptoBlock
 
                         if (coinIdsWithPortfolioEntry.Count > 0)
                         {
-                            // print coin portfolio entry display table containing portfolio entries corresponding
+                            // print coin PortfolioEntry display table containing portfolio entries corresponding
                             // to fetched coin ids
                             string portfolioEntryDisplayTableString =
                                 PortfolioManager.Instance.GetPortfolioEntryDisplayTableString(
                                     coinIdsWithPortfolioEntry.ToArray());
                             ConsoleIOManager.Instance.PrintData(portfolioEntryDisplayTableString);
                         }
+                        else // no PortfolioEntries to display
+                        {
+                            string noticeMessage = "No portfolio entries to display.";
+                            ConsoleIOManager.Instance.LogNotice(noticeMessage);
+                        }
 
                         // if data for coin ids which don't have corresponding porfolio entries was requested, 
                         // display an appropriate message to user
                         if (coinNamesWithoutPortfolioEntry.Count > 0)
                         {
-                            string errorMessage = StringUtils.Append(
+                            string noticeMessage = StringUtils.Append(
                                 "Following coin(s) were not in portfolio: ",
                                 ", ",
                                 coinNamesWithoutPortfolioEntry.ToArray())
                                 + ".";
-                            ConsoleIOManager.Instance.LogError(errorMessage);
+                            ConsoleIOManager.Instance.LogNotice(noticeMessage);
                         }
                     }
                     catch (CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
