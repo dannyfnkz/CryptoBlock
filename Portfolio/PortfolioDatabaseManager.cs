@@ -5,8 +5,8 @@ using CryptoBlock.Utils.IO.SqLite;
 using CryptoBlock.Utils.IO.SQLite.Queries;
 using CryptoBlock.Utils.IO.SQLite.Queries.Columns;
 using CryptoBlock.Utils.IO.SQLite.Queries.Conditions;
-using CryptoBlock.Utils.IO.SQLite.Schema;
 using CryptoBlock.Utils.IO.SQLite.Xml;
+using System;
 using Utils.IO.SQLite;
 using static Utils.IO.SQLite.ResultSet;
 
@@ -39,7 +39,7 @@ namespace CryptoBlock
 
                 internal static class TransactionTypeTableStructure
                 {
-                    internal static readonly string TABLE_NAME = "TransactionType";
+                    internal static readonly string TABLE_NAME = "CoinTransactionType";
 
                     internal static readonly string ID_COLUMN_NAME = "_id";
                     internal static readonly string NAME_COLUMN_NAME = "name";
@@ -50,7 +50,7 @@ namespace CryptoBlock
                     internal static readonly string TABLE_NAME = "CoinTransaction";
 
                     internal static readonly string ID_COLUMN_NAME = "_id";
-                    internal static readonly string TRANSACTIO_TYPE_ID_COLUMN_NAME = "transactionTypeId";
+                    internal static readonly string TRANSACTIO_TYPE_ID_COLUMN_NAME = "coinTransactionTypeId";
                     internal static readonly string AMOUNT_COLUMN_NAME = "amount";
                     internal static readonly string PRICE_PER_COIN_COLUMN_NAME = "pricePerCoin";
                     internal static readonly string UNIX_TIMESTAMP_COLUMN_NAME = "unixTimestamp";
@@ -105,7 +105,7 @@ namespace CryptoBlock
 
             internal void RemoveCoin(long coinId)
             {
-                sqliteDatabaseHandler.BeginTransaction();
+                bool transactionStarted = sqliteDatabaseHandler.BeginTransactionIfNotAlreadyUnderway();
 
                 // get portfolio id associated with specified coinId
                 long portfolioEntryId = GetPortfolioEntryId(coinId);
@@ -116,7 +116,7 @@ namespace CryptoBlock
                 // delete transactions associated with portfolioEntryId
                 deleteTransactionsAssociatedWithPortfolioEntry(portfolioEntryId);
 
-                sqliteDatabaseHandler.CommitTransaction();
+                sqliteDatabaseHandler.CommitTransactionIfStartedByCaller(transactionStarted);
             }
 
             internal long GetPortfolioEntryId(long coinId)
@@ -436,20 +436,32 @@ namespace CryptoBlock
 
             private void createNewPortfolioDatabaseFile()
             {
+                // initialize SQLiteDatabaseHandler
+                this.sqliteDatabaseHandler = new SQLiteDatabaseHandler(SQLite_DATABASE_FILE_PATH, true);
+                this.sqliteDatabaseHandler.OpenConnection();
+
+                // start initialization transaction
+                bool transactionStarted = this.sqliteDatabaseHandler.BeginTransactionIfNotAlreadyUnderway();
+
+                // initialize SQLiteDatabaseHandler with DatabaseSchema
+
                 // read DatabaseSchema XML from file
                 FileXmlDocument databaseSchemaXmlDocument = new FileXmlDocument(DATABASE_SCHEMA_FILE_PATH);
 
-                // initialize SQLiteDatabaseHandler with DatabaseSchema
-                sqliteDatabaseHandler = new SQLiteDatabaseHandler(databaseSchemaXmlDocument);
+                // create database tables specified in FileXmlDocument
+                this.sqliteDatabaseHandler.InitializeDatabaseSchema(databaseSchemaXmlDocument);
 
-                // initialize TransactionTypeTable (representing Transaction.eType enum) with data 
+                // initialize TransactionTypeTable (representing Transaction.eType) with enum data 
 
                 // read TransactionTypeTable data from XML file
                 FileXmlDocument transactionTypeTableDataXmlDocument =
                     new FileXmlDocument(TRANSACTION_TYPE_TABLE_DATA_FILE_PATH);
 
-                sqliteDatabaseHandler.OpenConnection();
+                // insert rows specfied in FileXmlDocument into TransactionTypeTable
                 sqliteDatabaseHandler.ExecuteInsertQueries(transactionTypeTableDataXmlDocument);
+
+                // commit initialization transaction
+                this.sqliteDatabaseHandler.CommitTransactionIfStartedByCaller(transactionStarted);
             }
 
             private void useExistingPortfolioDatabaseFile()

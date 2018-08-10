@@ -117,13 +117,13 @@ namespace CryptoBlock
             private readonly string filePath;
 
             private SQLiteConnection connection;
-            private bool transactionUnderway;
+            private SQLiteTransaction currentUnderwayTransaction;
 
-            public SQLiteDatabaseHandler(string filePath, bool createNewEmptyFile = false)
+            public SQLiteDatabaseHandler(string filePath, bool createNewFile = false)
             {
                 this.filePath = filePath;
 
-                if(createNewEmptyFile)
+                if(createNewFile)
                 {
                     // try creating a new db file
                     try
@@ -137,40 +137,6 @@ namespace CryptoBlock
                 }
             }
 
-            public SQLiteDatabaseHandler(FileXmlDocument databaseSchemaXmlDocument, string filePath = null)
-            {
-                try
-                {
-                    DatabaseSchema databaseSchema = XMLParser.ParseDatabaseSchema(databaseSchemaXmlDocument);
-
-                    if(filePath != null)
-                    {
-                        this.filePath = filePath;
-                    }
-                    else
-                    {
-                        this.filePath = databaseSchema.DatabaseName + SQLITE_FILE_EXTENSION;
-                    }
-                    
-                    OpenConnection();
-
-                    BeginTransaction();
-
-                    foreach(TableSchema tableSchema in databaseSchema.TableSchemas)
-                    {
-                        CreateTable(tableSchema);
-                    }
-
-                    CommitTransaction();
-
-                    CloseConnection();
-                }
-                catch (XmlDocumentParseException xmlDocumentParseException)
-                {
-                    throw new SQLiteDatabaseHandlerException(filePath, null, xmlDocumentParseException);
-                }
-            }
-
             public string FilePath
             {
                 get { return filePath; }
@@ -180,6 +146,34 @@ namespace CryptoBlock
             {
                 get { return connection != null; }
             }
+
+            public bool TransactionUnderway
+            {
+                get { return this.currentUnderwayTransaction != null; }
+            }
+
+            public void InitializeDatabaseSchema(FileXmlDocument databaseSchemaXmlDocument)
+            {
+                assertConnectionToDatabaseOpen("InitializeDatabaseSchema");
+
+                try
+                {
+                    DatabaseSchema databaseSchema = XMLParser.ParseDatabaseSchema(databaseSchemaXmlDocument);
+
+                    bool transactionStarted = BeginTransactionIfNotAlreadyUnderway();
+
+                    foreach (TableSchema tableSchema in databaseSchema.TableSchemas)
+                    {
+                        CreateTable(tableSchema);
+                    }
+
+                    CommitTransactionIfStartedByCaller(transactionStarted);
+                }
+                catch (XmlDocumentParseException xmlDocumentParseException)
+                {
+                    throw new SQLiteDatabaseHandlerException(filePath, null, xmlDocumentParseException);
+                }
+            }       
 
             public void OpenConnection()
             {
@@ -220,33 +214,50 @@ namespace CryptoBlock
             {
                 assertTransactionNotAlreadyUnderway();
 
-                string queryString = "BEGIN TRANSACTION";
+                this.currentUnderwayTransaction = connection.BeginTransaction();
+            }
 
-                executeWriteQuery(queryString);
+            public bool BeginTransactionIfNotAlreadyUnderway()
+            {
+                bool startNewTransaction = !TransactionUnderway;
 
-                this.transactionUnderway = true;
+                if(startNewTransaction)
+                {
+                    BeginTransaction();
+                }
+
+                return startNewTransaction;
             }
 
             public void CommitTransaction()
             {
                 assertTransactionStarted("CommitTransaction");
 
-                string queryString = "COMMIT TRANSACTION";
+                this.currentUnderwayTransaction.Commit();
+                this.currentUnderwayTransaction = null;
+            }
 
-                executeWriteQuery(queryString);
+            public bool CommitTransactionIfStartedByCaller(bool transactionStartedByCaller)
+            {
+                assertTransactionStarted("CommitTransactionIfStartedByCaller");
 
-                this.transactionUnderway = false;
+                bool commitTransaction = transactionStartedByCaller;
+
+                if(commitTransaction)
+                {
+                    CommitTransaction();
+                }
+
+                return commitTransaction;
+                CommitTransaction();
             }
 
             public void RollbackTransaction()
             {
                 assertTransactionStarted("RollbackTransaction");
 
-                string queryString = "ROLLBACK TRANSACTION";
-
-                executeWriteQuery(queryString);
-
-                this.transactionUnderway = false;
+                this.currentUnderwayTransaction.Rollback();
+                this.currentUnderwayTransaction = null;
             }
 
             public void CreateTable(TableSchema tableSchema)
@@ -369,7 +380,7 @@ namespace CryptoBlock
 
             private void assertTransactionNotAlreadyUnderway()
             {
-                if(transactionUnderway)
+                if(TransactionUnderway)
                 {
                     throw new TransactionAlreadyUnderwayException(this.filePath);
                 }
@@ -377,7 +388,7 @@ namespace CryptoBlock
 
             private void assertTransactionStarted(string operationName)
             {
-                if(!transactionUnderway)
+                if(!TransactionUnderway)
                 {
                     throw new TransactionNotStartedException(this.filePath, operationName);
                 }
