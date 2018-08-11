@@ -25,10 +25,16 @@ namespace CryptoBlock
 
                 this.queryString = buildQueryString();
             }
+            
 
             public override string QueryString
             {
                 get { return queryString; }
+            }
+
+            public ValuedColumn[] ValuedColumns
+            {
+                get { return valuedColumns; }
             }
 
             public static InsertQuery Parse(XmlNode rowDataXmlNode, string tableName)

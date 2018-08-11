@@ -86,6 +86,7 @@
     <Compile Include="IO\SQLite\Queries\Conditions\ComplexCondition.cs" />
     <Compile Include="IO\SQLite\Queries\Conditions\Condition.cs" />
     <Compile Include="IO\SQLite\Queries\DeleteQuery.cs" />
+    <Compile Include="IO\SQLite\Queries\InsertBatch.cs" />
     <Compile Include="IO\SQLite\Queries\InsertQuery.cs" />
     <Compile Include="IO\SQLite\Queries\Query.cs" />
     <Compile Include="IO\SQLite\Queries\SelectQuery.cs" />

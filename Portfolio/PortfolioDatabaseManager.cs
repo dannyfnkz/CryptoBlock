@@ -71,7 +71,17 @@ namespace CryptoBlock
             {
                 if (!FileIOManager.Instance.FileExists(SQLite_DATABASE_FILE_PATH))
                 {
-                    createNewPortfolioDatabaseFile();
+                    try
+                    {
+                        createNewPortfolioDatabaseFile();
+                    }
+                    catch(Exception exception) 
+                    {
+                        sqliteDatabaseHandler.Dispose();
+                        FileIOManager.Instance.DeleteFile(SQLite_DATABASE_FILE_PATH);
+
+                        throw exception;
+                    }                  
                 }
                 else
                 {
@@ -105,7 +115,8 @@ namespace CryptoBlock
 
             internal void RemoveCoin(long coinId)
             {
-                bool transactionStarted = sqliteDatabaseHandler.BeginTransactionIfNotAlreadyUnderway();
+                ulong transactionHandle = 
+                    sqliteDatabaseHandler.BeginTransactionIfNotAlreadyUnderway(out bool transactionStarted);
 
                 // get portfolio id associated with specified coinId
                 long portfolioEntryId = GetPortfolioEntryId(coinId);
@@ -116,7 +127,9 @@ namespace CryptoBlock
                 // delete transactions associated with portfolioEntryId
                 deleteTransactionsAssociatedWithPortfolioEntry(portfolioEntryId);
 
-                sqliteDatabaseHandler.CommitTransactionIfStartedByCaller(transactionStarted);
+                sqliteDatabaseHandler.CommitTransactionIfStartedByCaller(
+                    transactionHandle,
+                    transactionStarted);
             }
 
             internal long GetPortfolioEntryId(long coinId)
@@ -319,6 +332,7 @@ namespace CryptoBlock
                     ? CoinTickerManager.Instance.GetCoinTicker(coinId)
                     : null;
 
+                // init a new PortfolioEntry having fetched data
                 PortfolioEntry portfolioEntry = new PortfolioEntry(
                     portfolioEntryRow.GetColumnValue<long>(
                         DatabaseStructure.PortfolioEntryTableStructure.ID_COLUMN_NAME),
@@ -402,6 +416,11 @@ namespace CryptoBlock
 
                 // delete association between deleted Transactions and deleted PortfolioEntry
                 // from "PortfolioEntryTransaction" table
+                deletePortfolioEntryTransactionAssociations(portfolioEntryId);
+            }
+
+            private void deletePortfolioEntryTransactionAssociations(long portfolioEntryId)
+            {
                 DeleteQuery transactionToPortfolioEntryAssociationDeleteQuery =
                     new DeleteQuery(
                         DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
@@ -420,7 +439,7 @@ namespace CryptoBlock
 
             private void deletePortfolioEntry(long coinId)
             {
-                // delete portfolio entry with specified coinId from "PortfolioEntry" table
+                // delete PortfolioEntry with specified coinId from "PortfolioEntry" table
                 DeleteQuery portfolioEntryDeleteQuery = new DeleteQuery(
                     DatabaseStructure.PortfolioEntryTableStructure.TABLE_NAME,
                     new BasicCondition(
@@ -436,32 +455,35 @@ namespace CryptoBlock
 
             private void createNewPortfolioDatabaseFile()
             {
-                // initialize SQLiteDatabaseHandler
-                this.sqliteDatabaseHandler = new SQLiteDatabaseHandler(SQLite_DATABASE_FILE_PATH, true);
-                this.sqliteDatabaseHandler.OpenConnection();
-
-                // start initialization transaction
-                bool transactionStarted = this.sqliteDatabaseHandler.BeginTransactionIfNotAlreadyUnderway();
-
-                // initialize SQLiteDatabaseHandler with DatabaseSchema
+                // parse XML files
 
                 // read DatabaseSchema XML from file
                 FileXmlDocument databaseSchemaXmlDocument = new FileXmlDocument(DATABASE_SCHEMA_FILE_PATH);
-
-                // create database tables specified in FileXmlDocument
-                this.sqliteDatabaseHandler.InitializeDatabaseSchema(databaseSchemaXmlDocument);
-
-                // initialize TransactionTypeTable (representing Transaction.eType) with enum data 
 
                 // read TransactionTypeTable data from XML file
                 FileXmlDocument transactionTypeTableDataXmlDocument =
                     new FileXmlDocument(TRANSACTION_TYPE_TABLE_DATA_FILE_PATH);
 
+                // initialize SQLiteDatabaseHandler
+                this.sqliteDatabaseHandler = new SQLiteDatabaseHandler(SQLite_DATABASE_FILE_PATH, true);
+                this.sqliteDatabaseHandler.OpenConnection();
+
+                // start initialization transaction
+                ulong transactionHandle = this.sqliteDatabaseHandler.BeginTransactionIfNotAlreadyUnderway(
+                    out bool transactionStarted);
+
+                // initialize SQLiteDatabaseHandler with DatabaseSchema
+                // create database tables specified in databaseSchemaXmlDocument
+                this.sqliteDatabaseHandler.InitializeDatabaseSchema(databaseSchemaXmlDocument);
+
+                // initialize TransactionTypeTable (representing Transaction.eType) with enum data 
                 // insert rows specfied in FileXmlDocument into TransactionTypeTable
                 sqliteDatabaseHandler.ExecuteInsertQueries(transactionTypeTableDataXmlDocument);
 
                 // commit initialization transaction
-                this.sqliteDatabaseHandler.CommitTransactionIfStartedByCaller(transactionStarted);
+                this.sqliteDatabaseHandler.CommitTransactionIfStartedByCaller(
+                    transactionHandle,
+                    transactionStarted);
             }
 
             private void useExistingPortfolioDatabaseFile()

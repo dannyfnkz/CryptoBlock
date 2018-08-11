@@ -479,11 +479,22 @@ namespace CryptoBlock
                 }
             }
 
+            // synchronious
+            /// input is not registered by the input listen thread,
+            /// and is therefore not appended to the input buffer.
+            public char ReadKey()
+            {
+                ConsoleKeyInfo pressedConsoleKey = Console.ReadKey(true);
+    
+                return pressedConsoleKey.KeyChar;
+            }
+
             /// <summary>
             /// synchroniously reads user console input until 'Enter' key is pressed, then returns said input.
             /// </summary>
             /// <remarks>
-            /// input is not registered by the input listen thread, and is therefore not appended to the input buffer.
+            /// input is not registered by the input listen thread,
+            /// and is therefore not appended to the input buffer.
             /// </remarks>
             /// <returns>
             /// user input read from console
@@ -661,9 +672,7 @@ namespace CryptoBlock
                     {
                         // discard Console input
                         ConsoleIOUtils.ClearConsoleInputBuffer();
-                    }
-
-                    
+                    }          
                 }                    
             }
 

@@ -80,10 +80,12 @@ namespace CryptoBlock
                 }
             }
 
-            public static InsertQuery[] ParseInsertQueries(FileXmlDocument tableDataXmlDocument)
+            public static InsertBatch ParseInsertBatch(FileXmlDocument tableDataXmlDocument)
             {
                 try
                 {
+                    InsertBatch insertBatch;
+
                     // get table data xml node
                     XmlNode tableDataXmlNode = tableDataXmlDocument.SelectNodes("table")[0];
 
@@ -109,7 +111,9 @@ namespace CryptoBlock
                         insertQueries[i] = InsertQuery.Parse(rowDataXmlNode, tableName);
                     }
 
-                    return insertQueries;
+                    insertBatch = new InsertBatch(tableName, insertQueries);
+
+                    return insertBatch;
                 }
                 catch (NullReferenceException nullReferenceException) // an required attribute was missing
                 {
@@ -124,6 +128,17 @@ namespace CryptoBlock
                         tableDataXmlDocument.FilePath,
                         null, xmlNodeParseException);
                 }
+            }
+
+            public static InsertQuery[] ParseInsertQueries(FileXmlDocument tableDataXmlDocument)
+            {
+                InsertQuery[] insertQueries;
+
+                InsertBatch insertBatch = ParseInsertBatch(tableDataXmlDocument);
+
+                insertQueries = insertBatch.InsertQueries;
+
+                return insertQueries;
             }
         }
     }

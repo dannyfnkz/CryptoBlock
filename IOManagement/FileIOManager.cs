@@ -55,6 +55,11 @@ namespace CryptoBlock
                 return FileIOUtils.ReadTextFromFile(filePath);
             }
 
+            public void DeleteFile(string filePath)
+            {
+                FileIOUtils.DeleteFile(filePath);
+            }
+
             /// <summary>
             /// synchronously writes <paramref name="content"/> to file at location <paramref name="filePath"/>.
             /// if file at <paramref name="filePath"/> does not exist,

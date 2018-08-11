@@ -11,7 +11,7 @@ namespace CryptoBlock
 {
     namespace Utils.IO.SqLite
     {
-        public class SQLiteDatabaseHandler
+        public class SQLiteDatabaseHandler : IDisposable
         {
             public class SQLiteDatabaseHandlerException : Exception
             {
@@ -112,12 +112,38 @@ namespace CryptoBlock
                 }
             }
 
+            public class InvalidTransactionHandleException : SQLiteDatabaseHandlerException
+            {
+                private readonly ulong transactionHandle;
+
+                public InvalidTransactionHandleException(string databaseFilePath, ulong transactionHandle)
+                    : base(databaseFilePath, formatExceptionMessage(transactionHandle))
+                {
+                    this.transactionHandle = transactionHandle;
+                }
+
+                public ulong TransactionHandle
+                {
+                    get { return transactionHandle; }
+                }
+
+                private static string formatExceptionMessage(ulong transactionHandle)
+                {
+                    return string.Format(
+                        "Transaction handle '{0}' is invalid.",
+                        transactionHandle);
+                }
+            }
+
             private const string SQLITE_FILE_EXTENSION = ".sqlite";
 
             private readonly string filePath;
 
             private SQLiteConnection connection;
+
             private SQLiteTransaction currentUnderwayTransaction;
+            private ulong currentTransactionHandle;
+            private bool rollbackTransactionOnException;
 
             public SQLiteDatabaseHandler(string filePath, bool createNewFile = false)
             {
@@ -144,12 +170,26 @@ namespace CryptoBlock
 
             public bool ConnectionOpen
             {
-                get { return connection != null; }
+                get { return this.connection != null; }
             }
 
             public bool TransactionUnderway
             {
                 get { return this.currentUnderwayTransaction != null; }
+            }
+
+            public bool RollbackTransactionOnException
+            {
+                get { return rollbackTransactionOnException; }
+                set { rollbackTransactionOnException = value; }
+            }
+
+            public void Dispose()
+            {
+                if(ConnectionOpen)
+                {
+                    CloseConnection();
+                }
             }
 
             public void InitializeDatabaseSchema(FileXmlDocument databaseSchemaXmlDocument)
@@ -160,17 +200,19 @@ namespace CryptoBlock
                 {
                     DatabaseSchema databaseSchema = XMLParser.ParseDatabaseSchema(databaseSchemaXmlDocument);
 
-                    bool transactionStarted = BeginTransactionIfNotAlreadyUnderway();
+                    ulong transactionHandle =
+                        BeginTransactionIfNotAlreadyUnderway(out bool transactionStarted);
 
                     foreach (TableSchema tableSchema in databaseSchema.TableSchemas)
                     {
                         CreateTable(tableSchema);
                     }
 
-                    CommitTransactionIfStartedByCaller(transactionStarted);
+                    CommitTransactionIfStartedByCaller(transactionHandle, transactionStarted);
                 }
                 catch (XmlDocumentParseException xmlDocumentParseException)
                 {
+                    onExceptionThrown();
                     throw new SQLiteDatabaseHandlerException(filePath, null, xmlDocumentParseException);
                 }
             }       
@@ -189,9 +231,9 @@ namespace CryptoBlock
                 }
                 catch (SQLiteException sqliteException)
                 {
+                    onExceptionThrown();
                     throw new SQLiteDatabaseHandlerException(filePath, null, sqliteException);
                 }
-
             }
 
             public void CloseConnection()
@@ -202,42 +244,58 @@ namespace CryptoBlock
                 try
                 {
                     connection.Close();
+
+                    // connection is not actually closed until the garbage collector releases
+                    // the SQLiteConnectionHandle
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+
                     connection = null;
                 }
                 catch (SQLiteException sqliteException)
                 {
+                    onExceptionThrown();
                     throw new SQLiteDatabaseHandlerException(filePath, null, sqliteException);
                 }
             }
 
-            public void BeginTransaction()
+            public ulong BeginTransaction()
             {
                 assertTransactionNotAlreadyUnderway();
 
                 this.currentUnderwayTransaction = connection.BeginTransaction();
+
+                ulong transactionHandle = getNewTransactionHandle();
+
+                return transactionHandle;
             }
 
-            public bool BeginTransactionIfNotAlreadyUnderway()
+            public ulong BeginTransactionIfNotAlreadyUnderway(out bool startNewTransaction)
             {
-                bool startNewTransaction = !TransactionUnderway;
+                ulong transactionHandle = 0;
+
+                startNewTransaction = !TransactionUnderway;
 
                 if(startNewTransaction)
                 {
-                    BeginTransaction();
+                    transactionHandle = BeginTransaction();
                 }
 
-                return startNewTransaction;
+                return transactionHandle;
             }
 
-            public void CommitTransaction()
+            public void CommitTransaction(ulong transactionHandle)
             {
                 assertTransactionStarted("CommitTransaction");
+                assertValidTransactionHandle(transactionHandle);
 
                 this.currentUnderwayTransaction.Commit();
                 this.currentUnderwayTransaction = null;
             }
 
-            public bool CommitTransactionIfStartedByCaller(bool transactionStartedByCaller)
+            public bool CommitTransactionIfStartedByCaller(
+                ulong transactionHandle,
+                bool transactionStartedByCaller)
             {
                 assertTransactionStarted("CommitTransactionIfStartedByCaller");
 
@@ -245,16 +303,16 @@ namespace CryptoBlock
 
                 if(commitTransaction)
                 {
-                    CommitTransaction();
+                    CommitTransaction(transactionHandle);
                 }
 
                 return commitTransaction;
-                CommitTransaction();
             }
 
-            public void RollbackTransaction()
+            public void RollbackTransaction(ulong transactionHandle)
             {
                 assertTransactionStarted("RollbackTransaction");
+                assertValidTransactionHandle(transactionHandle);
 
                 this.currentUnderwayTransaction.Rollback();
                 this.currentUnderwayTransaction = null;
@@ -277,16 +335,18 @@ namespace CryptoBlock
                 return numAffectedRows;
             }
 
-            public void DropTable(string tableName)
+            public int DropTable(string tableName)
             {
                 // build query string
                 string queryString = string.Format("DROP TABLE {0}", tableName);
              
                 // execute query
-                executeWriteQuery(queryString);           
+                int numOfRowsAffected = executeWriteQuery(queryString);
+
+                return numOfRowsAffected;
             }
 
-            public void TruncateTable(string tableName)
+            public int TruncateTable(string tableName)
             {
                 assertConnectionToDatabaseOpen("TruncateTable");
 
@@ -294,7 +354,9 @@ namespace CryptoBlock
                 string queryString = string.Format("DELETE FROM {0}", tableName);
 
                 // execute query
-                executeWriteQuery(queryString);
+                int numOfRowsAffected = executeWriteQuery(queryString);
+
+                return numOfRowsAffected;
             }
 
             public int ExecuteInsertQuery(InsertQuery insertQuery)
@@ -309,27 +371,34 @@ namespace CryptoBlock
 
             public int ExecuteInsertQueries(FileXmlDocument tableDataXmlDocument)
             {
-                assertConnectionToDatabaseOpen("ExecuteInsertQueries");
+                assertConnectionToDatabaseOpen("ExecuteInsertQuery");
 
                 try
                 {
-                    int numAffectedRows = 0;
+                    int numAffectedRows;
 
-                    // parse InsertQueries from tableDataXmlDocument
-                    InsertQuery[] insertQueries = XMLParser.ParseInsertQueries(tableDataXmlDocument);
+                    // parse InsertBatch from tableDataXmlDocument
+                    InsertBatch insertBatch = XMLParser.ParseInsertBatch(tableDataXmlDocument);
 
-                    // execute insert queries
-                    foreach (InsertQuery insertQuery in insertQueries)
-                    {
-                        numAffectedRows += ExecuteInsertQuery(insertQuery);
-                    }
+                    // execute insertBatch query
+                    numAffectedRows = ExecuteInsertQuery(insertBatch);
 
                     return numAffectedRows;
                 }
                 catch(XmlDocumentParseException xmlDocumentParseException)
                 {
+                    onExceptionThrown();
                     throw new SQLiteDatabaseHandlerException(filePath, null, xmlDocumentParseException);
                 }
+            }
+
+            public int ExecuteInsertQuery(InsertBatch insertBatch)
+            {
+                assertConnectionToDatabaseOpen("ExecuteInsertQuery");
+
+                int numAffectedRows = executeWriteQuery(insertBatch.QueryString);
+
+                return numAffectedRows;
             }
 
             public int ExecuteDeleteQuery(DeleteQuery deleteQuery)
@@ -357,6 +426,7 @@ namespace CryptoBlock
                 }
                 catch (SQLiteException sqliteException)
                 {
+                    onExceptionThrown();
                     throw new SQLiteDatabaseHandlerException(filePath, null, sqliteException);
                 }
             }
@@ -374,14 +444,21 @@ namespace CryptoBlock
                 }
                 catch (SQLiteException sqliteException)
                 {
+                    onExceptionThrown();
                     throw new SQLiteDatabaseHandlerException(filePath, null, sqliteException);
                 }
+            }
+
+            private ulong getNewTransactionHandle()
+            {
+                return ++this.currentTransactionHandle;
             }
 
             private void assertTransactionNotAlreadyUnderway()
             {
                 if(TransactionUnderway)
                 {
+                    onExceptionThrown();
                     throw new TransactionAlreadyUnderwayException(this.filePath);
                 }
             }
@@ -390,7 +467,17 @@ namespace CryptoBlock
             {
                 if(!TransactionUnderway)
                 {
+                    onExceptionThrown();
                     throw new TransactionNotStartedException(this.filePath, operationName);
+                }
+            }
+
+            private void assertValidTransactionHandle(ulong transactionHandle)
+            {
+                if(transactionHandle != this.currentTransactionHandle)
+                {
+                    onExceptionThrown();
+                    throw new InvalidTransactionHandleException(this.filePath, transactionHandle);
                 }
             }
 
@@ -398,6 +485,7 @@ namespace CryptoBlock
             {
                 if (ConnectionOpen)
                 {
+                    onExceptionThrown();
                     throw new ConnectionToDatabaseAlreadyOpenException(filePath, operationName);
                 }
             }
@@ -406,7 +494,17 @@ namespace CryptoBlock
             {
                 if (!ConnectionOpen)
                 {
+                    onExceptionThrown();
                     throw new ConnectionToDatabaseNotOpenException(filePath, operationName);
+                }
+            }
+
+            private void onExceptionThrown()
+            {
+                if(TransactionUnderway && RollbackTransactionOnException)
+                {
+                    ulong underwayTransactionHandle = this.currentTransactionHandle - 1;
+                    RollbackTransaction(underwayTransactionHandle);
                 }
             }
         }

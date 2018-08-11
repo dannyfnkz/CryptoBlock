@@ -4,6 +4,7 @@ using CryptoBlock.ServerDataManagement;
 using System.Threading;
 using CryptoBlock.CommandHandling;
 using CryptoBlock.PortfolioManagement;
+using static CryptoBlock.PortfolioManagement.PortfolioManager;
 
 namespace CryptoBlock
 {
@@ -16,9 +17,26 @@ namespace CryptoBlock
             ConsoleIOManager.Instance.RegisterInput = false;
 
             initializeCoinListingManager();
-            initializeCoinTickerManager(CoinListingManager.Instance.RepositoryCount);
-            initializePortfolioManager();
 
+            try
+            {
+                initializePortfolioManager();
+            }
+            catch (DatabaseCommunicationException databaseCommunicationException)
+            {
+                ConsoleIOManager.Instance.LogError(
+                    "An exception occurred while trying to initialize portfolio data file." +
+                    " Program cannot be started.");
+                ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
+                ExceptionManager.Instance.LogToErrorFile(databaseCommunicationException);
+
+                ConsoleIOManager.Instance.showPressAnyKeyToContinueDialog();
+
+                return;
+            }
+
+            initializeCoinTickerManager(CoinListingManager.Instance.RepositoryCount);
+            
             ConsoleIOManager.Instance.RegisterInput = true;
             ListenForUserCommands();
         }

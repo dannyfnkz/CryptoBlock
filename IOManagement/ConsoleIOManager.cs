@@ -55,7 +55,7 @@ namespace CryptoBlock
             public void LogNotice(string message, bool flushOutputBuffer = false)
             {
                 string outputString = getLogMessage(message);
-                QueueOutput(outputString, flushOutputBuffer);
+                base.QueueOutput(outputString, flushOutputBuffer);
             }
 
             /// <summary>
@@ -69,7 +69,7 @@ namespace CryptoBlock
             public void LogError(string message, bool flushOutputBuffer = false)
             {
                 string outputString = getLogMessage(message);
-                QueueOutput(outputString, flushOutputBuffer);
+                base.QueueOutput(outputString, flushOutputBuffer);
             }
 
             /// <summary>
@@ -109,7 +109,7 @@ namespace CryptoBlock
             public void PrintData(string data, bool flushOutputBuffer = false)
             {
                 string outputString = data + Environment.NewLine;
-                QueueOutput(outputString, flushOutputBuffer);
+                base.QueueOutput(outputString, flushOutputBuffer);
             }
 
             /// <summary>
@@ -124,6 +124,15 @@ namespace CryptoBlock
             {
                 string outputString = Environment.NewLine;
                 QueueOutput(outputString, flushOutputBuffer);
+            }
+
+            public void showPressAnyKeyToContinueDialog()
+            {
+                string dialogPromptMessage = "Press any key to continue ..";
+                LogNotice(dialogPromptMessage);
+
+                // wait for key press
+                base.ReadKey();
             }
 
             /// <summary>
@@ -145,17 +154,16 @@ namespace CryptoBlock
 
                 // construct dialog display message
                 string dialogPromptMessage = promptMessage + " (Y/N)";
-
                 LogNotice(dialogPromptMessage);
 
                 // read user input
-                string userInput = ReadLine().ToLower();
+                string userInput = base.ReadLine().ToLower();
 
                 // keep requesting input so long as it's not valid
                 while(userInput != "y" && userInput != "n")
                 {
                     LogNotice("Invalid input, please select 'Y' or 'N'");
-                    userInput = ReadLine().ToLower();
+                    userInput = base.ReadLine().ToLower();
                 }
 
                 userChoice = userInput == "y" ? true : false;
