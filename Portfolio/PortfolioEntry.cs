@@ -1,4 +1,5 @@
 ﻿using CryptoBlock.CMCAPI;
+using CryptoBlock.PortfolioManagement.Transactions;
 using CryptoBlock.Utils;
 using CryptoBlock.Utils.IO.SqLite;
 using CryptoBlock.Utils.IO.SQLite.Schema;
@@ -185,66 +186,41 @@ namespace CryptoBlock
             }
 
             /// <summary>
-            /// performs a purchase of <paramref name="buyAmount"/> coins for <paramref name="buyPricePerCoin"/>.
+            /// performs a buy transaction.
             /// </summary>
-            /// <seealso cref="addTransaction(Transaction.eType, double, double, long)"/>
+            /// <seealso cref="addTransaction(Transaction)"/>
             /// <param name="buyAmount"></param>
             /// <param name="buyPricePerCoin"></param>
             /// <param name="unixTimestamp">unix timestamp when purchase was made</param>
             /// <exception cref="InvalidPriceException">
-            /// <seealso cref="addTransaction(Transaction.eType, double, double, long)"/>
+            /// <seealso cref="addTransaction(Transaction)"/>
             /// </exception>
             /// <exception cref="SQLiteDatabaseHandlerException">
-            /// <seealso cref="addTransaction(Transaction.eType, double, double, long)"/>
+            /// <seealso cref="addTransaction(Transaction)"/>
             /// </exception>
-            public void Buy(double buyAmount, double buyPricePerCoin, long unixTimestamp)
+            public void Buy(Transaction buyTransaction)
             {
-                addTransaction(Transaction.eType.Buy, buyAmount, buyPricePerCoin, unixTimestamp);
+                addTransaction(buyTransaction);
             }
 
             /// <summary>
-            /// performs a sale of <paramref name="sellAmount"/> coins for <paramref name="sellPricePerCoin"/>.
+            /// performs a sale transaction.
             /// </summary>
-            /// <seealso cref="addTransaction(Transaction.eType, double, double, long)"/>
-            /// <param name="sellAmount"></param>
-            /// <param name="sellPricePerCoin"></param>
-            /// <param name="unixTimestamp"></param>
+            /// <seealso cref="addTransaction(Transaction)"/>
+            /// <param name="sellTransaction"></param>
             /// <exception cref="InvalidPriceException">
-            /// <seealso cref="addTransaction(Transaction.eType, double, double, long)"/>
+            /// <seealso cref="addTransaction(Transaction)"/>
             /// </exception>
             /// <exception cref="InsufficientFundsException">
-            /// <seealso cref="addTransaction(Transaction.eType, double, double, long)"/>
+            /// <seealso cref="addTransaction(Transaction)"/>
             /// </exception>
             /// <exception cref="SQLiteDatabaseHandlerException">
-            /// <seealso cref="addTransaction(Transaction.eType, double, double, long)"/>
+            /// <seealso cref="addTransaction(Transaction)"/>
             /// </exception>
-            public void Sell(double sellAmount, double sellPricePerCoin, long unixTimestamp)
+            public void Sell(SellTransaction sellTransaction)
             {
-                addTransaction(Transaction.eType.Sell, sellAmount, sellPricePerCoin, unixTimestamp);
+                addTransaction(sellTransaction);
             }
-
-            ///// <summary>
-            ///// sets <paramref name="coinTicker"/> and updates <see cref="ProfitPercentageUsd"/> accordingly.
-            ///// </summary>
-            ///// <seealso cref="setProfitPercentageUsd"/>
-            ///// <param name="coinTicker"></param>
-            ///// <exception cref="ArgumentNullException">
-            ///// <seealso cref="assertCoinTickerNotNull(CoinTicker)"/>
-            ///// </exception>
-            ///// <exception cref="PortfolioAndTickerCoinIdMismatchException">
-            ///// <seealso cref="assertCoinTickerIdMatchesCoinId(CoinTicker)"/>
-            ///// </exception>
-            //public void Update(CoinTicker coinTicker)
-            //{
-            //    assertCoinTickerNotNull(coinTicker);
-
-            //    // assert that coinTicker and this portfolio entry have a matching coin id
-            //    assertCoinTickerIdMatchesCoinId(coinTicker);
-
-            //    this.coinTicker = coinTicker;
-
-            //    setProfitPercentageUsd();
-            //}
 
             /// <summary>
             /// creates a new <see cref="Transaction"/> with specified
@@ -267,14 +243,8 @@ namespace CryptoBlock
             /// <exception cref="SQLiteDatabaseHandlerException">
             /// <seealso cref="PortfolioDatabaseManager.UpdatePortfolioEntry(PortfolioEntry)"/>
             /// </exception>
-            private void addTransaction(
-                Transaction.eType transactionType,
-                double amount,
-                double pricePerCoin,
-                long unixTimestamp)
+            private void addTransaction(Transaction transaction)
             {
-                Transaction transaction = new Transaction(transactionType, amount, pricePerCoin, unixTimestamp);
-
                 // add to transaction history stored in database
                 PortfolioDatabaseManager.Instance.AddTransaction(transaction, this);
 

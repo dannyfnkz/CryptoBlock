@@ -1,10 +1,12 @@
 ﻿using CryptoBlock.ExceptionManagement;
 using CryptoBlock.IOManagement;
+using CryptoBlock.PortfolioManagement.Transactions;
 using CryptoBlock.ServerDataManagement;
 using CryptoBlock.Utils;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using static CryptoBlock.PortfolioManagement.PortfolioEntry;
 using static CryptoBlock.Utils.IO.SqLite.SQLiteDatabaseHandler;
 
 namespace CryptoBlock
@@ -371,6 +373,26 @@ namespace CryptoBlock
                 }
             }
 
+            public void AddCoins(IList<long> coinIds)
+            {
+                assertManagerInitialized("AddCoins");
+
+                foreach(long coinId in coinIds) // perform checks for all coinIds in advance
+                {
+                    assertCoinIdValid(coinId);
+                    assertCoinNotAlreadyInPortfolio(coinId);
+                }
+
+                try
+                {
+                    PortfolioDatabaseManager.Instance.AddCoins(coinIds);
+                }
+                catch (SQLiteDatabaseHandlerException sqliteDatabaseHandlerException)
+                {
+                    handleDatabaseHandlerException("AddCoins", sqliteDatabaseHandlerException);
+                }
+            }
+
             /// <summary>
             /// removes <see cref="PortfolioEntry"/> associated with <paramref name="coinId"/> from portfolio.
             /// </summary>
@@ -390,7 +412,8 @@ namespace CryptoBlock
             /// </exception>
             public void RemoveCoin(long coinId)
             {
-                assertManagerInitialized("RemovePortfolioEntry");
+                assertManagerInitialized("RemoveCoin");
+                assertCoinIdValid(coinId);
                 assertCoinInPortfolio(coinId);
 
                 try
@@ -403,15 +426,31 @@ namespace CryptoBlock
                 }
             }
 
+            public void RemoveCoins(long[] coinIds)
+            {
+                assertManagerInitialized("RemoveCoins");
+
+                foreach (long coinId in coinIds) // perform checks for all coinIds
+                {
+                    assertCoinIdValid(coinId);
+                    assertCoinInPortfolio(coinId);
+                }
+
+                try
+                {
+                    PortfolioDatabaseManager.Instance.RemoveCoins(coinIds);
+                }
+                catch (SQLiteDatabaseHandlerException sqliteDatabaseHandlerException)
+                {
+                    handleDatabaseHandlerException("RemoveCoins", sqliteDatabaseHandlerException);
+                }
+            }
+
             /// <summary>
-            /// buys <paramref name="buyAmount"/> of coin
-            /// with specified <paramref name="coinId"/> for <paramref name="buyPricePerCoin"/>.
+            /// performs a buy transaction for coin having <paramref name="buyTransaction"/>.CoinId.
             /// </summary>
-            /// <seealso cref="PortfolioEntry.Buy(double, double, long)"/>
-            /// <param name="coinId"></param>
-            /// <param name="buyAmount"></param>
-            /// <param name="buyPricePerCoin"></param>
-            /// <param name="unixTimestamp"></param>
+            /// <seealso cref="PortfolioEntry.Buy(Transaction)"/>
+            /// <param name="buyTransaction"></param>
             /// <exception cref="ManagerNotInitializedException">
             /// <seealso cref="GetPortfolioEntry(long)"/>
             /// </exception>
@@ -419,18 +458,20 @@ namespace CryptoBlock
             /// <seealso cref="GetPortfolioEntry(long)"/>
             /// </exception>
             /// <exception cref="InvalidPriceException">
-            /// <seealso cref="PortfolioEntry.Buy(double, double, long)"/>
+            /// <seealso cref="PortfolioEntry.Buy(Transaction))"/>
             /// </exception>
             /// <exception cref="DatabaseCommunicationException">
             /// <seealso cref="handleDatabaseHandlerException(string, SQLiteDatabaseHandlerException)"/>
             /// </exception>
-            public void BuyCoin(long coinId, double buyAmount, double buyPricePerCoin, long unixTimestamp)
+            public void BuyCoin(BuyTransaction buyTransaction)
             {
-                PortfolioEntry portfolioEntry = GetPortfolioEntry(coinId);
+                assertManagerInitialized("BuyCoin");
+
+                PortfolioEntry portfolioEntry = GetPortfolioEntry(buyTransaction.CoinId);
 
                 try
                 {
-                    portfolioEntry.Buy(buyAmount, buyPricePerCoin, unixTimestamp);
+                    portfolioEntry.Buy(buyTransaction);
                 }
                 catch (SQLiteDatabaseHandlerException sqliteDatabaseHandlerException)
                 {
@@ -438,15 +479,22 @@ namespace CryptoBlock
                 }
             }
 
+            // can have a better implementation (support on database manager level for multiple buys
+            public void BuyCoin(IList<BuyTransaction> buyTransactions)
+            {
+                assertManagerInitialized("BuyCoin");
+
+                foreach(BuyTransaction buyTransaction in buyTransactions)
+                {
+                    BuyCoin(buyTransaction);
+                }
+            }
+
             /// <summary>
-            /// sells <paramref name="sellAmount"/> of coin
-            /// with specified <paramref name="coinId"/> for <paramref name="sellPricePerCoin"/>.
+            /// performs a sell transaction.
             /// </summary>
-            /// <seealso cref="PortfolioEntry.Sell(double, double, long)"/>
-            /// <param name="coinId"></param>
-            /// <param name="sellAmount"></param>
-            /// <param name="sellPricePerCoin"></param>
-            /// <param name="unixTimestamp">unix timestamp of purchase</param>
+            /// <seealso cref="PortfolioEntry.Sell(SellTransaction)"/>
+            /// <param name="sellTransaction"></param>
             /// <exception cref="ManagerNotInitializedException">
             /// <seealso cref="GetPortfolioEntry(int)"/>
             /// </exception>
@@ -454,26 +502,37 @@ namespace CryptoBlock
             /// <seealso cref="GetPortfolioEntry(long)"/>
             /// </exception>
             /// <exception cref="InvalidPriceException">
-            /// <seealso cref="PortfolioEntry.Sell(double, double, long)"/>
+            /// <seealso cref="PortfolioEntry.Sell(SellTransaction)"/>
             /// </exception>
             /// <exception cref="InsufficientFundsException">
-            /// <seealso cref="PortfolioEntry.Sell(double, double, long)"/>
+            /// <seealso cref="PortfolioEntry.Sell(SellTransaction)"/>
             /// </exception>
             /// <exception cref="DatabaseCommunicationException">
             /// <seealso cref="GetPortfolioEntry(long)"/>
             /// <seealso cref="handleDatabaseHandlerException(string, SQLiteDatabaseHandlerException)"/>
             /// </exception>
-            public void SellCoin(long coinId, double sellAmount, double sellPricePerCoin, long unixTimestamp)
+            public void SellCoin(SellTransaction sellTransaction)
             {
-                PortfolioEntry portfolioEntry = GetPortfolioEntry(coinId);
+                PortfolioEntry portfolioEntry = GetPortfolioEntry(sellTransaction.CoinId);
 
                 try
                 {
-                    portfolioEntry.Sell(sellAmount, sellPricePerCoin, unixTimestamp);
+                    portfolioEntry.Sell(sellTransaction);
                 }
                 catch (SQLiteDatabaseHandlerException sqliteDatabaseHandlerException)
                 {
                     handleDatabaseHandlerException("SellCoin", sqliteDatabaseHandlerException);
+                }
+            }
+
+            // can have a better implementation (support on database manager level for multiple buys
+            public void SellCoin(IList<SellTransaction> sellTransactions)
+            {
+                assertManagerInitialized("SellCoin");
+
+                foreach (SellTransaction sellTransaction in sellTransactions)
+                {
+                    SellCoin(sellTransaction);
                 }
             }
 

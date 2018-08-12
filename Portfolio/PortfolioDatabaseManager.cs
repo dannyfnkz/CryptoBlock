@@ -1,5 +1,6 @@
 ﻿using CryptoBlock.CMCAPI;
 using CryptoBlock.IOManagement;
+using CryptoBlock.PortfolioManagement.Transactions;
 using CryptoBlock.ServerDataManagement;
 using CryptoBlock.Utils.IO.SqLite;
 using CryptoBlock.Utils.IO.SQLite.Queries;
@@ -7,6 +8,8 @@ using CryptoBlock.Utils.IO.SQLite.Queries.Columns;
 using CryptoBlock.Utils.IO.SQLite.Queries.Conditions;
 using CryptoBlock.Utils.IO.SQLite.Xml;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using Utils.IO.SQLite;
 using static Utils.IO.SQLite.ResultSet;
 
@@ -110,26 +113,50 @@ namespace CryptoBlock
                             DatabaseStructure.PortfolioEntryTableStructure.COIN_ID_COLUMN_NAME, coinId)
                     });
 
-                sqliteDatabaseHandler.ExecuteInsertQuery(insertQuery);
+                this.sqliteDatabaseHandler.ExecuteInsertQuery(insertQuery);
+            }
+
+            internal void AddCoins(IList<long> coinIds)
+            {
+                this.sqliteDatabaseHandler.ExecuteWithTransaction(() => 
+                    {
+                        foreach(long coinId in coinIds)
+                        {
+                            AddCoin(coinId);
+                        }
+                    }
+                );
+
             }
 
             internal void RemoveCoin(long coinId)
             {
-                ulong transactionHandle = 
-                    sqliteDatabaseHandler.BeginTransactionIfNotAlreadyUnderway(out bool transactionStarted);
+                this.sqliteDatabaseHandler.ExecuteWithTransaction(
+                    () =>
+                        {
+                            // get portfolio id associated with specified coinId
+                            long portfolioEntryId = GetPortfolioEntryId(coinId);
 
-                // get portfolio id associated with specified coinId
-                long portfolioEntryId = GetPortfolioEntryId(coinId);
+                            // delete portfolio entry with specified coinId
+                            deletePortfolioEntry(coinId);
 
-                // delete portfolio entry with specified coinId
-                deletePortfolioEntry(coinId);
+                            // delete transactions associated with portfolioEntryId
+                            deleteTransactionsAssociatedWithPortfolioEntry(portfolioEntryId);
+                        }
+                );
+            }
 
-                // delete transactions associated with portfolioEntryId
-                deleteTransactionsAssociatedWithPortfolioEntry(portfolioEntryId);
-
-                sqliteDatabaseHandler.CommitTransactionIfStartedByCaller(
-                    transactionHandle,
-                    transactionStarted);
+            internal void RemoveCoins(ICollection<long> coinIds)
+            {
+                this.sqliteDatabaseHandler.ExecuteWithTransaction(
+                    () =>
+                        {
+                            foreach(long coinId in coinIds)
+                            {
+                                RemoveCoin(coinId);
+                            }
+                        }
+                );
             }
 
             internal long GetPortfolioEntryId(long coinId)
@@ -165,78 +192,41 @@ namespace CryptoBlock
 
             internal void AddTransaction(Transaction transaction, PortfolioEntry portfolioEntry)
             {
-                // get Transacion.eType id based on Transaction.eType name ("Buy" \ "Sell")
-                string transactionTypeString = transaction.Type.ToString();
+                this.sqliteDatabaseHandler.ExecuteWithTransaction(
+                    () =>
+                        {
+                            // get Transacion.eType id based on Transaction.eType name ("Buy" \ "Sell")
+                            SelectQuery transactionTypeIdSelectQuery =
+                                buildTransactionTypeIdSelectQuery(transaction);
 
-                SelectQuery transactionTypeIdSelectQuery
-                    = new SelectQuery(DatabaseStructure.TransactionTypeTableStructure.TABLE_NAME,
-                    new TableColumn[]
-                    {
-                        new TableColumn(
-                            DatabaseStructure.TransactionTypeTableStructure.ID_COLUMN_NAME,
-                            DatabaseStructure.TransactionTypeTableStructure.TABLE_NAME)
-                    },
-                    null,
-                    new BasicCondition(
-                        new ValuedTableColumn(
-                            DatabaseStructure.TransactionTypeTableStructure.NAME_COLUMN_NAME,
-                            DatabaseStructure.TransactionTypeTableStructure.TABLE_NAME,
-                            transactionTypeString),
-                        BasicCondition.eComparisonType.Equal
-                        )
-                    );
+                            // insert Transaction into "CoinTransaction" table with Transacion.eType id
+                            // fetched by using transactionTypeIdSelectQuery
+                            InsertQuery insertTransactionIntoTableQuery = new InsertQuery(
+                                DatabaseStructure.CoinTransactionTableStructure.TABLE_NAME,
+                                new ValuedColumn[]
+                                {
+                                new ValuedColumn(
+                                    DatabaseStructure.CoinTransactionTableStructure.TRANSACTIO_TYPE_ID_COLUMN_NAME,
+                                    transactionTypeIdSelectQuery),
+                                new ValuedColumn(
+                                    DatabaseStructure.CoinTransactionTableStructure.AMOUNT_COLUMN_NAME,
+                                    transaction.Amount),
+                                new ValuedColumn(
+                                    DatabaseStructure.CoinTransactionTableStructure.PRICE_PER_COIN_COLUMN_NAME,
+                                    transaction.PricePerCoin),
+                                new ValuedColumn(
+                                    DatabaseStructure.CoinTransactionTableStructure.UNIX_TIMESTAMP_COLUMN_NAME,
+                                    transaction.UnixTimestamp)
+                                }
+                            );
 
-                // insert Transaction into "CoinTransaction" table with Transacion.eType id
-                // fetched by using transactionTypeIdSelectQuery
-                InsertQuery insertTransactionIntoTableQuery = new InsertQuery(
-                    DatabaseStructure.CoinTransactionTableStructure.TABLE_NAME,
-                    new ValuedColumn[]
-                    {
-                        new ValuedColumn(
-                            DatabaseStructure.CoinTransactionTableStructure.TRANSACTIO_TYPE_ID_COLUMN_NAME,
-                            transactionTypeIdSelectQuery),
-                        new ValuedColumn(
-                            DatabaseStructure.CoinTransactionTableStructure.AMOUNT_COLUMN_NAME,
-                            transaction.Amount),
-                        new ValuedColumn(
-                            DatabaseStructure.CoinTransactionTableStructure.PRICE_PER_COIN_COLUMN_NAME,
-                            transaction.PricePerCoin),
-                        new ValuedColumn(
-                            DatabaseStructure.CoinTransactionTableStructure.UNIX_TIMESTAMP_COLUMN_NAME,
-                            transaction.UnixTimestamp)
-                    }
+                            sqliteDatabaseHandler.ExecuteInsertQuery(insertTransactionIntoTableQuery);
+
+                            // create database association between inserted Transaction
+                            // and its corresponding PortfolioEntry
+                            associatePortfolioEntryAndLastInsertedTransaction(portfolioEntry.Id);
+                        }
                 );
-
-                sqliteDatabaseHandler.ExecuteInsertQuery(insertTransactionIntoTableQuery);
-
-                // create database association between inserted Transaction
-                // and its corresponding PortfolioEntry
-
-                // get id of inserted Transaction
-                SelectQuery transactionIdSelectQuery = new SelectQuery(
-                    null,
-                    new TableColumn[]
-                    {
-                        new FunctionTableColumn(FunctionTableColumn.eFunctionType.LastInsertRowid)
-                    });
-
-                // create association between inserted Transaction and PortfolioEntry
-                // by INSERTing into "PortfolioEntryTransaction" table
-                InsertQuery associateTransactionWithPortfolioEntryInsertQuery = new InsertQuery(
-                    DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
-                    new ValuedColumn[]
-                    {
-                        new ValuedColumn(
-                            DatabaseStructure.PortfolioEntryTransactionTableStructure
-                            .PORTFOLIO_ENTRY_ID_COLUMN_NAME,
-                            portfolioEntry.Id),
-                        new ValuedColumn(
-                            DatabaseStructure.PortfolioEntryTransactionTableStructure
-                            .COIN_TRANSACTION_ID_COLUMN_NAME,
-                            transactionIdSelectQuery)
-                    });
-
-                sqliteDatabaseHandler.ExecuteInsertQuery(associateTransactionWithPortfolioEntryInsertQuery);
             }
 
             internal bool IsCoinIdInPortfolio(long coinId)
@@ -376,6 +366,33 @@ namespace CryptoBlock
                 return coinIds;
             }
 
+            private SelectQuery buildTransactionTypeIdSelectQuery(Transaction transaction)
+            {
+                SelectQuery transactionTypeIdSelectQuery;
+
+                string transactionTypeString = transaction.Type.ToString();
+
+                transactionTypeIdSelectQuery
+                    = new SelectQuery(DatabaseStructure.TransactionTypeTableStructure.TABLE_NAME,
+                    new TableColumn[]
+                    {
+                                new TableColumn(
+                                    DatabaseStructure.TransactionTypeTableStructure.ID_COLUMN_NAME,
+                                    DatabaseStructure.TransactionTypeTableStructure.TABLE_NAME)
+                    },
+                    null,
+                    new BasicCondition(
+                        new ValuedTableColumn(
+                            DatabaseStructure.TransactionTypeTableStructure.NAME_COLUMN_NAME,
+                            DatabaseStructure.TransactionTypeTableStructure.TABLE_NAME,
+                            transactionTypeString),
+                        BasicCondition.eComparisonType.Equal
+                        )
+                    );
+
+                return transactionTypeIdSelectQuery;
+            }
+
             // assumes SQL transaction is underway
             private void deleteTransactionsAssociatedWithPortfolioEntry(long portfolioEntryId)
             {
@@ -451,6 +468,36 @@ namespace CryptoBlock
                     );
 
                 sqliteDatabaseHandler.ExecuteDeleteQuery(portfolioEntryDeleteQuery);
+            }
+
+            private void associatePortfolioEntryAndLastInsertedTransaction(long portfolioEntryId)
+            {
+                // get id of inserted Transaction
+                SelectQuery transactionIdSelectQuery = new SelectQuery(
+                    null,
+                    new TableColumn[]
+                    {
+                                new FunctionTableColumn(FunctionTableColumn.eFunctionType.LastInsertRowid)
+                    });
+
+                // create association between inserted Transaction and PortfolioEntry
+                // by INSERTing into "PortfolioEntryTransaction" table
+                InsertQuery associateTransactionWithPortfolioEntryInsertQuery = new InsertQuery(
+                    DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
+                    new ValuedColumn[]
+                    {
+                                new ValuedColumn(
+                                    DatabaseStructure.PortfolioEntryTransactionTableStructure
+                                    .PORTFOLIO_ENTRY_ID_COLUMN_NAME,
+                                    portfolioEntryId),
+                                new ValuedColumn(
+                                    DatabaseStructure.PortfolioEntryTransactionTableStructure
+                                    .COIN_TRANSACTION_ID_COLUMN_NAME,
+                                    transactionIdSelectQuery)
+                    });
+
+                sqliteDatabaseHandler.ExecuteInsertQuery(
+                    associateTransactionWithPortfolioEntryInsertQuery);
             }
 
             private void createNewPortfolioDatabaseFile()

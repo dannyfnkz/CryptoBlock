@@ -81,6 +81,16 @@ namespace CryptoBlock
                     throw new ArgumentOutOfRangeException(exceptionMessage, (Exception)null);
                 }
             }
+
+            public static bool IsOdd(int num)
+            {
+                return !IsEven(num);
+            }
+
+            public static bool IsEven(int num)
+            {
+                return num % 2 == 0;
+            }
         }
     }
 }

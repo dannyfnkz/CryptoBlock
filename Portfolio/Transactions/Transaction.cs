@@ -2,12 +2,12 @@
 
 namespace CryptoBlock
 {
-    namespace PortfolioManagement
+    namespace PortfolioManagement.Transactions
     {
         /// <summary>
         /// represents a coin transaction.
         /// </summary>
-        internal class Transaction
+        public class Transaction
         {
             /// <summary>
             /// type of <see cref= "Transaction"/>.
@@ -18,18 +18,30 @@ namespace CryptoBlock
             }
 
             [JsonProperty]
-            private eType type;
+            private readonly eType type;
+
+            [JsonProperty]
+            private readonly long coinId;
+
             [JsonProperty]
             private double amount;
+
             [JsonProperty]
-            private double pricePerCoin;
+            private readonly double pricePerCoin;
+
             [JsonProperty]
-            private long unixTimestamp;
+            private readonly long unixTimestamp;
 
             [JsonConstructor]
-            internal Transaction(eType type, double amount, double pricePerCoin, long unixTimestamp)
+            internal Transaction(
+                eType type,
+                long coinId,
+                double amount,
+                double pricePerCoin,
+                long unixTimestamp)
             {
                 this.type = type;
+                this.coinId = coinId;
                 this.amount = amount;
                 this.pricePerCoin = pricePerCoin;
                 this.unixTimestamp = unixTimestamp;
@@ -43,12 +55,17 @@ namespace CryptoBlock
             {
                 get { return type; }
             }
+
+            public long CoinId
+            {
+                get { return coinId; }
+            }
             
             /// <summary>
             /// amount of coin.
             /// </summary>
             [JsonIgnore]
-            internal double Amount
+            public double Amount
             {
                 get { return amount; }
             }
@@ -57,7 +74,7 @@ namespace CryptoBlock
             /// price per coin.
             /// </summary>
             [JsonIgnore]
-            internal double PricePerCoin
+            public double PricePerCoin
             {
                 get { return pricePerCoin; }
             }
@@ -66,7 +83,7 @@ namespace CryptoBlock
             /// <see cref="Transaction"/> timestamp.
             /// </summary>
             [JsonIgnore]
-            internal long UnixTimestamp
+            public long UnixTimestamp
             {
                 get { return unixTimestamp; }
             }

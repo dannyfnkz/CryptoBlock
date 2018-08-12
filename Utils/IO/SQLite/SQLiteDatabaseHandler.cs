@@ -416,6 +416,15 @@ namespace CryptoBlock
                 return executeReadQuery(selectQuery.QueryString);
             }
 
+            public void ExecuteWithTransaction(Action databaseAction)
+            {
+                ulong transactionHandle = BeginTransactionIfNotAlreadyUnderway(out bool transactionStarted);
+
+                databaseAction.Invoke();
+
+                CommitTransactionIfStartedByCaller(transactionHandle, transactionStarted);
+            }
+
             private int executeWriteQuery(string query)
             {
                 try

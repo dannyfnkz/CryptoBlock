@@ -49,7 +49,9 @@
     <Compile Include="PortfolioEntryTable.cs" />
     <Compile Include="PortfolioManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Transaction.cs" />
+    <Compile Include="Transactions\BuyTransaction.cs" />
+    <Compile Include="Transactions\SellTransaction.cs" />
+    <Compile Include="Transactions\Transaction.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CMCAPI\CMCAPI.csproj">
@@ -94,5 +96,6 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

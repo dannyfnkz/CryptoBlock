@@ -385,6 +385,20 @@ namespace CryptoBlock
                 }
             }
 
+            public long[] GetCoinIdsByNamesOrSymbols(IList<string> coinNamesOrSymbols)
+            {
+                assertManagerInitialized("GetCoinIdByNameOrSymbol");
+
+                long[] coinIds = new long[coinNamesOrSymbols.Count];
+
+                for(int i = 0; i < coinNamesOrSymbols.Count; i++)
+                {
+                    coinIds[i] = GetCoinIdByNameOrSymbol(coinNamesOrSymbols[i]);
+                }
+
+                return coinIds;
+            }
+
             /// <summary>
             /// returns coin name corresponding to <paramref name="coinId"/>.
             /// </summary>
