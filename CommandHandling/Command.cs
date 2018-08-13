@@ -1,4 +1,6 @@
-﻿using CryptoBlock.IOManagement;
+﻿using CryptoBlock.CommandHandling.Arguments;
+using CryptoBlock.IOManagement;
+using System.Collections.Generic;
 
 namespace CryptoBlock
 {
@@ -9,34 +11,35 @@ namespace CryptoBlock
         /// </summary>
         public abstract class Command
         {
-            /// <summary>
-            /// thrown if user gave a wrong number of arguments for command. 
-            /// </summary>
-            public class WrongNumberOfArgumentsException : CommandExecutionException
-            {
-                public WrongNumberOfArgumentsException(int minNumberOfArguments, int maxNumberOfArguments)
-                    : base(formatExceptionMessage(minNumberOfArguments, maxNumberOfArguments))
-                {
+            ///// <summary>
+            ///// thrown if user gave a wrong number of arguments for command. 
+            ///// </summary>
+            //public class WrongNumberOfArgumentsException : CommandExecutionException
+            //{
+            //    public WrongNumberOfArgumentsException(int minNumberOfArguments, int maxNumberOfArguments)
+            //        : base(formatExceptionMessage(minNumberOfArguments, maxNumberOfArguments))
+            //    {
 
-                }
+            //    }
 
-                private static string formatExceptionMessage(int minNumberOfArguments, int maxNumberOfArguments)
-                {
-                    return string.Format("wrong number of arguments: should be between {0} and {1}.",
-                        minNumberOfArguments,
-                        maxNumberOfArguments);
-                }
-            }
+            //    private static string formatExceptionMessage(int minNumberOfArguments, int maxNumberOfArguments)
+            //    {
+            //        return string.Format("Wrong number of arguments: should be between {0} and {1}.",
+            //            minNumberOfArguments,
+            //            maxNumberOfArguments);
+            //    }
+            //}
 
             private readonly string prefix;
-            private readonly int minNumberOfArguments;
-            private readonly int maxNumberOfArguments;
 
-            public Command(string prefix, int minNumberOfArguments, int maxNumberOfArguments)
+            protected readonly List<ICommandArgumentConstraint> commandArgumentConstraintList
+                = new List<ICommandArgumentConstraint>();
+
+            public Command(string prefix)
             {
                 this.prefix = prefix;
-                this.minNumberOfArguments = minNumberOfArguments;
-                this.maxNumberOfArguments = maxNumberOfArguments;
+                //this.minNumberOfArguments = minNumberOfArguments;
+                //this.maxNumberOfArguments = maxNumberOfArguments;
             }
 
             /// <summary>
@@ -47,21 +50,21 @@ namespace CryptoBlock
                 get { return prefix; }
             }
 
-            /// <summary>
-            /// minimum number of arguments allowed for command.
-            /// </summary>
-            public int MinNumberOfArguments
-            {
-                get { return minNumberOfArguments; }
-            }
+            ///// <summary>
+            ///// minimum number of arguments allowed for command.
+            ///// </summary>
+            //public int MinNumberOfArguments
+            //{
+            //    get { return minNumberOfArguments; }
+            //}
 
-            /// <summary>
-            /// maximum number of arguments allowed for command.
-            /// </summary>
-            public int MaxNumberOfArguments
-            {
-                get { return maxNumberOfArguments; }
-            }
+            ///// <summary>
+            ///// maximum number of arguments allowed for command.
+            ///// </summary>
+            //public int MaxNumberOfArguments
+            //{
+            //    get { return maxNumberOfArguments; }
+            //}
 
             /// <summary>
             /// executes command with given <paramref name="commandArguments"/>.
@@ -69,36 +72,53 @@ namespace CryptoBlock
             /// <param name="commandArguments"></param>
             public abstract void ExecuteCommand(string[] commandArguments);
 
-            /// <summary>
-            /// checks whether user entered a wrong number of arguments,
-            /// and logs appropriate message to console in that case. 
-            /// </summary>
-            /// <param name="commandArguments"></param>
-            /// <param name="invalidNumberOfArguments">
-            /// set to true if user entered a wrong number of argument, else false
-            /// </param>
-            protected void HandleWrongNumberOfArguments(
-                string[] commandArguments,
-                out bool wrongNumberOfArguments)
+            protected bool CheckCommandArgumentConstraints(string[] commandArgumentArray)
             {
-                int numberOfArguments = commandArguments.Length;
-
-                if (numberOfArguments < minNumberOfArguments || numberOfArguments > maxNumberOfArguments)
+                foreach(ICommandArgumentConstraint commandArgumentConstrint in this.commandArgumentConstraintList)
                 {
-                    // wrong number of arguments
-                    wrongNumberOfArguments = true;
+                    bool commandArgumentArrayValid = commandArgumentConstrint.IsValid(commandArgumentArray);
 
-                    ConsoleIOManager.Instance.LogErrorFormat(
-                        false,
-                        "Wrong number of arguments for command: should be between {0} and {1}.",                        
-                        minNumberOfArguments,
-                        maxNumberOfArguments);
+                    if(!commandArgumentArrayValid)
+                    {
+                        commandArgumentConstrint.OnInvalidCommandArgumentArray(commandArgumentArray);
+
+                        return false;
+                    }
                 }
-                else // valid number of arguments
-                {
-                    wrongNumberOfArguments = false;
-                }
+
+                return true;
             }
+
+            ///// <summary>
+            ///// checks whether user entered a wrong number of arguments,
+            ///// and logs appropriate message to console in that case. 
+            ///// </summary>
+            ///// <param name="commandArguments"></param>
+            ///// <param name="invalidNumberOfArguments">
+            ///// set to true if user entered a wrong number of argument, else false
+            ///// </param>
+            //protected void HandleWrongNumberOfArguments(
+            //    string[] commandArguments,
+            //    out bool wrongNumberOfArguments)
+            //{
+            //    int numberOfArguments = commandArguments.Length;
+
+            //    if (numberOfArguments < minNumberOfArguments || numberOfArguments > maxNumberOfArguments)
+            //    {
+            //        // wrong number of arguments
+            //        wrongNumberOfArguments = true;
+
+            //        ConsoleIOManager.Instance.LogErrorFormat(
+            //            false,
+            //            "Wrong number of arguments for command: should be between {0} and {1}.",                        
+            //            minNumberOfArguments,
+            //            maxNumberOfArguments);
+            //    }
+            //    else // valid number of arguments
+            //    {
+            //        wrongNumberOfArguments = false;
+            //    }
+            //}
         }
     }
 }

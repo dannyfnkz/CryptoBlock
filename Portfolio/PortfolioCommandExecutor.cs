@@ -1,4 +1,5 @@
 ﻿using CryptoBlock.CommandHandling;
+using CryptoBlock.CommandHandling.Arguments;
 using CryptoBlock.ExceptionManagement;
 using CryptoBlock.IOManagement;
 using CryptoBlock.PortfolioManagement.Transactions;
@@ -31,9 +32,13 @@ namespace CryptoBlock
                     string inheritingCommandPrefix,
                     int minNumberOfArguments,
                     int maxNumberOfArguments)
-                    : base(formatPrefix(inheritingCommandPrefix), minNumberOfArguments, maxNumberOfArguments)
+                    : base(formatPrefix(inheritingCommandPrefix))
                 {
-
+                    base.commandArgumentConstraintList.Add(
+                        new NumberOfArgumentsCommandArgumentConstraint(
+                            minNumberOfArguments,
+                            maxNumberOfArguments)
+                        );
                 }
 
                 protected void HandleDatabaseCommunicationException(
@@ -92,10 +97,9 @@ namespace CryptoBlock
                 /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
-                    // handle case where number of arguments is invalid
-                    HandleWrongNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
+                    bool commandArgumentsValid = base.CheckCommandArgumentConstraints(commandArguments);
 
-                    if (invalidNumberOfArguments)
+                    if(!commandArgumentsValid)
                     {
                         return;
                     }
@@ -201,10 +205,9 @@ namespace CryptoBlock
                 /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
-                    // handle case where number of arguments is invalid
-                    HandleWrongNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
+                    bool commandArgumentsValid = base.CheckCommandArgumentConstraints(commandArguments);
 
-                    if (invalidNumberOfArguments)
+                    if (!commandArgumentsValid)
                     {
                         return;
                     }
@@ -301,10 +304,9 @@ namespace CryptoBlock
                 /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
-                    // handle case where number of arguments is invalid
-                    HandleWrongNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
+                    bool commandArgumentsValid = base.CheckCommandArgumentConstraints(commandArguments);
 
-                    if (invalidNumberOfArguments)
+                    if (!commandArgumentsValid)
                     {
                         return;
                     }
@@ -386,10 +388,9 @@ namespace CryptoBlock
 
                 public override void ExecuteCommand(string[] commandArguments)
                 {
-                    // handle case where number of arguments is invalid
-                    HandleWrongNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
+                    bool commandArgumentsValid = base.CheckCommandArgumentConstraints(commandArguments);
 
-                    if (invalidNumberOfArguments)
+                    if (!commandArgumentsValid)
                     {
                         return;
                     }
@@ -449,13 +450,13 @@ namespace CryptoBlock
                 /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
-                    // handle case where number of arguments is invalid
-                    HandleWrongNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
+                    bool commandArgumentsValid = base.CheckCommandArgumentConstraints(commandArguments);
 
-                    if (invalidNumberOfArguments)
+                    if (!commandArgumentsValid)
                     {
                         return;
                     }
+
                     try
                     {
                         // price coin name or symbol from command argument 0
@@ -632,47 +633,6 @@ namespace CryptoBlock
                 }
             }
 
-            
-         
-
-            private bool tryBuyingCoin(long coinId, string buyAmountArgument, string buyPriceArgument)
-            {
-                bool buyingSucceeded;
-
-                // parse buy amount from buyAmountArgument
-                bool buyAmountParseResult = NumberUtils.TryParseDouble(
-                    buyAmountArgument,
-                    out double buyAmount,
-                    0,
-                    PortfolioManager.MaxNumericalValueAllowed);
-
-                // price buy price from buyPriceArgument
-                bool buyPriceParseResult = NumberUtils.TryParseDouble(
-                    buyPriceArgument,
-                    out double buyPricePerCoin,
-                    0,
-                    PortfolioManager.MaxNumericalValueAllowed);
-
-                if (!buyAmountParseResult || !buyPriceParseResult)
-                {
-                    // user entered a non-numeric or out-of-bounds value as buy price or buy amount
-                    ConsoleIOManager.Instance.LogErrorFormat(
-                        false,
-                        "Invalid format: buy price and amount must be numeric values larger than {0}" +
-                        " and smaller than {1}.",
-                        0,
-                        PortfolioManager.MaxNumericalValueAllowed);
-
-                    buyingSucceeded = false;
-                }
-                else
-                {
-                    buyingSucceeded = true;
-                }
-
-                return buyingSucceeded;
-            }
-
             /// <summary>
             /// <para>
             /// sells specified amount of specified coin, for a specified price per coin.
@@ -705,13 +665,13 @@ namespace CryptoBlock
                 /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
-                    // handle case where number of arguments is invalid
-                    HandleWrongNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
+                    bool commandArgumentsValid = base.CheckCommandArgumentConstraints(commandArguments);
 
-                    if (invalidNumberOfArguments)
+                    if (!commandArgumentsValid)
                     {
                         return;
                     }
+
                     try
                     {
                         // price coin name or symbol from command argument 0

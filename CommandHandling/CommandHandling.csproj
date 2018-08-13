@@ -40,7 +40,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Arguments\NumberOfArgumentsCommandArgumentConstraint.cs" />
+    <Compile Include="Arguments\ICommandArgumentConstraint.cs" />
     <Compile Include="Command.cs" />
+    <Compile Include="Arguments\CommandArgumentParseException.cs" />
     <Compile Include="CommandExecutionException.cs" />
     <Compile Include="CommandExecutor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -1,4 +1,5 @@
 ﻿using CryptoBlock.CommandHandling;
+using CryptoBlock.CommandHandling.Arguments;
 using CryptoBlock.IOManagement;
 using CryptoBlock.Utils.InternetUtils;
 using System;
@@ -18,9 +19,13 @@ namespace CryptoBlock
             private abstract class SystemCommand : Command
             {
                 internal SystemCommand(string prefix, int minNumberOfArguments, int maxNumberOfArguments)
-                    : base(prefix, minNumberOfArguments, maxNumberOfArguments)
+                    : base(prefix)
                 {
-
+                    base.commandArgumentConstraintList.Add(
+                        new NumberOfArgumentsCommandArgumentConstraint(
+                            minNumberOfArguments,
+                            maxNumberOfArguments)
+                        );
                 }
             }
 
@@ -35,9 +40,13 @@ namespace CryptoBlock
                 private const string PREFIX = "status";
 
                 internal StatusCommand(string inheritingCommandPrefix)
-                    : base(formatPrefix(inheritingCommandPrefix), MIN_NUMBER_OF_ARGUMENTS, MAX_NUMBER_OF_ARGUMENTS)
+                    : base(formatPrefix(inheritingCommandPrefix))
                 {
-
+                    base.commandArgumentConstraintList.Add(
+                        new NumberOfArgumentsCommandArgumentConstraint(
+                            MIN_NUMBER_OF_ARGUMENTS,
+                            MAX_NUMBER_OF_ARGUMENTS)
+                        );
                 }
 
                 /// <summary>
@@ -81,10 +90,9 @@ namespace CryptoBlock
                 /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
-                    // handle case where number of arguments is invalid
-                    HandleWrongNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
+                    bool commandArgumentsValid = base.CheckCommandArgumentConstraints(commandArguments);
 
-                    if (invalidNumberOfArguments)
+                    if (!commandArgumentsValid)
                     {
                         return;
                     }

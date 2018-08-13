@@ -1,4 +1,5 @@
 ﻿using CryptoBlock.CommandHandling;
+using CryptoBlock.CommandHandling.Arguments;
 using CryptoBlock.IOManagement;
 using CryptoBlock.Utils;
 using System.Collections.Generic;
@@ -21,9 +22,13 @@ namespace CryptoBlock
                 private const int MAX_NUMBER_OF_ARGUMENTS = 20;
 
                 internal ServerDataCommand(string prefix)
-                    : base(prefix, MIN_NUMBER_OF_ARGUMENTS, MAX_NUMBER_OF_ARGUMENTS)
+                    : base(prefix)
                 {
-
+                    base.commandArgumentConstraintList.Add(
+                        new NumberOfArgumentsCommandArgumentConstraint(
+                            MIN_NUMBER_OF_ARGUMENTS,
+                            MAX_NUMBER_OF_ARGUMENTS)
+                        );
                 }
             }
 
@@ -54,10 +59,9 @@ namespace CryptoBlock
                 /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
-                    // handle case where number of arguments is invalid
-                    HandleWrongNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
+                    bool commandArgumentsValid = base.CheckCommandArgumentConstraints(commandArguments);
 
-                    if (invalidNumberOfArguments)
+                    if (!commandArgumentsValid)
                     {
                         return;
                     }
@@ -107,10 +111,9 @@ namespace CryptoBlock
                 /// <param name="commandArguments"></param>
                 public override void ExecuteCommand(string[] commandArguments)
                 {
-                    // handle case where number of arguments is invalid
-                    HandleWrongNumberOfArguments(commandArguments, out bool invalidNumberOfArguments);
+                    bool commandArgumentsValid = base.CheckCommandArgumentConstraints(commandArguments);
 
-                    if (invalidNumberOfArguments)
+                    if (!commandArgumentsValid)
                     {
                         return;
                     }
