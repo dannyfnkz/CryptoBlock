@@ -525,7 +525,7 @@ namespace CryptoBlock
                 }
             }
 
-            // can have a better implementation (support on database manager level for multiple buys
+            // can have a better implementation (support on database manager level for multiple sells
             public void SellCoin(IList<SellTransaction> sellTransactions)
             {
                 assertManagerInitialized("SellCoin");

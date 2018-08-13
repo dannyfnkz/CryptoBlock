@@ -5,6 +5,7 @@ using CryptoBlock.IOManagement;
 using CryptoBlock.PortfolioManagement.Transactions;
 using CryptoBlock.ServerDataManagement;
 using CryptoBlock.Utils;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using static CryptoBlock.PortfolioManagement.PortfolioManager;
@@ -36,8 +37,8 @@ namespace CryptoBlock
                 {
                     base.commandArgumentConstraintList.Add(
                         new NumberOfArgumentsCommandArgumentConstraint(
-                            minNumberOfArguments,
-                            maxNumberOfArguments)
+                                minNumberOfArguments,
+                                maxNumberOfArguments)
                         );
                 }
 
@@ -417,24 +418,148 @@ namespace CryptoBlock
                 }
             }
 
+            private abstract class PortfolioTransactionCommand<T> : PortfolioCommand where T : Transaction
+            {
+                private class OddNumberOfArgumentsCommandArgumentConstraint : ICommandArgumentConstraint
+                {
+                    bool ICommandArgumentConstraint.IsValid(string[] commandArgumentArray)
+                    {
+                        return NumberUtils.IsOdd(commandArgumentArray.Length);
+                    }
+
+                    void ICommandArgumentConstraint.OnInvalidCommandArgumentArray(string[] commandArgumentArray)
+                    {
+                        string errorMessage = "Invalid format: number of arguments must be odd.";
+                        ConsoleIOManager.Instance.LogError(errorMessage);
+                    }
+                }
+
+                private const int MIN_NUMBER_OF_TRANSACTIONS = 1;
+                private const int MAX_NUMBER_OF_TRANSACTIONS = 5;
+                private const int MIN_NUMBER_OF_ARGUMENTS = 1 + 2 * MIN_NUMBER_OF_TRANSACTIONS;
+                private const int MAX_NUMBER_OF_ARGUMENTS = 1 + 2 * MAX_NUMBER_OF_TRANSACTIONS;
+
+                private static readonly Dictionary<Type, string> transactionTypeToSubPrefix
+                    = new Dictionary<Type, string>()
+                    {
+                        { typeof(BuyTransaction), "buy" },
+                        { typeof(SellTransaction), "sell" }
+                    };
+
+
+                internal PortfolioTransactionCommand()
+                    : base(
+                          transactionTypeToSubPrefix[typeof(T)],
+                          MIN_NUMBER_OF_ARGUMENTS,
+                          MAX_NUMBER_OF_ARGUMENTS)
+                {
+                    base.commandArgumentConstraintList.Add(
+                        new OddNumberOfArgumentsCommandArgumentConstraint());
+                }
+
+
+                protected static T[] tryParseTransactionArray(
+                    string[] commandArguments,
+                    long coinId,
+                    long unixTimestamp,
+                    out bool arrayParseSuccesss)
+                {
+                    // first argument is coin name / symbol, rest are consecutive pairs of 
+                    // (buyAmount, pricePerCoin)
+                    T[] transactions = new T[(commandArguments.Length - 1) / 2];
+
+                    arrayParseSuccesss = false;
+
+                    for (int i = 1; i < commandArguments.Length; i += 2)
+                    {
+                        string amountArgument = commandArguments[i];
+                        string pricePerCoinArgument = commandArguments[i + 1];
+
+                        T transaction = tryParseTransaction(
+                            amountArgument,
+                            pricePerCoinArgument,
+                            coinId,
+                            unixTimestamp,
+                            out bool operationParseResult);
+
+                        if (operationParseResult)
+                        {
+                            transactions[i / 2] = transaction;
+                        }
+                        else
+                        {
+                            return null;
+                        }
+                    }
+
+                    arrayParseSuccesss = true;
+
+                    return transactions;
+                }
+
+                private static T tryParseTransaction(
+                    string amountArgument,
+                    string priceArgument,
+                    long coinId,
+                    long unixTimestamp,
+                    out bool parseResult)
+                {
+                    Transaction transaction;
+
+                    // parse buy amount from buyAmountArgument
+                    bool amountParseResult = NumberUtils.TryParseDouble(
+                        amountArgument,
+                        out double amount,
+                        0,
+                        PortfolioManager.MaxNumericalValueAllowed);
+
+                    // price buy price from buyPriceArgument
+                    bool priceParseResult = NumberUtils.TryParseDouble(
+                        priceArgument,
+                        out double pricePerCoin,
+                        0,
+                        PortfolioManager.MaxNumericalValueAllowed);
+
+                    if (amountParseResult && priceParseResult)
+                    {
+                        transaction = typeof(T) == typeof(BuyTransaction)
+                            ? (Transaction)(new BuyTransaction(coinId, amount, pricePerCoin, unixTimestamp))
+                            : (Transaction)(new SellTransaction(coinId, amount, pricePerCoin, unixTimestamp));
+
+                        parseResult = true;
+                    }
+                    else
+                    {
+                        // user entered a non-numeric or out-of-bounds value as buy price or buy amount
+                        string errorMessage = string.Format(
+                            "Invalid format: price and amount must be numeric values larger than {0}" +
+                            " and smaller than {1}.",
+                            0,
+                            PortfolioManager.MaxNumericalValueAllowed);
+                        ConsoleIOManager.Instance.LogError(errorMessage);
+
+                        transaction = null;
+                        parseResult = false;
+                    }
+
+                    return (T)transaction;
+                }
+
+            }
+
             /// <summary>
             /// <para>
             /// buys specified amount of specified coin, for a specified price per coin.
             /// </para>
             /// <para>
-            /// command syntax: portfolio buy [coin name / symbol] [buy amount] [buy price per coin]
+            /// command syntax:
+            /// portfolio buy [coin name / symbol] ([buy amount] [buy price per coin]),
+            /// ([buy amount] [buy price per coin]), ...
             /// </para>
             /// </summary>
-            private class PortfolioBuyCommand : PortfolioCommand
+            private class PortfolioBuyCommand : PortfolioTransactionCommand<BuyTransaction>
             {
-                private const int MIN_NUMBER_OF_ARGUMENTS = 1 + 2 * 1;
-                private const int MAX_NUMBER_OF_ARGUMENTS = 1 + 2 * 5;
-
-                // command sub-prefix
-                private const string SUB_PREFIX = "buy";
-
                 internal PortfolioBuyCommand()
-                    : base(SUB_PREFIX, MIN_NUMBER_OF_ARGUMENTS, MAX_NUMBER_OF_ARGUMENTS)
                 {
 
                 }
@@ -471,8 +596,8 @@ namespace CryptoBlock
                         // current timestamp
                         long unixTimestamp = DateTimeUtils.GetUnixTimestamp();
 
-                        // parse buy operations
-                        BuyTransaction[] buyTransactions = tryParseBuyOperations(
+                        // parse buy transactions
+                        BuyTransaction[] buyTransactions = tryParseTransactionArray(
                             commandArguments,
                             coinId,
                             unixTimestamp,
@@ -524,7 +649,10 @@ namespace CryptoBlock
                                 buyTransactions[0].Amount,
                                 coinName,
                                 buyTransactions[0].PricePerCoin)
-                            : "Specified purchases made successfully";
+                            : string.Format(
+                                "{0} Specified purchases made successfully.",
+                                buyTransactions.Length);
+
                         ConsoleIOManager.Instance.LogNotice(successfulPurchaseNoticeMessage);
                     }
                     catch (CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
@@ -534,102 +662,8 @@ namespace CryptoBlock
                     }
                     catch (DatabaseCommunicationException databaseCommunicationException)
                     {
-                        HandleDatabaseCommunicationException(databaseCommunicationException);
+                        base.HandleDatabaseCommunicationException(databaseCommunicationException);
                     }
-                }
-
-                private BuyTransaction[] tryParseBuyOperations(
-                    string[] commandArguments,
-                    long coinId,
-                    long unixTimestamp,
-                    out bool arrayParseSuccesss)
-                {
-                    if(NumberUtils.IsEven(commandArguments.Length))
-                    {
-                        string errorMessage = "Incorrect syntax: Number of command arguments must be odd.";
-                        ConsoleIOManager.Instance.LogError(errorMessage);
-
-                        arrayParseSuccesss = false;
-
-                        return null;
-                    }
-
-                    // first argument is coin name / symbol, rest are consecutive pairs of 
-                    // (buyAmount, pricePerCoin)
-                    BuyTransaction[] buyTransactions = new BuyTransaction[(commandArguments.Length - 1) /2];
-
-                    arrayParseSuccesss = false;
-
-                    for (int i = 1; i < commandArguments.Length; i += 2)
-                    {
-                        string buyAmountArgument = commandArguments[i];
-                        string buyPricePerCoinArgument = commandArguments[i + 1];
-
-                        BuyTransaction buyTransaction = tryParseBuyTransaction(
-                            buyAmountArgument,
-                            buyPricePerCoinArgument,
-                            coinId,
-                            unixTimestamp,
-                            out bool buyOperationParseResult);
-
-                        if (buyOperationParseResult)
-                        {
-                            buyTransactions[i / 2] = buyTransaction;
-                        }
-                        else
-                        {
-                            return null;
-                        }
-                    }
-
-                    arrayParseSuccesss = true;
-
-                    return buyTransactions;
-                }
-
-                private BuyTransaction tryParseBuyTransaction(
-                    string buyAmountArgument, 
-                    string buyPriceArgument,
-                    long coinId,
-                    long unixTimestamp,
-                    out bool parseResult)
-                {
-                    BuyTransaction buyTransaction;
-
-                    // parse buy amount from buyAmountArgument
-                    bool buyAmountParseResult = NumberUtils.TryParseDouble(
-                        buyAmountArgument,
-                        out double buyAmount,
-                        0,
-                        PortfolioManager.MaxNumericalValueAllowed);
-
-                    // price buy price from buyPriceArgument
-                    bool buyPriceParseResult = NumberUtils.TryParseDouble(
-                        buyPriceArgument,
-                        out double buyPricePerCoin,
-                        0,
-                        PortfolioManager.MaxNumericalValueAllowed);
-
-                    if(buyAmountParseResult && buyPriceParseResult)
-                    {
-                        buyTransaction = new BuyTransaction(coinId, buyAmount, buyPricePerCoin, unixTimestamp);
-                        parseResult = true;
-                    }
-                    else
-                    {
-                        // user entered a non-numeric or out-of-bounds value as buy price or buy amount
-                        string errorMessage = string.Format(
-                            "Invalid format: buy price and amount must be numeric values larger than {0}" +
-                            " and smaller than {1}.",
-                            0,
-                            PortfolioManager.MaxNumericalValueAllowed);
-                        ConsoleIOManager.Instance.LogError(errorMessage);
-
-                        buyTransaction = null;
-                        parseResult = false;
-                    }
-
-                    return buyTransaction;
                 }
             }
 
@@ -641,15 +675,10 @@ namespace CryptoBlock
             /// command syntax: portfolio sell [coin name / symbol] [sell amount] [sell price per coin]
             /// </para>
             /// </summary>
-            private class PortfolioSellCommand : PortfolioCommand
+            private class PortfolioSellCommand : PortfolioTransactionCommand<SellTransaction>
             {
-                private const int MIN_NUMBER_OF_ARGUMENTS = 3;
-                private const int MAX_NUMBER_OF_ARGUMENTS = 3;
-
-                private const string SUB_PREFIX = "sell";
-
                 internal PortfolioSellCommand()
-                    : base(SUB_PREFIX, MIN_NUMBER_OF_ARGUMENTS, MAX_NUMBER_OF_ARGUMENTS)
+                    : base()
                 {
 
                 }
@@ -687,36 +716,16 @@ namespace CryptoBlock
                         // current timestamp
                         long unixTimestamp = DateTimeUtils.GetUnixTimestamp();
 
-                        // parse sell amount from command argument 1
-                        bool sellAmountParseResult = Utils.NumberUtils.TryParseDouble(
-                            commandArguments[1],
-                            out double sellAmount,
-                            0,
-                            PortfolioManager.MaxNumericalValueAllowed);
 
-                        // parse sell price from command argument 2
-                        bool sellPriceParseResult = Utils.NumberUtils.TryParseDouble(
-                            commandArguments[2],
-                            out double sellPricePerCoin,
-                            0,
-                            PortfolioManager.MaxNumericalValueAllowed);
-
-                        SellTransaction sellTransaction = new SellTransaction(
+                        // parse buy transactions
+                        SellTransaction[] sellTransactions = tryParseTransactionArray(
+                            commandArguments,
                             coinId,
-                            sellAmount,
-                            sellPricePerCoin,
-                            unixTimestamp);
+                            unixTimestamp,
+                            out bool sellTransactionArrayParseSuccess);
 
-                        if (!sellAmountParseResult || !sellPriceParseResult)
+                        if (!sellTransactionArrayParseSuccess)
                         {
-                            // user entered a non-numeric or out-of-bounds value as buy price or buy amount
-                            ConsoleIOManager.Instance.LogErrorFormat(
-                                false,
-                                "Invalid format: buy price and amount must be numeric values larget than {0}" +
-                                " and smaller than {1}.",
-                                0,
-                                PortfolioManager.MaxNumericalValueAllowed);
-
                             return;
                         }
 
@@ -732,31 +741,37 @@ namespace CryptoBlock
                             return;
                         }
 
-                        // check if there are enough funds for sell operation
+                        // check if there are enough funds for sell transactions
                         PortfolioEntry portfolioEntry = PortfolioManager.Instance.GetPortfolioEntry(coinId);
-                        double coinHoldings = portfolioEntry.Holdings;
+                        bool sufficientFundsForSellTransactions = sufficientFundsForTransactions(
+                            portfolioEntry, sellTransactions);
 
-                        if (coinHoldings < sellAmount) // not enough funds to sell requested amount
+                        if (!sufficientFundsForSellTransactions) // not enough funds to perform sales
                         {
                             ConsoleIOManager.Instance.LogErrorFormat(
                                 false,
-                                "Not enough funds for sell operation. {0} holdings: {1} {2}.",                     
+                                "Not enough funds for requested sell operation(s). {0} holdings: {1} {2}.",                     
                                 coinName,
-                                coinHoldings,
+                                portfolioEntry.Holdings,
                                 coinSymbol);
                             return;
                         }
 
-                        // execute sell command
-                        PortfolioManager.Instance.SellCoin(sellTransaction);
+                        // execute sell transactions
+                        PortfolioManager.Instance.SellCoin(sellTransactions);
 
-                        // purchase performed successfully
-                        ConsoleIOManager.Instance.LogNoticeFormat(
-                            false,
-                            "Successfully purchased {0} '{1}' for {2}$ each.",
-                            sellAmount,
-                            coinName,
-                            sellPricePerCoin);
+                        // sale(s) performed successfully
+                        string successfulSaleNoticeMessage = sellTransactions.Length == 1
+                            ? string.Format(
+                                "Successfully sold {0} {1} for {2}$ each.",
+                                sellTransactions[0].Amount,
+                                coinName,
+                                sellTransactions[0].PricePerCoin)
+                            : string.Format(
+                                "{0} Specified sales made successfully.",
+                                sellTransactions.Length);
+
+                        ConsoleIOManager.Instance.LogNotice(successfulSaleNoticeMessage);
                     }
                     catch (CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                     {
@@ -765,8 +780,22 @@ namespace CryptoBlock
                     }
                     catch (DatabaseCommunicationException databaseCommunicationException)
                     {
-                        HandleDatabaseCommunicationException(databaseCommunicationException);
+                        base.HandleDatabaseCommunicationException(databaseCommunicationException);
                     }
+                }
+
+                private bool sufficientFundsForTransactions(
+                    PortfolioEntry portfolioEntry,
+                    SellTransaction[] sellTransactions)
+                {
+                    double requiredFunds = 0;
+
+                    foreach(SellTransaction sellTransaction in sellTransactions)
+                    {
+                        requiredFunds += sellTransaction.Amount;
+                    }
+
+                    return requiredFunds <= portfolioEntry.Holdings;
                 }
             }
 
