@@ -131,7 +131,7 @@ namespace CryptoBlock
             /// <summary>
             /// represents a column whose value type is a <see cref="Property"/>.
             /// </summary>
-            public class PropertyColumn : Table.Column
+            public class PropertyColumn : Column
             {
                 /// <summary>
                 /// thrown if specified propertyNames and headers <see cref="IList{T}"/> do not have the same
@@ -148,13 +148,17 @@ namespace CryptoBlock
 
                 private Property property;
 
-                public PropertyColumn(string header, int width, Property property)
-                    : base(header, width)
+                public PropertyColumn(
+                    string header,
+                    int width,
+                    Property property,
+                    string cutSuffix = DEFAULT_CUT_SUFFIX)
+                    : base(header, width, cutSuffix)
                 {
                     this.property = property;
                 }
 
-                public PropertyColumn(Table.Column column, Property property)
+                public PropertyColumn(Column column, Property property)
                     : base(column)
                 {
                     this.property = property;

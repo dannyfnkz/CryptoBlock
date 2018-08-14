@@ -223,7 +223,7 @@ namespace CryptoBlock
                         eDisplayProperty.ProfitPercentageUsd,
                         new PropertyColumn(
                             "% Profit (USD)",
-                            17,
+                            14,
                             displayPropertyToProperty[eDisplayProperty.ProfitPercentageUsd])
                     }
                 };

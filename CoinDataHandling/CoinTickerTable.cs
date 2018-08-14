@@ -85,29 +85,33 @@ namespace CryptoBlock
                         eDisplayProperty.CirculatingSupply,
                         new PropertyColumn(
                             "Circ. Supply",
-                            15,
-                            displayPropertyToProperty[eDisplayProperty.CirculatingSupply])
+                            12,
+                            displayPropertyToProperty[eDisplayProperty.CirculatingSupply],
+                            string.Empty)
                     },
                     {
                         eDisplayProperty.PriceUsd,
                         new PropertyColumn(
-                            "Price USD",
-                            14,
-                            displayPropertyToProperty[eDisplayProperty.PriceUsd])
+                            "Price (USD)",
+                            11,
+                            displayPropertyToProperty[eDisplayProperty.PriceUsd],
+                            string.Empty)
                     },
                     {
                         eDisplayProperty.Volume24hUsd,
                         new PropertyColumn(
                             "Volume 24h (USD)",
-                            18,
-                            displayPropertyToProperty[eDisplayProperty.Volume24hUsd])
+                            16,
+                            displayPropertyToProperty[eDisplayProperty.Volume24hUsd],
+                            string.Empty)
                     },
                     {
                         eDisplayProperty.PricePercentChange24hUsd,
                         new PropertyTable.PropertyColumn(
                             "% chg 24h",
-                            11,
-                            displayPropertyToProperty[eDisplayProperty.PricePercentChange24hUsd])
+                            9,
+                            displayPropertyToProperty[eDisplayProperty.PricePercentChange24hUsd],
+                            string.Empty)
                     }
                 };
 

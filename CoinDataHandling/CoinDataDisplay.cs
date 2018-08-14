@@ -74,7 +74,7 @@ namespace CryptoBlock
                         eDisplayProperty.Symbol,
                         new PropertyTable.PropertyColumn(
                             "Symbol",
-                            8,
+                            6,
                             displayPropertyToProperty[eDisplayProperty.Symbol])
                     }
                 };

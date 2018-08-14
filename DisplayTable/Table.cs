@@ -62,21 +62,61 @@ namespace CryptoBlock
                     }
                 }
 
-                private string header;
-                private int width;
+                protected const string DEFAULT_CUT_SUFFIX = "..";
+                protected const int DEFAULT_PADDING = 2;
+
+                private readonly string header;
+                private readonly int width;
+                private readonly int padding = DEFAULT_PADDING;
+                private readonly string cutSuffix = DEFAULT_CUT_SUFFIX;
 
                 /// <summary>
                 /// initializes a new column with specified <paramref name="header"/> and <paramref name="width"/>.
                 /// </summary>
                 /// <param name="header"></param>
                 /// <param name="width"></param>
-                /// <exception cref="WidthOutOfRangeException"><seealso cref="assertValidWidth(int, string)"/></exception>
-                public Column(string header, int width)
+                /// <param name="padding"></param>
+                /// <param name="cutSuffix"></param>
+                /// <exception cref="WidthOutOfRangeException">
+                /// <seealso cref="assertValidWidth(int, string)"/>
+                /// </exception>
+                public Column(
+                    string header,
+                    int width,
+                    int padding,
+                    string cutSuffix)
+                    : this(header, width)
+                {
+                    this.padding = padding;
+                    this.cutSuffix = cutSuffix;
+                }
+
+                public Column(
+                    string header,
+                    int width)
                 {
                     assertValidWidth(width, header);
 
                     this.header = header;
                     this.width = width;
+                }
+
+                public Column(
+                    string header,
+                    int width,
+                    int padding)
+                    : this(header, width)
+                {
+                    this.padding = padding;
+                }
+
+                public Column(
+                    string header,
+                    int width,
+                    string cutSuffix)
+                    : this(header, width)
+                {
+                    this.cutSuffix = cutSuffix;
                 }
 
                 /// <summary>
@@ -98,6 +138,21 @@ namespace CryptoBlock
                 public int Width
                 {
                     get { return width; }
+                }
+
+                public int Padding
+                {
+                    get { return padding; }
+                }
+
+                public int WidthWithPadding
+                {
+                    get { return Width + Padding; }
+                }
+
+                public string CutSuffix
+                {
+                    get { return cutSuffix; }
                 }
 
                 /// <summary>
@@ -164,9 +219,9 @@ namespace CryptoBlock
                 public override string ToString()
                 {
                     // shorten header if it is longer than column width
-                    string shortenedHeader = StringUtils.ShortenIfLongerThan(header, width);
+                    string shortenedHeader = StringUtils.ShortenIfLongerThan(Header, Width, CutSuffix);
                      
-                    return shortenedHeader.PadRight(width);
+                    return shortenedHeader.PadRight(WidthWithPadding);
                 }
 
                 /// <summary>
@@ -304,10 +359,11 @@ namespace CryptoBlock
                         // shorten current column value if it is longer than current column width
                         string columnValueDisplayString = StringUtils.ShortenIfLongerThan(
                             columnValue,
-                            columns[i].Width);
+                            columns[i].Width,
+                            columns[i].CutSuffix);
 
                         // pad columnValueDisplayString according to column width
-                        columnValueDisplayString = columnValueDisplayString.PadRight(columns[i].Width);
+                        columnValueDisplayString = columnValueDisplayString.PadRight(columns[i].WidthWithPadding);
 
                         // append columnValueDisplayString
                         rowStringBuilder.Append(columnValueDisplayString);
