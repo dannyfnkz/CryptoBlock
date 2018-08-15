@@ -45,6 +45,9 @@
     <Compile Include="CoinListingTable.cs" />
     <Compile Include="CoinTickerManager.cs" />
     <Compile Include="CoinTickerTable.cs" />
+    <Compile Include="Commands\CoinListingCommand.cs" />
+    <Compile Include="Commands\CoinTickerCommmand.cs" />
+    <Compile Include="Commands\ServerDataCommand.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Range.cs" />
     <Compile Include="ServerDataCommandExecutor.cs" />

@@ -43,6 +43,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\PortfolioAddCommand.cs" />
+    <Compile Include="Commands\PortfolioClearCommand.cs" />
+    <Compile Include="Commands\PortfolioCommand.cs" />
+    <Compile Include="Commands\PortfolioRemoveCommand.cs" />
+    <Compile Include="Commands\TransactionCommands\PortfolioBuyCommand.cs" />
+    <Compile Include="Commands\TransactionCommands\PortfolioSellCommand.cs" />
+    <Compile Include="Commands\TransactionCommands\PortfolioTransactionCommand.cs" />
+    <Compile Include="Commands\PortfolioViewCommand.cs" />
     <Compile Include="PortfolioCommandExecutor.cs" />
     <Compile Include="PortfolioDatabaseManager.cs" />
     <Compile Include="PortfolioEntry.cs" />
