@@ -1,5 +1,6 @@
 ﻿using CryptoBlock.Utils;
-using CryptoBlock.Utils.CollectionUtils;
+using CryptoBlock.Utils.Collections;
+using CryptoBlock.Utils.Strings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -219,7 +220,7 @@ namespace CryptoBlock
                 public override string ToString()
                 {
                     // shorten header if it is longer than column width
-                    string shortenedHeader = StringUtils.ShortenIfLongerThan(Header, Width, CutSuffix);
+                    string shortenedHeader = Header.ShortenIfLongerThan(Width, CutSuffix);
                      
                     return shortenedHeader.PadRight(WidthWithPadding);
                 }
@@ -357,8 +358,7 @@ namespace CryptoBlock
                         string columnValue = columnValues[i];
 
                         // shorten current column value if it is longer than current column width
-                        string columnValueDisplayString = StringUtils.ShortenIfLongerThan(
-                            columnValue,
+                        string columnValueDisplayString = columnValue.ShortenIfLongerThan(
                             columns[i].Width,
                             columns[i].CutSuffix);
 

@@ -23,12 +23,9 @@ namespace CryptoBlock
             /// </summary>
             public class PortfolioManagerException : Exception
             {
-                public PortfolioManagerException(string exceptionMessage)
-                    : base(exceptionMessage)
-                {
-
-                }
-                public PortfolioManagerException(string exceptionMessage, Exception innerException)
+                public PortfolioManagerException(
+                    string exceptionMessage = null,
+                    Exception innerException = null)
                     : base(exceptionMessage, innerException)
                 {
 
@@ -94,6 +91,20 @@ namespace CryptoBlock
                         "An exception occurred while trying to communicate with database."
                         + " Requested operation: '{0}'.",
                         operationName);
+                }
+            }
+
+            public class UndoableLastActionNotAvailableException : PortfolioManagerException
+            {
+                public UndoableLastActionNotAvailableException()
+                    : base(formatExceptionMessage())
+                {
+
+                }
+
+                private static string formatExceptionMessage()
+                {
+                    return "No undoable action available.";
                 }
             }
 
@@ -241,35 +252,9 @@ namespace CryptoBlock
                 get { return instance; }
             }
 
-            /// <summary>
-            /// <para>
-            /// initializes a new <see cref="PortfolioManager"/> instance and starts file data save thread.
-            /// </para>
-            /// <para>
-            /// if a portfolio data save file exists, attempts to load portfolio data from file. 
-            /// </para>
-            /// </summary>
-            /// <seealso cref="loadDataFromSaveFile"/>
-            /// <exception cref="ManagerAlreadyInitializedException">
-            /// <seealso cref="assertManagerNotInitialized(string)"/>
-            /// </exception>
-            /// <exception cref="DatabaseCommunicationException">
-            /// <seealso cref="handleDatabaseHandlerException(string, SQLiteDatabaseHandlerException)"/>
-            /// </exception>
-            public static void Initialize()
+            internal bool UndoableLastActionAvailable
             {
-                assertManagerNotInitialized();
-
-                try
-                {
-                    PortfolioDatabaseManager.Initialize();
-                    instance = new PortfolioManager();
-                }
-
-                catch(SQLiteDatabaseHandlerException sqliteDatabaseHandlerException)
-                {
-                    handleDatabaseHandlerException("Initialize", sqliteDatabaseHandlerException);
-                }
+                get { return PortfolioDatabaseManager.Instance.UndoableLastActionAvailable; }
             }
 
             /// <summary>
@@ -301,6 +286,44 @@ namespace CryptoBlock
 
                     return coinIds;
                 }
+            }
+
+            /// <summary>
+            /// <para>
+            /// initializes a new <see cref="PortfolioManager"/> instance and starts file data save thread.
+            /// </para>
+            /// <para>
+            /// if a portfolio data save file exists, attempts to load portfolio data from file. 
+            /// </para>
+            /// </summary>
+            /// <seealso cref="loadDataFromSaveFile"/>
+            /// <exception cref="ManagerAlreadyInitializedException">
+            /// <seealso cref="assertManagerNotInitialized(string)"/>
+            /// </exception>
+            /// <exception cref="DatabaseCommunicationException">
+            /// <seealso cref="handleDatabaseHandlerException(string, SQLiteDatabaseHandlerException)"/>
+            /// </exception>
+            public static void Initialize()
+            {
+                assertManagerNotInitialized();
+
+                try
+                {
+                    PortfolioDatabaseManager.Initialize();
+                    instance = new PortfolioManager();
+                }
+
+                catch (SQLiteDatabaseHandlerException sqliteDatabaseHandlerException)
+                {
+                    handleDatabaseHandlerException("Initialize", sqliteDatabaseHandlerException);
+                }
+            }
+
+            internal void UndoLastAction()
+            {
+                assertUndoableLastActionAvailable();
+
+                PortfolioDatabaseManager.Instance.UndoLastAction();
             }
 
             /// <summary>
@@ -339,6 +362,24 @@ namespace CryptoBlock
                 }
 
                 return isInPortfolio;
+            }
+
+            public void AddAndBuyCoin(long coinId, BuyTransaction buyTransaction)
+            {
+                AddAndBuyCoin(coinId, new BuyTransaction[] { buyTransaction });
+            }
+
+            public void AddAndBuyCoin(long coinId, IEnumerable<BuyTransaction> buyTransactions)
+            {
+                assertManagerInitialized("AddAndBuyCoin");
+
+                PortfolioDatabaseManager.Instance.ExecuteAsOneAction(
+                    () =>
+                    {
+                        AddCoin(coinId);
+                        BuyCoin(buyTransactions);
+                    }
+                );
             }
 
             /// <summary>
@@ -480,14 +521,19 @@ namespace CryptoBlock
             }
 
             // can have a better implementation (support on database manager level for multiple buys
-            public void BuyCoin(IList<BuyTransaction> buyTransactions)
+            public void BuyCoin(IEnumerable<BuyTransaction> buyTransactions)
             {
                 assertManagerInitialized("BuyCoin");
 
-                foreach(BuyTransaction buyTransaction in buyTransactions)
-                {
-                    BuyCoin(buyTransaction);
-                }
+                PortfolioDatabaseManager.Instance.ExecuteAsOneAction(
+                    () =>
+                    {
+                        foreach (BuyTransaction buyTransaction in buyTransactions)
+                        {
+                            BuyCoin(buyTransaction);
+                        }
+                    }
+                );
             }
 
             /// <summary>
@@ -530,10 +576,15 @@ namespace CryptoBlock
             {
                 assertManagerInitialized("SellCoin");
 
-                foreach (SellTransaction sellTransaction in sellTransactions)
-                {
-                    SellCoin(sellTransaction);
-                }
+                PortfolioDatabaseManager.Instance.ExecuteAsOneAction(
+                    () =>
+                    {
+                        foreach (SellTransaction sellTransaction in sellTransactions)
+                        {
+                            SellCoin(sellTransaction);
+                        }
+                    }
+                );
             }
 
             /// <summary>
@@ -677,77 +728,13 @@ namespace CryptoBlock
                 }
             }
 
-            ///// <summary>
-            ///// initializes <see cref="PortfolioEntry"/>s in portfolio with <see cref="CoinTicker"/>s,
-            ///// if <see cref="CoinTicker"/> corresponding to <see cref="PortfolioEntry"/>'s coin ID is available
-            ///// in <see cref="CoinTickerManager"/>.
-            ///// </summary>
-            //private static void initializePortfolioEntryCoinTickers()
-            //{
-            //    Dictionary<int, PortfolioEntry>.KeyCollection portfolioEntryCoinIds
-            //        = instance.coinIdToPortfolioEntry.Keys;
-
-            //    // update portfolio entries which have corresponding coin tickers available
-            //    foreach (int coinId in portfolioEntryCoinIds)
-            //    {
-            //        if (CoinTickerManager.Instance.HasCoinTicker(coinId)) // coin ticker available
-            //        {
-            //            // get coin ticker
-            //            CoinTicker coinTicker = CoinTickerManager.Instance.GetCoinTicker(coinId);
-
-            //            // update portfolio entry corresponding to coin id
-            //            PortfolioEntry portfolioEntry = instance.coinIdToPortfolioEntry[coinId];
-            //            portfolioEntry.Update(coinTicker);
-            //        }
-            //    }
-            //}
-
-            ///// <summary>
-            ///// called when a change has been made to portfolio (e.g adding, buying or selling a coin).
-            ///// </summary>
-            //private void onPortfolioStateChanged()
-            //{
-            //    // init and start file data save task
-            //    Task fileDataSaveTask = new Task(new Action(fileDataSaveTask_Target));
-            //    fileDataSaveTask.Start();
-            //}
-
-            ///// <summary>
-            ///// <para>
-            ///// updates <see cref="PortfolioEntry"/>s with IDs contained in <paramref name="updatedCoinIdRange"/>.
-            ///// </para>
-            ///// <para>
-            ///// called when <see cref="CoinTickerManager"/> notified of 
-            ///// an <see cref="CoinTickerManager.RepositoryUpdatedEvent"/>.
-            ///// </para> 
-            ///// </summary>
-            ///// <seealso cref="updatePortfolioEntries(Range)"/>
-            ///// <param name="updatedCoinIdRange"></param>
-            //private void coinTickerManager_RepositoryUpdated(Range updatedCoinIdRange)
-            //{
-            //    updatePortfolioEntries(updatedCoinIdRange);
-            //}
-
-            ///// <summary>
-            ///// <para>
-            ///// updates <see cref="PortfolioEntry"/>s with IDs contained in <paramref name="updatedCoinIdRange"/>.
-            ///// </para>
-            ///// </summary>
-            ///// <seealso cref="PortfolioEntry.Update(CoinTicker)"/>
-            ///// <param name="updatedCoinIdRange"></param>
-            //private void updatePortfolioEntries(Range updatedCoinIdRange)
-            //{
-            //    // for each PortfolioEntry in portfolio,
-            //    // update entry if its coin id is included in the update range
-            //    foreach (int coinId in coinIdToPortfolioEntry.Keys)
-            //    {
-            //        if (updatedCoinIdRange.IsWithinRange(coinId))
-            //        {
-            //            CoinTicker coinTicker = CoinTickerManager.Instance.GetCoinTicker(coinId);
-            //            coinIdToPortfolioEntry[coinId].Update(coinTicker);
-            //        }
-            //    }
-            //}
+            private void assertUndoableLastActionAvailable()
+            {
+                if (!this.UndoableLastActionAvailable)
+                {
+                    throw new UndoableLastActionNotAvailableException();
+                }
+            }
 
             /// <summary>
             /// asserts that coin with <paramref name="coinId"/> exists in portfolio.

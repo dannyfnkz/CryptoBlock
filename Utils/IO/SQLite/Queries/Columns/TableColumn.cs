@@ -26,14 +26,9 @@ namespace CryptoBlock
                 get { return tableName; }
             }
 
-            public string FullyQualifiedName
+            public override string FullyQualifiedName
             {
                 get { return fullyQualifiedName; }
-            }
-
-            public virtual string QueryString
-            {
-                get { return FullyQualifiedName; }
             }
 
             private static string buildFullyQualifiedName(string columnName, string tableName)

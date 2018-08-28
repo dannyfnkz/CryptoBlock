@@ -18,40 +18,41 @@ namespace CryptoBlock
             // command sub-prefix
             private const string SUB_PREFIX = "clear";
 
+            private long[] removedCoinIds;
+
             internal PortfolioClearCommand()
                 : base(SUB_PREFIX, MIN_NUMBER_OF_ARGUMENTS, MAX_NUMBER_OF_ARGUMENTS)
             {
 
             }
 
-            public override void ExecuteCommand(string[] commandArguments)
+            protected override bool Execute(string[] commandArguments)
             {
-                bool commandArgumentsValid = base.CheckCommandArgumentConstraints(commandArguments);
-
-                if (!commandArgumentsValid)
-                {
-                    return;
-                }
+                bool commandExecutedSuccessfuly;
 
                 try
                 {
                     // get all coinIds in portfolio
-                    long[] coinIds = PortfolioManager.Instance.CoinIds;
+                    long[] coinIdsToBeRemoved = PortfolioManager.Instance.CoinIds;
 
-                    foreach (long coinId in coinIds)
-                    {
-                        // delete PortfolioEntry corresponding to coinId from portfolio
-                        PortfolioManager.Instance.RemoveCoin(coinId);
-                    }
+                    // delete PortfolioEntry corresponding to coinId from portfolio
+                    PortfolioManager.Instance.RemoveCoins(coinIdsToBeRemoved);
 
                     // log successful removal notice to console
                     ConsoleIOManager.Instance.LogNotice(
                         "All entries were successfully removed from portfolio.");
+
+                    commandExecutedSuccessfuly = true;
+
+                    this.removedCoinIds = coinIdsToBeRemoved;
                 }
                 catch (DatabaseCommunicationException databaseCommunicationException)
                 {
-                    HandleDatabaseCommunicationException(databaseCommunicationException);
+                    PortfolioCommandUtils.HandleDatabaseCommunicationException(databaseCommunicationException);
+                    commandExecutedSuccessfuly = false;
                 }
+
+                return commandExecutedSuccessfuly;
             }
         }
     }

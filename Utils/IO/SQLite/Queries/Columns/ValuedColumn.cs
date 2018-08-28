@@ -11,23 +11,26 @@ namespace CryptoBlock
     {
         public class ValuedColumn : Column
         {
-            private const string NULL_VALUE_STRING_REPRESENTATION = "NULL";
+            public class NamesAndValuesCountMismatchException : MismatchException
+            {
+                public NamesAndValuesCountMismatchException()
+                    : base("names.Length", "values.Length")
+                {
 
-            private readonly object value;
+                }
+            }
+
+            private readonly ColumnValue columnValue;
 
             public ValuedColumn(string name, object value)
                 : base(name)
             {
-                this.value = value;
+                this.columnValue = new ColumnValue(value);
             }
 
             public object Value
             {
-                get
-                {
-                    object value = this.value ?? NULL_VALUE_STRING_REPRESENTATION;
-                    return value;
-                }
+                get { return columnValue.Value; }
             }
 
             public static ValuedColumn Parse(XmlNode ValuedColumnXmlNode)
@@ -38,6 +41,30 @@ namespace CryptoBlock
                 ValuedColumn valuedColumn = new ValuedColumn(columnName, columnValue);
 
                 return valuedColumn;
+            }
+
+            public static ValuedColumn[] Parse(IList<string> columnNames, IList<object> columnValues)
+            {               
+                assertColumnNamesAndValuesCountMatches(columnNames, columnValues);
+
+                ValuedColumn[] parsedValuedColumns = new ValuedColumn[columnNames.Count];
+
+                for (int i = 0; i < parsedValuedColumns.Length; i++)
+                {
+                    parsedValuedColumns[i] = new ValuedColumn(columnNames[i], columnValues[i]);
+                }
+
+                return parsedValuedColumns;
+            }
+
+            private static void assertColumnNamesAndValuesCountMatches(
+                IList<string> columnNames,
+                IList<object> columnValues)
+            {
+                if(columnNames.Count != columnValues.Count)
+                {
+                    throw new NamesAndValuesCountMismatchException();
+                }
             }
         }
     }

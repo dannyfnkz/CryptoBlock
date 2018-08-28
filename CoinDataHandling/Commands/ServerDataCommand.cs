@@ -17,7 +17,7 @@ namespace CryptoBlock
         {
             private const int MIN_NUMBER_OF_ARGUMENTS = 1;
             private const int MAX_NUMBER_OF_ARGUMENTS = 20;
-
+            
             internal ServerDataCommand(string prefix)
                 : base(prefix)
             {

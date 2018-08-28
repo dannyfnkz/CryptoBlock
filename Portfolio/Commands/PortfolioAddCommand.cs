@@ -37,18 +37,14 @@ namespace CryptoBlock
             /// <summary>
             /// adds new <see cref="PortfolioEntry"/> to portfolio, corresponding to coin id
             /// specified in <paramref name="commandArguments"/>[0].
+            /// returns whether command was executed successfully.
             /// </summary>
             /// <seealso cref="CoinListingManager.GetCoinIdByNameOrSymbol(string)"/>
             /// <seealso cref="PortfolioManager.AddCoin(int)"/>
             /// <param name="commandArguments"></param>
-            public override void ExecuteCommand(string[] commandArguments)
+            protected override bool Execute(string[] commandArguments)
             {
-                bool commandArgumentsValid = base.CheckCommandArgumentConstraints(commandArguments);
-
-                if (!commandArgumentsValid)
-                {
-                    return;
-                }
+                bool commandExecutedSuccessfuly;
 
                 // command arguments should be coin names or symbols
                 string[] coinNamesOrSymbols = commandArguments;
@@ -65,15 +61,19 @@ namespace CryptoBlock
                     // log success notice
                     string coinsPortfolioAddSuccessNotice = buildPortfolioAddSuccessNotice(coinIds);
                     ConsoleIOManager.Instance.LogNotice(coinsPortfolioAddSuccessNotice);
+
+                    commandExecutedSuccessfuly = true;
                 }
                 catch (CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                 {
                     // coin with specified name / symbol not found in listing repository
                     ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
+                    commandExecutedSuccessfuly = false;
                 }
                 catch (DatabaseCommunicationException databaseCommunicationException)
                 {
-                    HandleDatabaseCommunicationException(databaseCommunicationException);
+                   PortfolioCommandUtils.HandleDatabaseCommunicationException(databaseCommunicationException);
+                    commandExecutedSuccessfuly = false;
                 }
                 catch (CoinAlreadyInPortfolioException coinAlreadyInPortfolioException)
                 {
@@ -85,7 +85,11 @@ namespace CryptoBlock
                         false,
                         "There's already an entry in portfolio for '{0}'.",
                         coinName);
+
+                    commandExecutedSuccessfuly = false;
                 }
+
+                return commandExecutedSuccessfuly;
             }
 
             private static string buildPortfolioAddSuccessNotice(long[] coinIds)

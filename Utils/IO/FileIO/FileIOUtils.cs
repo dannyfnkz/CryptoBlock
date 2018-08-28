@@ -45,7 +45,7 @@ namespace CryptoBlock
             /// </exception>
             public static void WriteTextToFile(string filePath, string content, string backupFilePath = null)
             {
-                if (File.Exists(filePath) && backupFilePath != null)
+                if (FileExists(filePath) && backupFilePath != null)
                 {
                     // safely replace requested file content by first writing new content to a new temp file,
                     // then deleting old file, and finally renaming new temp file path to requested file path
@@ -99,6 +99,11 @@ namespace CryptoBlock
                         throw new FileWriteException(filePath, exception);
                     }
                 }
+            }
+
+            public static bool FileExists(string filePath)
+            {
+                return File.Exists(filePath);
             }
 
             /// <summary>

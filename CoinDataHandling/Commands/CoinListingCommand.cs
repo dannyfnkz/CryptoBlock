@@ -30,18 +30,14 @@ namespace CryptoBlock
             /// <summary>
             /// prints <see cref="CoinListing"/> data corresponding to coin name / symbols
             /// contained in <paramref name="commandArguments"/> in tabular format.
+            /// returns whether command was executed successfully.
             /// </summary>
             /// <seealso cref="CoinListingManager.FetchCoinIds(string[])"/>
             /// <seealso cref="CoinListingManager.GetCoinListingTableDisplayString(int[])"/>
             /// <param name="commandArguments"></param>
-            public override void ExecuteCommand(string[] commandArguments)
+            protected override bool Execute(string[] commandArguments)
             {
-                bool commandArgumentsValid = base.CheckCommandArgumentConstraints(commandArguments);
-
-                if (!commandArgumentsValid)
-                {
-                    return;
-                }
+                bool commandExecutedSuccessfuly;
 
                 try
                 {
@@ -53,11 +49,16 @@ namespace CryptoBlock
                     string coinListingTableString =
                         CoinListingManager.Instance.GetCoinListingTableDisplayString(coinIds);
                     ConsoleIOManager.Instance.PrintData(coinListingTableString);
+
+                    commandExecutedSuccessfuly = true;
                 }
                 catch (CoinListingManager.CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                 {
                     ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
+                    commandExecutedSuccessfuly = false;
                 }
+
+                return commandExecutedSuccessfuly;
             }
         }
     }

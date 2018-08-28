@@ -46,11 +46,13 @@
     <Compile Include="Commands\PortfolioAddCommand.cs" />
     <Compile Include="Commands\PortfolioClearCommand.cs" />
     <Compile Include="Commands\PortfolioCommand.cs" />
+    <Compile Include="Commands\PortfolioCommandUtils.cs" />
     <Compile Include="Commands\PortfolioRemoveCommand.cs" />
     <Compile Include="Commands\TransactionCommands\PortfolioBuyCommand.cs" />
     <Compile Include="Commands\TransactionCommands\PortfolioSellCommand.cs" />
     <Compile Include="Commands\TransactionCommands\PortfolioTransactionCommand.cs" />
     <Compile Include="Commands\PortfolioViewCommand.cs" />
+    <Compile Include="Commands\UndoLastActionCommand.cs" />
     <Compile Include="PortfolioCommandExecutor.cs" />
     <Compile Include="PortfolioDatabaseManager.cs" />
     <Compile Include="PortfolioEntry.cs" />
@@ -95,15 +97,14 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="DatabaseTableSchema.txt" />
-    <EmbeddedResource Include="TransactionTypeTableData.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
+    <EmbeddedResource Include="CoinTransactionTypeTableData.xml" />
     <EmbeddedResource Include="DatabaseSchema.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>XCOPY /s /d /y $(ProjectDir)*.xml $(SolutionDir)$(SolutionName)\$(OutDir)</PostBuildEvent>
+  </PropertyGroup>
 </Project>

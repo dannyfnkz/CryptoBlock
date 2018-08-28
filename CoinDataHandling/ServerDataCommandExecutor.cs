@@ -19,8 +19,9 @@ namespace CryptoBlock
             public ServerDataCommandExecutor()
             {
                 // add associations between commands and their prefixes
-                AddCommandPrefixToCommandPair(new CoinTickerCommmand());
-                AddCommandPrefixToCommandPair(new CoinListingCommand());
+                AddCommandPrefixToCommandPair(
+                    new CoinTickerCommmand(),
+                    new CoinListingCommand());
             }
 
             /// <summary>

@@ -13,7 +13,7 @@ namespace CryptoBlock
         /// <summary>
         /// represents an executable status command.
         /// </summary>
-        internal abstract class StatusCommand : Command
+        internal abstract class StatusCommand : SystemCommand
         {
             private const int MIN_NUMBER_OF_ARGUMENTS = 0;
             private const int MAX_NUMBER_OF_ARGUMENTS = 0;
@@ -21,13 +21,12 @@ namespace CryptoBlock
             private const string PREFIX = "status";
 
             internal StatusCommand(string inheritingCommandPrefix)
-                : base(formatPrefix(inheritingCommandPrefix))
+                : base(
+                      formatPrefix(inheritingCommandPrefix),
+                      MIN_NUMBER_OF_ARGUMENTS,
+                      MAX_NUMBER_OF_ARGUMENTS)
             {
-                base.commandArgumentConstraintList.Add(
-                    new NumberOfArgumentsCommandArgumentConstraint(
-                        MIN_NUMBER_OF_ARGUMENTS,
-                        MAX_NUMBER_OF_ARGUMENTS)
-                    );
+
             }
 
             /// <summary>

@@ -24,6 +24,28 @@ namespace CryptoBlock
         /// </summary>
         internal class PortfolioSellCommand : PortfolioTransactionCommand<SellTransaction>
         {
+            private class InsufficientFundsForSellTransactionsException : Exception
+            {
+                private readonly long coinId;
+                private readonly double coinHoldings;
+
+                internal InsufficientFundsForSellTransactionsException(long coinId, double coinHoldings)
+                {
+                    this.coinId = coinId;
+                    this.coinHoldings = coinHoldings;
+                }
+
+                internal long CoinId
+                {
+                    get { return coinId; }
+                }
+
+                internal double CoinHoldings
+                {
+                    get { return coinHoldings; }
+                }
+            }
+
             internal PortfolioSellCommand()
                 : base()
             {
@@ -34,19 +56,15 @@ namespace CryptoBlock
             /// sells coin corresponding to name / symbol specified in <paramref name="commandArguments"/>[0],
             /// where sell amount is specified in <paramref name="commandArguments"/>[1]
             /// and sell price per coin is specified in <paramref name="commandArguments"/>[2].
+            /// returns whether command was executed successfully.
             /// </summary>
             /// <seealso cref="CoinListingManager.GetCoinIdByNameOrSymbol(string)"/>
             /// <seealso cref="PortfolioManager.GetCoinHoldings(int)"/>
             /// <seealso cref="PortfolioManager.SellCoin(int, double, double, long)"/>
             /// <param name="commandArguments"></param>
-            public override void ExecuteCommand(string[] commandArguments)
+            protected override bool Execute(string[] commandArguments)
             {
-                bool commandArgumentsValid = base.CheckCommandArgumentConstraints(commandArguments);
-
-                if (!commandArgumentsValid)
-                {
-                    return;
-                }
+                bool commandExecutedSuccessfuly;
 
                 try
                 {
@@ -71,64 +89,88 @@ namespace CryptoBlock
                         unixTimestamp,
                         out bool sellTransactionArrayParseSuccess);
 
-                    if (!sellTransactionArrayParseSuccess)
+                    if (sellTransactionArrayParseSuccess)
                     {
-                        return;
-                    }
 
-                    // check if portfolio has an entry with specified id
-                    if (!PortfolioManager.Instance.IsInPortfolio(coinId))
+                        // check if there are enough funds for sell transactions
+                        PortfolioEntry portfolioEntry = PortfolioManager.Instance.GetPortfolioEntry(coinId);
+                        bool sufficientFundsForSellTransactions = sufficientFundsForTransactions(
+                            portfolioEntry, sellTransactions);
+
+                        if (!sufficientFundsForSellTransactions) // not enough funds to perform sales
+                        {
+                            throw new InsufficientFundsForSellTransactionsException(
+                                coinId,
+                                portfolioEntry.Holdings);
+                        }
+
+                        // execute sell transactions
+                        PortfolioManager.Instance.SellCoin(sellTransactions);
+
+                        // sale(s) performed successfully
+                        string successfulSaleNoticeMessage = sellTransactions.Length == 1
+                            ? string.Format(
+                                "Successfully sold {0} {1} for {2}$ each.",
+                                sellTransactions[0].Amount,
+                                coinName,
+                                sellTransactions[0].PricePerCoin)
+                            : string.Format(
+                                "{0} Specified sales made successfully.",
+                                sellTransactions.Length);
+
+                        ConsoleIOManager.Instance.LogNotice(successfulSaleNoticeMessage);
+
+                        commandExecutedSuccessfuly = true;
+                    }
+                    else // !sellTransactionArrayParseSuccess
                     {
-                        // portfolio has no entry with specified id
-                        ConsoleIOManager.Instance.LogErrorFormat(
-                            false,
-                            "There's no entry in portfolio manager for '{0}'.",
-                            coinName);
-
-                        return;
+                        commandExecutedSuccessfuly = false;
                     }
-
-                    // check if there are enough funds for sell transactions
-                    PortfolioEntry portfolioEntry = PortfolioManager.Instance.GetPortfolioEntry(coinId);
-                    bool sufficientFundsForSellTransactions = sufficientFundsForTransactions(
-                        portfolioEntry, sellTransactions);
-
-                    if (!sufficientFundsForSellTransactions) // not enough funds to perform sales
-                    {
-                        ConsoleIOManager.Instance.LogErrorFormat(
-                            false,
-                            "Not enough funds for requested sell operation(s). {0} holdings: {1} {2}.",
-                            coinName,
-                            portfolioEntry.Holdings,
-                            coinSymbol);
-                        return;
-                    }
-
-                    // execute sell transactions
-                    PortfolioManager.Instance.SellCoin(sellTransactions);
-
-                    // sale(s) performed successfully
-                    string successfulSaleNoticeMessage = sellTransactions.Length == 1
-                        ? string.Format(
-                            "Successfully sold {0} {1} for {2}$ each.",
-                            sellTransactions[0].Amount,
-                            coinName,
-                            sellTransactions[0].PricePerCoin)
-                        : string.Format(
-                            "{0} Specified sales made successfully.",
-                            sellTransactions.Length);
-
-                    ConsoleIOManager.Instance.LogNotice(successfulSaleNoticeMessage);
                 }
                 catch (CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                 {
                     // coin with specified name / symbol not found in listing repository
                     ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
+
+                    commandExecutedSuccessfuly = false;
+                }
+                catch(CoinNotInPortfolioException coinNotInPortfolioException)
+                {
+                    // portfolio has no entry with specified id
+                    string coinName = CoinListingManager.Instance.GetCoinNameById(
+                        coinNotInPortfolioException.CoinId);
+
+                    ConsoleIOManager.Instance.LogErrorFormat(
+                        false,
+                        "There's no entry in portfolio manager for '{0}'.",
+                        coinName);
+
+                    commandExecutedSuccessfuly = false;
+                }
+                catch(
+                InsufficientFundsForSellTransactionsException insufficientFundsForSellTransactionsException)
+                {
+                    string coinName = CoinListingManager.Instance.GetCoinNameById(
+                        insufficientFundsForSellTransactionsException.CoinId);
+                    string coinSymbol = CoinListingManager.Instance.GetCoinSymbolById(
+                        insufficientFundsForSellTransactionsException.CoinId);
+
+                    ConsoleIOManager.Instance.LogErrorFormat(
+                        false,
+                        "Not enough funds for requested sell operation(s). {0} holdings: {1} {2}.",
+                        coinName,
+                        insufficientFundsForSellTransactionsException.CoinHoldings,
+                        coinSymbol);
+
+                    commandExecutedSuccessfuly = false;
                 }
                 catch (DatabaseCommunicationException databaseCommunicationException)
                 {
-                    base.HandleDatabaseCommunicationException(databaseCommunicationException);
+                    PortfolioCommandUtils.HandleDatabaseCommunicationException(databaseCommunicationException);
+                    commandExecutedSuccessfuly = false;
                 }
+
+                return commandExecutedSuccessfuly;
             }
 
             private bool sufficientFundsForTransactions(

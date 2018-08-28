@@ -35,19 +35,15 @@ namespace CryptoBlock
             /// buys coin corresponding to name / symbol specified in <paramref name="commandArguments"/>[0],
             /// where buy amount is specified in <paramref name="commandArguments"/>[1]
             /// and buy price per coin is specified in <paramref name="commandArguments"/>[2].
+            /// returns whether command was executed successfully.
             /// </summary>
             /// <seealso cref="CoinListingManager.GetCoinIdByNameOrSymbol(string)"/>
             /// <seealso cref="ConsoleIOManager.ShowConfirmationDialog(string)"/>
             /// <seealso cref="PortfolioManager.BuyCoin(int, double, double, long)"/>
             /// <param name="commandArguments"></param>
-            public override void ExecuteCommand(string[] commandArguments)
+            protected override bool Execute(string[] commandArguments)
             {
-                bool commandArgumentsValid = base.CheckCommandArgumentConstraints(commandArguments);
-
-                if (!commandArgumentsValid)
-                {
-                    return;
-                }
+                bool commandExecutedSuccessfuly;
 
                 try
                 {
@@ -68,69 +64,99 @@ namespace CryptoBlock
                         commandArguments,
                         coinId,
                         unixTimestamp,
-                        out bool buyOperationsParseSuccess);
+                        out bool buyTransactionsParseSuccess);
 
-                    if (!buyOperationsParseSuccess)
+                    bool createNewPortfolioEntry = false;
+
+                    if (buyTransactionsParseSuccess)
                     {
-                        return;
-                    }
+                        bool executeBuyTransactions = false;
 
-                    // check if portfolio has an entry with specified id
-                    if (!PortfolioManager.Instance.IsInPortfolio(coinId))
-                    {
-                        // portfolio has no entry with specified id
-                        ConsoleIOManager.Instance.LogErrorFormat(
-                            false,
-                            "There's no entry in portfolio manager for '{0}'.",
-                            coinName);
-
-                        // ask user if they want to create a new portfolio entry
-                        string promptMessage = "Create new entry?";
-                        bool createNewPortfolioEntry =
-                            ConsoleIOManager.Instance.ShowConfirmationDialog(promptMessage);
-
-                        if (createNewPortfolioEntry) // user chose to create a new portfolio entry
+                        // check if portfolio has an entry with specified id
+                        if (!PortfolioManager.Instance.IsInPortfolio(coinId))
                         {
-                            // create a new entry before proceeding to execute buy command 
-                            PortfolioManager.Instance.AddCoin(coinId);
-
-                            ConsoleIOManager.Instance.LogNoticeFormat(
+                            // portfolio has no entry with specified id
+                            ConsoleIOManager.Instance.LogErrorFormat(
                                 false,
-                                "'{0}' successfully added to portfolio.",
+                                "There's no entry in portfolio manager for '{0}'.",
                                 coinName);
+
+                            // ask user if they want to create a new portfolio entry
+                            string promptMessage = "Create new entry?";
+                            createNewPortfolioEntry =
+                                ConsoleIOManager.Instance.ShowConfirmationDialog(promptMessage);
+
+                            if (createNewPortfolioEntry) // user chose to create a new portfolio entry
+                            {
+                                executeBuyTransactions = true;
+                            }
+                            else // user chose not to create a new portfolio entry
+                            {
+                                ConsoleIOManager.Instance.LogNotice("Purchase cancelled.");
+                                executeBuyTransactions = false;
+                            }
                         }
-                        else // user chose not to create a new portfolio entry
+                        else // portfolio already has an entry with specified id
                         {
-                            ConsoleIOManager.Instance.LogNotice("Purchase cancelled.");
-                            return;
+                            executeBuyTransactions = true;
+                        }
+
+                        if(executeBuyTransactions)
+                        {
+                            if(createNewPortfolioEntry) // perform coin (add + buy) action
+                            {
+                                PortfolioManager.Instance.AddAndBuyCoin(coinId, buyTransactions);
+
+                                // log coin add notice
+                                ConsoleIOManager.Instance.LogNoticeFormat(
+                                    false,
+                                    "'{0}' successfully added to portfolio.",
+                                    coinName);
+                            }
+                            else // perform coin buy action
+                            {
+                                PortfolioManager.Instance.BuyCoin(buyTransactions);
+                            }
+
+                            // purchase performed successfully
+                            string successfulPurchaseNoticeMessage = buyTransactions.Length == 1
+                                ? string.Format(
+                                    "Successfully purchased {0} {1} for {2}$ each.",
+                                    buyTransactions[0].Amount,
+                                    coinName,
+                                    buyTransactions[0].PricePerCoin)
+                                : string.Format(
+                                    "{0} Specified purchases made successfully.",
+                                    buyTransactions.Length);
+
+                            ConsoleIOManager.Instance.LogNotice(successfulPurchaseNoticeMessage);
+
+                            commandExecutedSuccessfuly = true;
+                        }
+                        else // !executeBuyTransactions
+                        {
+                            commandExecutedSuccessfuly = false;
                         }
                     }
-
-                    // execute buy command
-                    PortfolioManager.Instance.BuyCoin(buyTransactions);
-
-                    // purchase performed successfully
-                    string successfulPurchaseNoticeMessage = buyTransactions.Length == 1
-                        ? string.Format(
-                            "Successfully purchased {0} {1} for {2}$ each.",
-                            buyTransactions[0].Amount,
-                            coinName,
-                            buyTransactions[0].PricePerCoin)
-                        : string.Format(
-                            "{0} Specified purchases made successfully.",
-                            buyTransactions.Length);
-
-                    ConsoleIOManager.Instance.LogNotice(successfulPurchaseNoticeMessage);
+                    else // buy transaction parse not successful
+                    {
+                        commandExecutedSuccessfuly = false;
+                    }
                 }
                 catch (CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                 {
                     // coin with specified name / symbol not found in listing repository
                     ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
+
+                    commandExecutedSuccessfuly = false;
                 }
                 catch (DatabaseCommunicationException databaseCommunicationException)
                 {
-                    base.HandleDatabaseCommunicationException(databaseCommunicationException);
+                    PortfolioCommandUtils.HandleDatabaseCommunicationException(databaseCommunicationException);
+                    commandExecutedSuccessfuly = false;
                 }
+
+                return commandExecutedSuccessfuly;
             }
         }
     }

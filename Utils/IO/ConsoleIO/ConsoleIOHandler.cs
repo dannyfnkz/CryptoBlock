@@ -1,4 +1,4 @@
-﻿using CryptoBlock.Utils.CollectionUtils;
+﻿using CryptoBlock.Utils.Collections;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;

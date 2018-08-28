@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CryptoBlock.Utils.Strings;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,6 +20,8 @@ namespace CryptoBlock
 
             private readonly eFunctionType functionType;
 
+            private readonly string fullyQualifiedName;
+
             public FunctionTableColumn(
                 eFunctionType functionType,
                 string name = null, 
@@ -26,6 +29,8 @@ namespace CryptoBlock
                 : base(name, tableName)
             {
                 this.functionType = functionType;
+
+                this.fullyQualifiedName = buildFullyQualifiedName();
             }
 
             public eFunctionType FunctionType
@@ -33,18 +38,22 @@ namespace CryptoBlock
                 get { return functionType; }
             }
 
-            public override string QueryString
+            public override string FullyQualifiedName
             {
-                get
-                {
-                    return string.Format(
-                    "{0}({1})",
-                    FunctionTypeToString(FunctionType),
-                    FullyQualifiedName);
-                }
+                get { return fullyQualifiedName; }
             }
 
-            public string FunctionTypeToString(eFunctionType functionType)
+            private string buildFullyQualifiedName()
+            {
+                string fullyQualifiedName = string.Format(
+                    "{0}({1})",
+                    FunctionTypeToString(FunctionType),
+                    base.FullyQualifiedName);
+
+                return fullyQualifiedName;
+            }
+
+            public static string FunctionTypeToString(eFunctionType functionType)
             {
                 string functiontypeString = functionType.ToString();
 

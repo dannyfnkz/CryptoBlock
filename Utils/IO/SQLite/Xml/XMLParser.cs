@@ -1,5 +1,8 @@
 ﻿using CryptoBlock.Utils.IO.SQLite.Queries;
+using CryptoBlock.Utils.IO.SQLite.Queries.DataQueries;
+using CryptoBlock.Utils.IO.SQLite.Queries.DataQueries.Write;
 using CryptoBlock.Utils.IO.SQLite.Schema;
+using CryptoBlock.Utils.IO.SQLite.Schemas;
 using System;
 using System.Collections.Generic;
 using System.Linq;

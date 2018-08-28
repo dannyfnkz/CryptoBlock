@@ -1,7 +1,7 @@
 ﻿using CryptoBlock.CMCAPI;
 using CryptoBlock.TableDisplay;
 using CryptoBlock.Utils;
-using CryptoBlock.Utils.CollectionUtils;
+using CryptoBlock.Utils.Collections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -74,8 +74,8 @@ namespace CryptoBlock
                 };
 
             // array of Properties associated with CoinTicker
-            private static readonly Property[] coinTickerProperties = 
-                displayPropertyToProperty.Values.ToArray();
+            private static readonly Property[] coinTickerProperties =
+                Enumerable.ToArray(displayPropertyToProperty.Values);
 
             // eDisplayProperty to PropertyColumn mapping
             private static readonly Dictionary<eDisplayProperty, PropertyColumn>

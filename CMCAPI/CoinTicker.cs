@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using CryptoBlock.Utils;
+using CryptoBlock.Utils.Strings;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using static CryptoBlock.Utils.JsonUtils;
@@ -304,11 +305,6 @@ namespace CryptoBlock
                         throw exception;
                     }
                 }
-            }
-
-            public override string ToString()
-            {
-                return StringUtils.ObjectToString(this);
             }
 
             /// <summary>

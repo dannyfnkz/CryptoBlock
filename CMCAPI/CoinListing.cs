@@ -142,11 +142,6 @@ namespace CryptoBlock
                     throw new JsonPropertyParseException("metadata.num_cryptocurrencies");
                 }
             }
-
-            public override string ToString()
-            {
-                return StringUtils.ObjectToString(this);
-            }
         }
     }
 }

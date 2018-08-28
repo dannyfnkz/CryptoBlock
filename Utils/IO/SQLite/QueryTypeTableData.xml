@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<table name="QueryType">
+  <row>
+    <column name="name">
+      <value>SELECT</value>
+    </column>
+  </row>
+  <row>
+    <column name="name">
+      <value>INSERT</value>
+    </column>
+  </row>
+  <row>
+    <column name="name">
+      <value>UPDATE</value>
+    </column>
+  </row>
+  <row>
+    <column name="name">
+      <value>DELETE</value>
+    </column>
+  </row>
+</table>

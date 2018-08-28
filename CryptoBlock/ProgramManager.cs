@@ -15,7 +15,44 @@ namespace CryptoBlock
         internal void StartProgram()
         {
             ConsoleIOManager.Instance.RegisterInput = false;
+            initializeManagers();
+            ConsoleIOManager.Instance.RegisterInput = true;
 
+            ListenForUserCommands();
+        }
+
+        internal void ListenForUserCommands()
+        {
+            ConsoleIOManager.Instance.EndOfInputKeyRegistered += consoleIOManager_EndOfInputKeyRegistered;
+
+            while (true)
+            {
+                // wait till user hits return key
+                userHitReturnKeyWaitHandle.WaitOne();
+               
+                // user hit return key
+
+                // read and parse user command
+                string userCommand = ConsoleIOManager.Instance.FlushInputBuffer();
+                CommandParsingManager.Instance.ParseCommand(userCommand);
+
+                // reset return key wait handle
+                userHitReturnKeyWaitHandle.Reset();
+            }
+        }
+
+        private void consoleIOManager_EndOfInputKeyRegistered(string inputLine)
+        {
+            userHitReturnKeyWaitHandle.Set();
+        }
+
+        private void coinDataManager_RepositoryInitialized(CoinTickerManager coinDataManager)
+        {
+            ConsoleIOManager.Instance.LogNotice("Coin ticker repository initialized successfully.");
+        }
+
+        private void initializeManagers()
+        {
             initializeCoinListingManager();
 
             try
@@ -36,39 +73,8 @@ namespace CryptoBlock
             }
 
             initializeCoinTickerManager(CoinListingManager.Instance.RepositoryCount);
-            
-            ConsoleIOManager.Instance.RegisterInput = true;
-            ListenForUserCommands();
-        }
 
-        internal void ListenForUserCommands()
-        {
-            ConsoleIOManager.Instance.EndOfInputKeyRegistered += consoleIOManager_EndOfInputKeyRegistered;
-
-            while (true)
-            {
-                // wait till user hits return key
-                userHitReturnKeyWaitHandle.WaitOne();
-               
-                // user hit return key
-
-                // read and parse user command
-                string userCommand = ConsoleIOManager.Instance.FlushInputBuffer();
-                CommandParser.ParseCommand(userCommand);
-
-                // reset return key wait handle
-                userHitReturnKeyWaitHandle.Reset();
-            }
-        }
-
-        private void consoleIOManager_EndOfInputKeyRegistered(string inputLine)
-        {
-            userHitReturnKeyWaitHandle.Set();
-        }
-
-        private void coinDataManager_RepositoryInitialized(CoinTickerManager coinDataManager)
-        {
-            ConsoleIOManager.Instance.LogNotice("Coin ticker repository initialized successfully.");
+            initializeCommandParsingManager();
         }
 
         private void initializeCoinListingManager()
@@ -109,6 +115,11 @@ namespace CryptoBlock
         private void initializePortfolioManager()
         {
             PortfolioManager.Initialize();
+        }
+
+        private void initializeCommandParsingManager()
+        {
+            CommandParsingManager.Initialize();
         }
     }
 }

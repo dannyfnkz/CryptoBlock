@@ -1,7 +1,7 @@
 ﻿using CryptoBlock.CMCAPI;
 using CryptoBlock.ServerDataManagement;
 using CryptoBlock.TableDisplay;
-using CryptoBlock.Utils.CollectionUtils;
+using CryptoBlock.Utils.Collections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -206,7 +206,7 @@ namespace CryptoBlock
 
             // array of PortfolioEntry properties, each representing a column in the table
             private static readonly Property[] portfolioEntryProperties =
-                displayPropertyToProperty.Values.ToArray();
+                Enumerable.ToArray(displayPropertyToProperty.Values);
 
             // eDisplayProperty to PropertyColumn mapping
             private static readonly Dictionary<eDisplayProperty, PropertyColumn>

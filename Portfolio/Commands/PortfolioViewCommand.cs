@@ -3,6 +3,7 @@ using CryptoBlock.PortfolioManagement;
 using CryptoBlock.PortfolioManagement.Commands;
 using CryptoBlock.ServerDataManagement;
 using CryptoBlock.Utils;
+using CryptoBlock.Utils.Strings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,18 +42,14 @@ namespace CryptoBlock
             /// prints portfolio data corresponding to coin name / symbols
             /// contained in <paramref name="commandArguments"/> (or all coins in portfolio if
             /// <paramref name="commandArguments"/>.Length == 0) in tabular format.
+            /// returns whether command was executed successfully.
             /// </summary>
             /// <seealso cref="CoinListingManager.FetchCoinIds(string[])"/>
             /// <seealso cref="PortfolioManager.GetPortfolioEntryDisplayTableString(int[])"/>
             /// <param name="commandArguments"></param>
-            public override void ExecuteCommand(string[] commandArguments)
+            protected override bool Execute(string[] commandArguments)
             {
-                bool commandArgumentsValid = base.CheckCommandArgumentConstraints(commandArguments);
-
-                if (!commandArgumentsValid)
-                {
-                    return;
-                }
+                bool commandExecutedSuccessfuly;
 
                 try
                 {
@@ -112,15 +109,21 @@ namespace CryptoBlock
                             + ".";
                         ConsoleIOManager.Instance.LogNotice(noticeMessage);
                     }
+
+                    commandExecutedSuccessfuly = true;
                 }
-                catch (CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
+                catch (CoinListingManager.CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                 {
                     ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
+                    commandExecutedSuccessfuly = false;
                 }
                 catch (DatabaseCommunicationException databaseCommunicationException)
                 {
-                    HandleDatabaseCommunicationException(databaseCommunicationException);
+                    PortfolioCommandUtils.HandleDatabaseCommunicationException(databaseCommunicationException);
+                    commandExecutedSuccessfuly = false;
                 }
+
+                return commandExecutedSuccessfuly;
             }
         }
     }

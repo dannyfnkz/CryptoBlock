@@ -245,14 +245,18 @@ namespace CryptoBlock
             /// </exception>
             private void addTransaction(Transaction transaction)
             {
-                // add to transaction history stored in database
-                PortfolioDatabaseManager.Instance.AddTransaction(transaction, this);
+                PortfolioDatabaseManager.Instance.ExecuteAsOneAction(() =>
+                {
+                    // add to transaction history stored in database
+                    PortfolioDatabaseManager.Instance.AddTransaction(transaction, this);
 
-                // handel transaction 
-                handleTransaction(transaction);
+                    // handel transaction 
+                    handleTransaction(transaction);
 
-                // update PortfolioEntry row in database
-                PortfolioDatabaseManager.Instance.UpdatePortfolioEntry(this);
+                    // update PortfolioEntry row in database
+                    PortfolioDatabaseManager.Instance.UpdatePortfolioEntry(this);
+                }
+                );
             }
 
             /// <summary>

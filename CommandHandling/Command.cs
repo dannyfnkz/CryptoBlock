@@ -31,6 +31,8 @@ namespace CryptoBlock
             //}
 
             private readonly string prefix;
+            
+            private bool executed;
 
             protected readonly List<ICommandArgumentConstraint> commandArgumentConstraintList
                 = new List<ICommandArgumentConstraint>();
@@ -50,6 +52,12 @@ namespace CryptoBlock
                 get { return prefix; }
             }
 
+            public bool Executed
+            {
+                get { return executed; }
+                protected set { executed = value; }
+            }
+
             ///// <summary>
             ///// minimum number of arguments allowed for command.
             ///// </summary>
@@ -66,13 +74,29 @@ namespace CryptoBlock
             //    get { return maxNumberOfArguments; }
             //}
 
+            public void Handle(string[] commandArguments)
+            {
+                bool commandArgumentsValid = checkCommandArgumentConstraints(commandArguments);
+
+                if(commandArgumentsValid)
+                {
+                    this.executed = Execute(commandArguments);
+                }
+            }
+
             /// <summary>
             /// executes command with given <paramref name="commandArguments"/>.
+            /// returns whether command was executed successfully.
             /// </summary>
             /// <param name="commandArguments"></param>
-            public abstract void ExecuteCommand(string[] commandArguments);
+            /// <returns>true if command was executed successfully,,
+            /// else false
+            /// </returns>
+            protected abstract bool Execute(string[] commandArguments);
 
-            protected bool CheckCommandArgumentConstraints(string[] commandArgumentArray)
+    //        public abstract void UndoCommand();
+
+            private bool checkCommandArgumentConstraints(string[] commandArgumentArray)
             {
                 foreach(ICommandArgumentConstraint commandArgumentConstrint in this.commandArgumentConstraintList)
                 {

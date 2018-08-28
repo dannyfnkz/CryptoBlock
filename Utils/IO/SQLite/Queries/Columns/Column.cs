@@ -8,7 +8,7 @@ namespace CryptoBlock
 {
     namespace Utils.IO.SQLite.Queries.Columns
     {
-        public class Column
+        public class Column : IExpression
         {
             private readonly string name;
 
@@ -17,10 +17,24 @@ namespace CryptoBlock
                 this.name = name;
             }
 
+            string IExpression.ExpressionString
+            {
+                get
+                {
+                    return FullyQualifiedName;
+                }
+            }
+
             public string Name
             {
                 get { return name; }
             }
+
+            public virtual string FullyQualifiedName
+            {
+                get { return Name; }
+            }
+
         }
     }
 }

@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Utils.IO.SQLite.Queries;
 
 namespace CryptoBlock
 {
@@ -14,7 +13,7 @@ namespace CryptoBlock
         {
             public enum eComparisonType
             {
-                Equal, NotEqual, LargerEqual, SmallerEqual, Larger, Smaller, In
+                Equal, NotEqual, LargerEqual, SmallerEqual, Larger, Smaller, In, Like
             }
 
             private static readonly Dictionary<eComparisonType, string> eComparisonTypeToString =
@@ -26,7 +25,8 @@ namespace CryptoBlock
                     { eComparisonType.SmallerEqual, "<=" },
                     { eComparisonType.Larger, ">" },
                     { eComparisonType.Smaller, "<" },
-                    { eComparisonType.In, "in" }
+                    { eComparisonType.In, "IN" },
+                    { eComparisonType.Like, "LIKE" }
             };
 
             private readonly ValuedTableColumn valuedTableColumn;

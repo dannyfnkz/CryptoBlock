@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CryptoBlock.Utils.Strings;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -171,14 +172,17 @@ namespace CryptoBlock
             {
 
                 // append exception message lines with indentation
-                String[] exceptionMessageLines = StringUtils.Split(exception.Message, Environment.NewLine);
+                String[] exceptionMessageLines = exception.Message.Split(Environment.NewLine);
 
                 for(int i = 0; i < exceptionMessageLines.Length; i++)
                 {
                     string exceptionMessageLine = exceptionMessageLines[i];
 
                     // add indentation corresponding to exception inner level
-                    StringUtils.Append(exceptionMessageStringBuilder, StringUtils.TAB_STRING, exceptionInnerLevel);
+                    StringUtils.Append(
+                        exceptionMessageStringBuilder, 
+                        StringUtils.TabString,
+                        exceptionInnerLevel);
                     exceptionMessageStringBuilder.Append(exceptionMessageLine);
 
                     if(i < exceptionMessageLines.Length - 1)

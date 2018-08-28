@@ -10,17 +10,17 @@ namespace CryptoBlock
     {
         public class ValuedTableColumn : TableColumn
         {
-            private readonly object value;
+            private readonly ColumnValue columnValue;
 
             public ValuedTableColumn(string name, string tableName, object value)
                 : base(name, tableName)
             {
-                this.value = value;
+                this.columnValue = new ColumnValue(value);
             }
 
             public object Value
             {
-                get { return value; }
+                get { return columnValue.Value; }
             }
         }
     }

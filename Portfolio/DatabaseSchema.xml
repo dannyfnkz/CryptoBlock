@@ -14,7 +14,7 @@
     <column name="averageBuyPrice" type="REAL">
     </column>
   </table>
-  <table name="PortfolioEntryTransaction">
+  <table name="PortfolioEntryCoinTransaction">
     <primary_key column_index="0" />
     <column name="_id" type="INTEGER">
     </column>
@@ -27,6 +27,7 @@
     </column>
   </table>
   <table name="CoinTransactionType">
+    <not_auditable />
     <primary_key column_index="0" />
     <column name="_id" type="INTEGER">
     </column>

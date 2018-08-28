@@ -30,18 +30,14 @@ namespace CryptoBlock
             }
 
             /// <summary>
-            /// prints internet connectivity status
+            /// prints internet connectivity status.
+            /// returns whether command was executed successfully.
             /// </summary>
             /// <seealso cref="InternetUtils.IsConnectedToInternet"/>
             /// <param name="commandArguments"></param>
-            public override void ExecuteCommand(string[] commandArguments)
+            protected override bool Execute(string[] commandArguments)
             {
-                bool commandArgumentsValid = base.CheckCommandArgumentConstraints(commandArguments);
-
-                if (!commandArgumentsValid)
-                {
-                    return;
-                }
+                bool commandExecutedSuccessfuly;
 
                 ConsoleIOManager.Instance.LogNotice("Checking internet connectivity ..");
 
@@ -52,6 +48,10 @@ namespace CryptoBlock
                     : "No internet connection.";
 
                 ConsoleIOManager.Instance.LogNotice(notice);
+
+                commandExecutedSuccessfuly = true;
+
+                return commandExecutedSuccessfuly;
             }
         }
     }

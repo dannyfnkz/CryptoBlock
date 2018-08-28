@@ -3,7 +3,7 @@ using CryptoBlock.IOManagement;
 using CryptoBlock.PortfolioManagement.Transactions;
 using CryptoBlock.ServerDataManagement;
 using CryptoBlock.Utils.IO.SqLite;
-using CryptoBlock.Utils.IO.SQLite.Queries;
+using CryptoBlock.Utils.IO.SQLite.Queries.DataQueries;
 using CryptoBlock.Utils.IO.SQLite.Queries.Columns;
 using CryptoBlock.Utils.IO.SQLite.Queries.Conditions;
 using CryptoBlock.Utils.IO.SQLite.Xml;
@@ -12,6 +12,9 @@ using System.Collections;
 using System.Collections.Generic;
 using Utils.IO.SQLite;
 using static Utils.IO.SQLite.ResultSet;
+using CryptoBlock.Utils.IO.SQLite.Queries;
+using CryptoBlock.Utils.IO.SQLite.Queries.DataQueries.Write;
+using CryptoBlock.Utils.IO.SQLite.Queries.DataQueries.Read;
 
 namespace CryptoBlock
 {
@@ -19,6 +22,31 @@ namespace CryptoBlock
     {
         internal class PortfolioDatabaseManager
         {
+            internal class PortfolioDatabaseManagerException : Exception
+            {
+                internal PortfolioDatabaseManagerException(
+                    string message = null,
+                    Exception innerException = null)
+                    : base(message, innerException)
+                {
+
+                }
+            }
+
+            internal class UndoableLastActionNotAvailableException : PortfolioDatabaseManagerException
+            {
+                internal UndoableLastActionNotAvailableException()
+                    : base(formatExceptionMessage())
+                {
+
+                }
+
+                private static string formatExceptionMessage()
+                {
+                    return "No undoable last action available.";
+                }
+            }
+
             private static class DatabaseStructure
             {
                 internal static class PortfolioEntryTableStructure
@@ -33,7 +61,7 @@ namespace CryptoBlock
 
                 internal static class PortfolioEntryTransactionTableStructure
                 {
-                    internal static readonly string TABLE_NAME = "PortfolioEntryTransaction";
+                    internal static readonly string TABLE_NAME = "PortfolioEntryCoinTransaction";
 
                     internal static readonly string ID_COLUMN_NAME = "_id";
                     internal static readonly string PORTFOLIO_ENTRY_ID_COLUMN_NAME = "portfolioEntryId";
@@ -70,6 +98,8 @@ namespace CryptoBlock
 
             private SQLiteDatabaseHandler sqliteDatabaseHandler;
 
+            private bool undoableLastActionAvailable;
+
             private PortfolioDatabaseManager()
             {
                 if (!FileIOManager.Instance.FileExists(SQLite_DATABASE_FILE_PATH))
@@ -80,7 +110,11 @@ namespace CryptoBlock
                     }
                     catch(Exception exception) 
                     {
-                        sqliteDatabaseHandler.Dispose();
+                        if(this.sqliteDatabaseHandler != null)
+                        {
+                            sqliteDatabaseHandler.Dispose();
+                        }
+                        
                         FileIOManager.Instance.DeleteFile(SQLite_DATABASE_FILE_PATH);
 
                         throw exception;
@@ -97,9 +131,28 @@ namespace CryptoBlock
                 get { return instance; }
             }
 
+            internal bool UndoableLastActionAvailable
+            {
+                get { return undoableLastActionAvailable; }
+            }
+
             internal static void Initialize()
             {
                 instance = new PortfolioDatabaseManager();
+            }
+
+            internal void UndoLastAction()
+            {
+                assertUndoableLastActionAvailable();
+
+                this.sqliteDatabaseHandler.UndoLastTransaction();
+                this.undoableLastActionAvailable = false;
+            }
+
+            // executes database operations described in portfolioDatabaseAction atomically
+            internal void ExecuteAsOneAction(Action portfolioDatabaseAction)
+            {
+                this.sqliteDatabaseHandler.ExecuteWithinTransaction(portfolioDatabaseAction);
             }
 
             internal void AddCoin(long coinId)
@@ -113,12 +166,14 @@ namespace CryptoBlock
                             DatabaseStructure.PortfolioEntryTableStructure.COIN_ID_COLUMN_NAME, coinId)
                     });
 
-                this.sqliteDatabaseHandler.ExecuteInsertQuery(insertQuery);
+                this.sqliteDatabaseHandler.InsertIntoTable(insertQuery);
+
+                this.undoableLastActionAvailable = true;
             }
 
-            internal void AddCoins(IList<long> coinIds)
+            internal void AddCoins(IEnumerable<long> coinIds)
             {
-                this.sqliteDatabaseHandler.ExecuteWithTransaction(() => 
+                this.sqliteDatabaseHandler.ExecuteWithinTransaction(() => 
                     {
                         foreach(long coinId in coinIds)
                         {
@@ -127,11 +182,12 @@ namespace CryptoBlock
                     }
                 );
 
+                this.undoableLastActionAvailable = true;
             }
 
             internal void RemoveCoin(long coinId)
             {
-                this.sqliteDatabaseHandler.ExecuteWithTransaction(
+                this.sqliteDatabaseHandler.ExecuteWithinTransaction(
                     () =>
                         {
                             // get portfolio id associated with specified coinId
@@ -144,11 +200,13 @@ namespace CryptoBlock
                             deleteTransactionsAssociatedWithPortfolioEntry(portfolioEntryId);
                         }
                 );
+
+                this.undoableLastActionAvailable = true;
             }
 
-            internal void RemoveCoins(ICollection<long> coinIds)
+            internal void RemoveCoins(IEnumerable<long> coinIds)
             {
-                this.sqliteDatabaseHandler.ExecuteWithTransaction(
+                this.sqliteDatabaseHandler.ExecuteWithinTransaction(
                     () =>
                         {
                             foreach(long coinId in coinIds)
@@ -157,6 +215,8 @@ namespace CryptoBlock
                             }
                         }
                 );
+
+                this.undoableLastActionAvailable = true;
             }
 
             internal long GetPortfolioEntryId(long coinId)
@@ -181,7 +241,7 @@ namespace CryptoBlock
                     );
 
                 ResultSet portfolioIdResultSet =
-                    sqliteDatabaseHandler.ExecuteSelectQuery(portfolioIdSelectQuery);
+                    sqliteDatabaseHandler.SelectFromTable(portfolioIdSelectQuery);
 
                 long portfolioEntryId = portfolioIdResultSet.GetColumnValue<long>(
                     0,
@@ -192,7 +252,7 @@ namespace CryptoBlock
 
             internal void AddTransaction(Transaction transaction, PortfolioEntry portfolioEntry)
             {
-                this.sqliteDatabaseHandler.ExecuteWithTransaction(
+                this.sqliteDatabaseHandler.ExecuteWithinTransaction(
                     () =>
                         {
                             // get Transacion.eType id based on Transaction.eType name ("Buy" \ "Sell")
@@ -220,13 +280,15 @@ namespace CryptoBlock
                                 }
                             );
 
-                            sqliteDatabaseHandler.ExecuteInsertQuery(insertTransactionIntoTableQuery);
+                            sqliteDatabaseHandler.InsertIntoTable(insertTransactionIntoTableQuery);
 
                             // create database association between inserted Transaction
                             // and its corresponding PortfolioEntry
                             associatePortfolioEntryAndLastInsertedTransaction(portfolioEntry.Id);
                         }
                 );
+
+                this.undoableLastActionAvailable = true;
             }
 
             internal bool IsCoinIdInPortfolio(long coinId)
@@ -249,7 +311,7 @@ namespace CryptoBlock
                             coinId),
                         BasicCondition.eComparisonType.Equal));
 
-                ResultSet resultSet = this.sqliteDatabaseHandler.ExecuteSelectQuery(selectQuery);
+                ResultSet resultSet = this.sqliteDatabaseHandler.SelectFromTable(selectQuery);
 
                 long numberOfPortfolioEntriesWithCoinId = resultSet.GetColumnValue<long>(0, 0);
 
@@ -279,7 +341,9 @@ namespace CryptoBlock
                         )
                     );
 
-                sqliteDatabaseHandler.ExecuteUpdateQuery(updateQuery);
+                sqliteDatabaseHandler.UpdateTable(updateQuery);
+
+                this.undoableLastActionAvailable = true;
             }
 
             internal PortfolioEntry GetPortfolioEntry(long coinId)
@@ -312,7 +376,7 @@ namespace CryptoBlock
                         )
                     );
 
-                ResultSet resultSet = this.sqliteDatabaseHandler.ExecuteSelectQuery(selectQuery);
+                ResultSet resultSet = this.sqliteDatabaseHandler.SelectFromTable(selectQuery);
 
                 // get single row in result set, containing PortfolioEntry columns
                 Row portfolioEntryRow = resultSet.GetRow(0);
@@ -352,7 +416,7 @@ namespace CryptoBlock
                     },
                     null);
 
-                ResultSet resultSet = sqliteDatabaseHandler.ExecuteSelectQuery(selectQuery);
+                ResultSet resultSet = sqliteDatabaseHandler.SelectFromTable(selectQuery);
 
                 // insert fetched coinIds into result array
                 coinIds = new long[resultSet.RowCount];
@@ -429,7 +493,7 @@ namespace CryptoBlock
                         )
                     );
 
-                sqliteDatabaseHandler.ExecuteDeleteQuery(transactionDeleteQuery);
+                sqliteDatabaseHandler.DeleteFromTable(transactionDeleteQuery);
 
                 // delete association between deleted Transactions and deleted PortfolioEntry
                 // from "PortfolioEntryTransaction" table
@@ -451,7 +515,7 @@ namespace CryptoBlock
                             )
                    );
 
-                sqliteDatabaseHandler.ExecuteDeleteQuery(transactionToPortfolioEntryAssociationDeleteQuery);
+                sqliteDatabaseHandler.DeleteFromTable(transactionToPortfolioEntryAssociationDeleteQuery);
             }
 
             private void deletePortfolioEntry(long coinId)
@@ -467,7 +531,7 @@ namespace CryptoBlock
                         BasicCondition.eComparisonType.Equal)
                     );
 
-                sqliteDatabaseHandler.ExecuteDeleteQuery(portfolioEntryDeleteQuery);
+                sqliteDatabaseHandler.DeleteFromTable(portfolioEntryDeleteQuery);
             }
 
             private void associatePortfolioEntryAndLastInsertedTransaction(long portfolioEntryId)
@@ -496,7 +560,7 @@ namespace CryptoBlock
                                     transactionIdSelectQuery)
                     });
 
-                sqliteDatabaseHandler.ExecuteInsertQuery(
+                sqliteDatabaseHandler.InsertIntoTable(
                     associateTransactionWithPortfolioEntryInsertQuery);
             }
 
@@ -521,11 +585,11 @@ namespace CryptoBlock
 
                 // initialize SQLiteDatabaseHandler with DatabaseSchema
                 // create database tables specified in databaseSchemaXmlDocument
-                this.sqliteDatabaseHandler.InitializeDatabaseSchema(databaseSchemaXmlDocument);
+                this.sqliteDatabaseHandler.LoadDatabaseSchema(databaseSchemaXmlDocument);
 
                 // initialize TransactionTypeTable (representing Transaction.eType) with enum data 
                 // insert rows specfied in FileXmlDocument into TransactionTypeTable
-                sqliteDatabaseHandler.ExecuteInsertQueries(transactionTypeTableDataXmlDocument);
+                sqliteDatabaseHandler.LoadTableData(transactionTypeTableDataXmlDocument);
 
                 // commit initialization transaction
                 this.sqliteDatabaseHandler.CommitTransactionIfStartedByCaller(
@@ -537,6 +601,14 @@ namespace CryptoBlock
             {
                 sqliteDatabaseHandler = new SQLiteDatabaseHandler(SQLite_DATABASE_FILE_PATH);
                 sqliteDatabaseHandler.OpenConnection();
+            }
+
+            private void assertUndoableLastActionAvailable()
+            {
+                if(!this.undoableLastActionAvailable)
+                {
+                    throw new UndoableLastActionNotAvailableException();
+                }
             }
         }
     }

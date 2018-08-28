@@ -1,4 +1,5 @@
 ﻿using CryptoBlock.Utils;
+using CryptoBlock.Utils.Strings;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -97,8 +98,7 @@ namespace CryptoBlock
             public string GetCommandPrefix(string userInputLowercase)
             {
                 // if user input starts with a recognized prefix, get prefix
-                string prefix = StringUtils.GetPrefixIfStartsWith(
-                    userInputLowercase,
+                string prefix = userInputLowercase.GetPrefixIfStartsWith(
                     commandPrefixToCommmand.Keys.ToArray());
 
                 if (prefix != null) // valid command
@@ -112,25 +112,34 @@ namespace CryptoBlock
             }
 
             /// <summary>
-            /// executes command having <paramref name="commandPrefix"/>
+            /// parses and handles command having <paramref name="commandPrefix"/>
             /// with associated <paramref name="commandArguments"/>.
+            /// returns parsed <see cref="Command"/>.
             /// </summary>
             /// <param name="commandPrefix"></param>
             /// <param name="commandArguments"></param>
+            /// <returns>
+            /// parsed <see cref="Command"/> having <paramref name="commandPrefix"/>
+            /// with associated <paramref name="commandArguments"/>
+            /// </returns>
             /// <exception cref="InvalidCommandException">
             /// thrown if command is not a valid <see cref="CommandType"/> command.
             /// </exception>
-            public void ExecuteCommand(string commandPrefix, string[] commandArguments)
+            public Command HandleCommand(string commandPrefix, string[] commandArguments)
             {
+                Command command;
+
                 if (!IsValidCommand(commandPrefix))
                 {
                     throw new InvalidCommandException(CommandType);
                 }
 
                 // get matching command
-                Command command = GetCommand(commandPrefix);
+                command = GetCommand(commandPrefix);
 
-                command.ExecuteCommand(commandArguments);
+                command.Handle(commandArguments);
+
+                return command;
             }
 
             /// <summary>

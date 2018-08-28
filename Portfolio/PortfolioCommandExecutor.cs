@@ -34,7 +34,8 @@ namespace CryptoBlock
                     new PortfolioRemoveCommand(),
                     new PortfolioClearCommand(),
                     new PortfolioBuyCommand(),
-                    new PortfolioSellCommand()
+                    new PortfolioSellCommand(),
+                    new UndoLastActionCommand()
                     );
             }
 

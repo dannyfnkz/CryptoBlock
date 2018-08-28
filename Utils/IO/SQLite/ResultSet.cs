@@ -8,6 +8,8 @@ using System.Web.Configuration;
 using System.Collections.Specialized;
 using System.Collections;
 using CryptoBlock.Utils.IO.SQLite.Queries.Columns;
+using CryptoBlock.Utils;
+using CryptoBlock.Utils.Collections;
 
 namespace Utils.IO.SQLite
 {
@@ -16,12 +18,10 @@ namespace Utils.IO.SQLite
         public class Row
         {
             private readonly OrderedDictionary columnNameToColumnValue;
-            private readonly int columnCount;          
+            private readonly int columnCount;
 
-            public Row(ValuedColumn[] valuedColumns)
-            {
-                this.columnCount = valuedColumns.Length;
-            }
+            private string[] columnNames;
+            private Object[] columnValues;
 
             public Row(OrderedDictionary columnNameToColumnValue)
             {
@@ -32,6 +32,33 @@ namespace Utils.IO.SQLite
             public int ColumnCount
             {
                 get { return columnCount; }
+            }
+
+            public string[] ColumnNames
+            {
+                get
+                {
+                    if(columnNames == null)
+                    {
+                        columnNames =
+                            this.columnNameToColumnValue.Keys.ToArray().CastAll<object,string>();
+                    }
+
+                    return columnNames;
+                }
+            }
+
+            public Object[] ColumnValues
+            {
+                get
+                {
+                    if(columnValues == null)
+                    {
+                        columnValues = this.columnNameToColumnValue.Values.ToArray();
+                    }
+
+                    return columnValues;
+                }
             }
 
             public string GetColumnName(int columnIndex)
@@ -69,6 +96,7 @@ namespace Utils.IO.SQLite
         {
             while(sqliteDataReader.Read())
             {
+                // <string, object> dictionary
                 OrderedDictionary fieldRowDictionary = new OrderedDictionary();
 
                 for (int i = 0; i < sqliteDataReader.FieldCount; i++)
