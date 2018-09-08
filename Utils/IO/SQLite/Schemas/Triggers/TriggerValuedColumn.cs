@@ -1,4 +1,5 @@
 ﻿using CryptoBlock.Utils.IO.SQLite.Queries.Columns;
+using CryptoBlock.Utils.IO.SQLite.Schemas.Triggers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,10 +10,24 @@ namespace CryptoBlock
 {
     namespace Utils.IO.SQLite.Schema.Triggers
     {
+        /// <summary>
+        /// represents a <see cref="ValuedColumn"/> used as part of a <see cref="TriggerSchema"/>.
+        /// </summary>
         public class TriggerValuedColumn : ValuedColumn
         {
+            /// <summary>
+            /// value of <see cref="TriggerValuedColumn"/>.
+            /// </summary>
             public class ValueExpression : IExpression
             {
+                /// <summary>
+                /// whether column value should be taken before triggering query or after.
+                /// </summary>
+                public enum eTime
+                {
+                    Old, New
+                }
+
                 private readonly string triggeredTableColumnName;
                 private readonly eTime time;
 
@@ -23,7 +38,7 @@ namespace CryptoBlock
                     this.triggeredTableColumnName = triggeredTableColumnName;
                     this.time = time;
 
-                    this.value = getValue(triggeredTableColumnName, time);
+                    this.value = buildValue(triggeredTableColumnName, time);
                 }
 
                 string IExpression.ExpressionString
@@ -49,47 +64,42 @@ namespace CryptoBlock
                     get { return value; }
                 }
 
-                private static string getValue(string triggeredTableColumnName, eTime time)
+                public static string TimeToString(eTime time)
+                {
+                    return time.ToString().ToLower();
+                }
+
+                private static string buildValue(string triggeredTableColumnName, eTime time)
                 {
                     string value = string.Format("{0}.{1}", TimeToString(time), triggeredTableColumnName);
                     return value;
                 }
             }
 
-            public enum eTime
-            {
-                Old, New
-            }
-
-            private readonly eTime time;
+            private readonly ValueExpression.eTime valueExpressionTime;
 
             public TriggerValuedColumn(
                 string name,
                 string triggeredTableColumnName,
-                eTime time)
-                : base(name, getValueExpression(triggeredTableColumnName, time))
+                ValueExpression.eTime valueExpressionTime)
+                : base(name, buildValue(triggeredTableColumnName, valueExpressionTime))
             {
-                this.time = time;
+                this.valueExpressionTime = valueExpressionTime;
             }
 
-            public eTime Time
+            public ValueExpression.eTime ValueExpressionTime
             {
-                get { return time; }
+                get { return valueExpressionTime; }
             }
 
-            private static ValueExpression getValueExpression(
+            private static ValueExpression buildValue(
                 string triggeredTableColumnName,
-                eTime time)
+                ValueExpression.eTime valueExpressionTime)
             {
                 ValueExpression valueExpression = new ValueExpression(
                     triggeredTableColumnName,
-                    time);
+                    valueExpressionTime);
                 return valueExpression;
-            }
-
-            public static string TimeToString(eTime time)
-            {
-                return time.ToString().ToLower();
             }
         }
     }

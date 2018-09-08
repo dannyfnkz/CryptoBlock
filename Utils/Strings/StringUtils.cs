@@ -9,6 +9,9 @@ namespace CryptoBlock
 {
     namespace Utils.Strings
     {
+        /// <summary>
+        /// contains <see cref="String"/> utility methods.
+        /// </summary>
         public static class StringUtils
         {
             private const string TAB_STRING = "\t";
@@ -153,6 +156,33 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// returns a copy of <paramref name="camelCaseString"/>, converted into 
+            /// PascalCase format.
+            /// </summary>
+            /// <param name="camelCaseString">a string in camelCase format</param>
+            /// <returns>
+            /// copy of <paramref name="camelCaseString"/>, converted into 
+            /// PascalCase format
+            /// </returns>
+            public static string CamelCaseToPascalCase(string camelCaseString)
+            {
+                const int firstLetterIndex = 0;
+                return camelCaseString.CharactersAtIndicesToUpper(firstLetterIndex);
+            }
+
+            /// <summary>
+            /// returns a copy of <paramref name="pascalCaseString"/>, converted into 
+            /// camelCase format.
+            /// </summary>
+            /// <param name="pascalCaseString">a string in PascalCase format.</param>
+            /// <returns>
+            /// copy of <paramref name="pascalCaseString"/>, converted into 
+            /// snake_case format
+            /// </returns>
+            /// <exception cref="ArgumentException">
+            /// thrown if <paramref name="pascalCaseString"/> is not in PascalCase format
+            /// </exception>
             public static string PascalCaseToCamelCase(string pascalCaseString)
             {
                 // get char array corresponding to pascalCaseString 
@@ -166,14 +196,26 @@ namespace CryptoBlock
                 return camelCaseString;
             }
 
+            /// <summary>
+            /// returns a copy of <paramref name="pascalCaseString"/>, converted into 
+            /// snake_case format.
+            /// </summary>
+            /// <param name="pascalCaseString">a string in PascalCase format.</param>
+            /// <returns>
+            /// a copy of <paramref name="pascalCaseString"/>, converted into 
+            /// snake_case format
+            /// </returns>
+            /// <exception cref="ArgumentException">
+            /// thrown if <paramref name="pascalCaseString"/> is not in PascalCase format
+            /// </exception>
             public static string PascalCaseToSnakeCase(string pascalCaseString)
             {
-                if (pascalCaseString == string.Empty)
+                if (pascalCaseString == string.Empty) // return empty string as-is
                 {
                     return pascalCaseString;
                 }
 
-                if (!char.IsUpper(pascalCaseString[0]))
+                if (!char.IsUpper(pascalCaseString[0])) // first letter not uppercase - invalid format
                 {
                     throw new ArgumentException(
                         "a PascalCase string must begin with an uppercase letter.",
@@ -216,13 +258,37 @@ namespace CryptoBlock
             }
 
             /// <summary>
+            /// asserts that <paramref name="index"/> is a valid index in <paramref name="str"/>.
+            /// </summary>
+            /// <param name="str"></param>
+            /// <param name="index"></param>
+            /// <param name="indexParameterName"></param>
+            /// <exception cref="IndexOutOfRangeException">
+            /// thrown if <paramref name="index"/> is not a valid index in <paramref name="str"/>
+            /// </exception>
+            internal static void AssertValidIndexInString(
+                int index,
+                string str,
+                string indexParameterName)
+            {
+                if (index < 0 || index >= str.Length)
+                {
+                    string exceptionMessage = string.Format(
+                        "Value '{0}' of parameter '{1}' was out of range in string.",
+                        index,
+                        indexParameterName);
+                    throw new IndexOutOfRangeException(exceptionMessage);
+                }
+            }
+
+            /// <summary>
             /// asserts that all string lengths in <paramref name="stringLengths"/> are non-negative.
             /// </summary>
             /// <param name="stringLengths"></param>
             /// <exception cref="ArgumentOutOfRangeException">
             /// thrown if a string length in <paramref name="stringLengths"/> is negative
             /// </exception>
-            internal static void assertValidStringLengths(params int[] stringLengths)
+            internal static void AssertValidStringLengths(params int[] stringLengths)
             {
                 foreach (int stringLength in stringLengths)
                 {

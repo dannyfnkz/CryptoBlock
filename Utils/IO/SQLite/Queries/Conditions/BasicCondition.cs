@@ -9,75 +9,85 @@ namespace CryptoBlock
 {
     namespace Utils.IO.SQLite.Queries.Conditions
     {
-        public class BasicCondition : Condition
+        /// <summary>
+        /// represents a basic <see cref="ICondition"/>.
+        /// </summary>
+        public class BasicCondition : ICondition
         {
-            public enum eComparisonType
+            /// <summary>
+            /// type of operator used to evaluate condition.
+            /// </summary>
+            public enum eOperatorType
             {
                 Equal, NotEqual, LargerEqual, SmallerEqual, Larger, Smaller, In, Like
             }
 
-            private static readonly Dictionary<eComparisonType, string> eComparisonTypeToString =
-                new Dictionary<eComparisonType, string>()
+            private static readonly Dictionary<eOperatorType, string> operatorTypeToString =
+                new Dictionary<eOperatorType, string>()
             {
-                    { eComparisonType.Equal, "=" },
-                    { eComparisonType.NotEqual, "<>" },
-                    { eComparisonType.LargerEqual, ">=" },
-                    { eComparisonType.SmallerEqual, "<=" },
-                    { eComparisonType.Larger, ">" },
-                    { eComparisonType.Smaller, "<" },
-                    { eComparisonType.In, "IN" },
-                    { eComparisonType.Like, "LIKE" }
+                    { eOperatorType.Equal, "=" },
+                    { eOperatorType.NotEqual, "<>" },
+                    { eOperatorType.LargerEqual, ">=" },
+                    { eOperatorType.SmallerEqual, "<=" },
+                    { eOperatorType.Larger, ">" },
+                    { eOperatorType.Smaller, "<" },
+                    { eOperatorType.In, "IN" },
+                    { eOperatorType.Like, "LIKE" }
             };
 
             private readonly ValuedTableColumn valuedTableColumn;
-            private readonly eComparisonType comparisonType;
-            private readonly string queryString;
+            private readonly eOperatorType operatorType;
 
-            public BasicCondition(ValuedTableColumn valuedTableColumn, eComparisonType comparisonType)
+            private readonly string expressionString;
+
+            public BasicCondition(ValuedTableColumn valuedTableColumn, eOperatorType operatorType)
             {
                 this.valuedTableColumn = valuedTableColumn;
-                this.comparisonType = comparisonType;
-                this.queryString = buildQueryString();
+                this.operatorType = operatorType;
+                this.expressionString = buildExpressionString();
             }
 
-            public ValuedTableColumn ValuedTableColumn
+            public string ExpressionString
             {
-                get { return valuedTableColumn; }
+                get { return expressionString; }
             }
 
-            public eComparisonType ComparisonType
+            public string FullyQualifiedColumnName
             {
-                get { return comparisonType; }
+                get { return valuedTableColumn.FullyQualifiedName; }
             }
 
-            public static string ComparisonTypeToString(eComparisonType comparisonType)
+            public eOperatorType OperatorType
             {
-                return eComparisonTypeToString[comparisonType];
+                get { return operatorType; }
             }
 
-            string Condition.QueryString
+            public object ColumnValue
             {
-                get { return queryString; }
+                get { return valuedTableColumn.Value; }
             }
 
-            private string buildQueryString()
+            public static string OperatorTypeToString(eOperatorType operatorType)
             {
-                string fullyQualifiedColumnName = this.valuedTableColumn.FullyQualifiedName;
-                string comparisonTypeString = ComparisonTypeToString(this.comparisonType);
-                object columnValue = this.valuedTableColumn.Value;
+                return operatorTypeToString[operatorType];
+            }
 
-                string queryString = columnValue is Query ?
+            private string buildExpressionString()
+            {
+                string comparisonTypeString = OperatorTypeToString(this.operatorType);
+
+                string queryString = ColumnValue is Query ?
                     string.Format(
                         "{0} {1} ({2})",
-                        fullyQualifiedColumnName,
+                        FullyQualifiedColumnName,
                         comparisonTypeString,
-                        (columnValue as Query).QueryString)
+                        (ColumnValue as Query).QueryString)
 
                     : string.Format(
                         "{0} {1} '{2}'",
-                        fullyQualifiedColumnName,
+                        FullyQualifiedColumnName,
                         comparisonTypeString,
-                        columnValue.ToString());
+                        ColumnValue.ToString());
 
                 return queryString;
             }

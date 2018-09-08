@@ -82,11 +82,27 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// returns whether <paramref name="num"/> is odd.
+            /// </summary>
+            /// <param name="num"></param>
+            /// <returns>
+            /// true if <paramref name="num"/> is odd,
+            /// else false
+            /// </returns>
             public static bool IsOdd(int num)
             {
                 return !IsEven(num);
             }
 
+            /// <summary>
+            /// returns whether <paramref name="num"/> is even.
+            /// </summary>
+            /// <param name="num"></param>
+            /// <returns>
+            /// true if <paramref name="num"/> is even,
+            /// else false
+            /// </returns>
             public static bool IsEven(int num)
             {
                 return num % 2 == 0;

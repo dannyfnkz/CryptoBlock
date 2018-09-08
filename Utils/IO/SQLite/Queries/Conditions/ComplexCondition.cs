@@ -8,67 +8,76 @@ namespace CryptoBlock
 {
     namespace Utils.IO.SQLite.Queries.Conditions
     {
-        public class ComplexCondition : Condition
+        /// <summary>
+        /// represents a complex <see cref="ICondition"/>, consisting of two 
+        /// other <see cref="ICondition"/>s.
+        /// </summary>
+        public class ComplexCondition : ICondition
         {
-            public enum eConditionType
+            // logical operator which glues left and rights conditions
+            public enum eLogicalOperator
             {
                 And, Or
             }
 
-            private static readonly Dictionary<eConditionType, string> eComparisonTypeToString =
-                new Dictionary<eConditionType, string>()
+            private static readonly Dictionary<eLogicalOperator, string> logicalOperatorToString =
+                new Dictionary<eLogicalOperator, string>()
             {
-                    { eConditionType.And, "AND" },
-                    { eConditionType.Or, "OR" },
+                    { eLogicalOperator.And, "AND" },
+                    { eLogicalOperator.Or, "OR" },
             };
 
-            private Condition leftCondition;
-            private eConditionType conditionType;
-            private Condition rightCondition;
-            private string queryString;
+            private ICondition leftCondition;
+            private eLogicalOperator logicalOperator;
+            private ICondition rightCondition;
+
+            private readonly string expressionString;
 
             public ComplexCondition(
-                Condition leftCondition,
-                Condition rightCondition,
-                eConditionType conditionType)
+                ICondition leftCondition,
+                ICondition rightCondition,
+                eLogicalOperator logicalOperator)
             {
                 this.leftCondition = leftCondition;
                 this.rightCondition = rightCondition;
-                this.conditionType = conditionType;
+                this.logicalOperator = logicalOperator;
 
-                this.queryString = buildQueryString();
+                this.expressionString = buildExpressionString();
             }
 
-            public Condition LeftCondition
+            public string ExpressionString
+            {
+                get { return expressionString; }
+            }
+
+            public ICondition LeftCondition
             {
                 get { return leftCondition; }
             }
 
-            public eConditionType ConditionType
+            /// <summary>
+            /// logical operator glueing <see cref="LeftCondition"/> and <see cref="RightCondition"/>.
+            /// </summary>
+            public eLogicalOperator LogicalOperator
             {
-                get { return conditionType; }
+                get { return logicalOperator; }
             }
 
-            public Condition RightCondition
+            public ICondition RightCondition
             {
                 get { return rightCondition; }
             }
 
-            string Condition.QueryString
+            public static string LogicalOperatorToString(eLogicalOperator conditionType)
             {
-                get { return queryString; }
+                return logicalOperatorToString[conditionType];
             }
 
-            public static string ConditionTypeToString(eConditionType conditionType)
+            private string buildExpressionString()
             {
-                return eComparisonTypeToString[conditionType];
-            }
-
-            private string buildQueryString()
-            {
-                string leftConditionQueryString = this.leftCondition.QueryString;
-                string conditionTypeString = ConditionTypeToString(this.conditionType);
-                string rightConditionQueryString = this.rightCondition.QueryString;
+                string leftConditionQueryString = this.LeftCondition.ExpressionString;
+                string conditionTypeString = LogicalOperatorToString(this.LogicalOperator);
+                string rightConditionQueryString = this.RightCondition.ExpressionString;
 
                 return string.Format(
                     "({0} {1} {2})",

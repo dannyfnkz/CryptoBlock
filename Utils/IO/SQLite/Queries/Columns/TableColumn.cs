@@ -8,6 +8,9 @@ namespace CryptoBlock
 {
     namespace Utils.IO.SQLite.Queries.Columns
     {
+        /// <summary>
+        /// represents a <see cref="Column"/> with an associated SQL table.
+        /// </summary>
         public class TableColumn : Column
         {
             private readonly string tableName;

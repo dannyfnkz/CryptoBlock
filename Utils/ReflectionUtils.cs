@@ -66,44 +66,21 @@ namespace CryptoBlock
                 return type.GetProperty(propertyName) != null;
             }
 
-          //  // if derivedClassObject is a subclass of T,
-          //  // converts derivedClassObject into an object of type T.
-          //  // else, returns null
-          //  public static T ForceType<T>(object derivedClassObject) where T : class
-          //  {
-          //      if(!(derivedClassObject is T))
-          //      {
-          //          return null;
-          //      }
-
-          //      T baseClassObject;
-
-          //      // creates a new object of type T without calling a constructor
-          //      baseClassObject = (T)System.Runtime.Serialization.FormatterServices
-          //.GetUninitializedObject(typeof(T));
-
-          //      Type derivedClassType = derivedClassObject.GetType();
-          //      Type baseClassType = baseClassObject.GetType();
-
-          //      FieldInfo[] baseClassTypeFieldInfos = GetInstanceFieldInfo(baseClassType);
-
-          //      foreach (FieldInfo baseClassTypeFieldInfo in baseClassTypeFieldInfos)
-          //      {
-          //          FieldInfo derivedClassTypeFieldInfo = derivedClassType.GetField(baseClassTypeFieldInfo.Name);
-
-          //          if (derivedClassTypeFieldInfo != null)
-          //          {
-          //              baseClassTypeFieldInfo.SetValue(
-          //                  baseClassObject,
-          //                  derivedClassTypeFieldInfo.GetValue(derivedClassObject));
-          //          }
-          //      }
-
-          //      return baseClassObject;
-          //  }
-
             // returns all instance FieldInfo[] of type. this does not include fields of base class,
             // in case type derives from another class.
+
+            /// <summary>
+            /// returns all instance <see cref="FieldInfo"/>s of specified <paramref name="type"/>.
+            /// </summary>
+            /// <remarks>
+            /// base class fields are not included.
+            /// </remarks>
+            /// <seealso cref="FieldInfo"/>
+            /// <seealso cref="Type.GetFields(BindingFlags)"/>
+            /// <param name="type"></param>
+            /// <returns>
+            /// all instance <see cref="FieldInfo"/>s of <paramref name="type"/>
+            /// </returns>
             public static FieldInfo[] GetInstanceFieldInfo(Type type)
             {
                 FieldInfo[] instanceFields = type.GetFields(

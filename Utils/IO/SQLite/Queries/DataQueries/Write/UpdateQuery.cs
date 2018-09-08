@@ -10,16 +10,19 @@ namespace CryptoBlock
 {
     namespace Utils.IO.SQLite.Queries.DataQueries.Write
     {
+        /// <summary>
+        ///  represents a <see cref="DataWriteQuery"/> which performs an UPDATE operation.
+        /// </summary>
         public class UpdateQuery : DataWriteQuery
         {
             private readonly string tableName;
             private readonly ValuedColumn[] valuedColumns;
-            private readonly Condition queryCondition;
+            private readonly ICondition queryCondition;
 
             public UpdateQuery(
                 string tableName,
                 IList<ValuedColumn> valuedColumns,
-                Condition queryCondition = null)
+                ICondition queryCondition = null)
             {
                 this.tableName = tableName;
                 this.valuedColumns = valuedColumns.ToArray();
@@ -36,7 +39,7 @@ namespace CryptoBlock
                 get { return valuedColumns; }
             }
 
-            public Condition QueryCondition
+            public ICondition QueryCondition
             {
                 get { return queryCondition; }
             }
@@ -47,7 +50,7 @@ namespace CryptoBlock
                 StringBuilder queryStringBuilder = new StringBuilder();
 
                 // append command header
-                queryStringBuilder.AppendFormat("UPDATE {0} SET ", this.tableName);
+                queryStringBuilder.AppendFormat("UPDATE {0} SET ", this.TableName);
 
                 // append ValuedColumns names and new values
                 for(int i = 0; i < valuedColumns.Length; i++)
@@ -65,7 +68,7 @@ namespace CryptoBlock
                 // append condition
                 if(queryCondition != null)
                 {
-                    queryStringBuilder.AppendFormat(" WHERE {0}", queryCondition.QueryString);
+                    queryStringBuilder.AppendFormat(" WHERE {0}", this.QueryCondition.ExpressionString);
                 }
 
                 return queryStringBuilder.ToString();

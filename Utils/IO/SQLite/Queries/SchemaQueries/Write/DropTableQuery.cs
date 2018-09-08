@@ -8,6 +8,9 @@ namespace CryptoBlock
 {
     namespace Utils.IO.SQLite.Queries.SchemaQueries.Write
     {
+        /// <summary>
+        /// represents a <see cref="SchemaWriteQuery"/> which drops a table.
+        /// </summary>
         public class DropTableQuery : SchemaWriteQuery
         {
             private readonly string tableName;
@@ -24,6 +27,10 @@ namespace CryptoBlock
                 get { return tableName; }
             }
 
+            /// <summary>
+            /// whether query should be executed only if a table with the specified
+            /// <see cref="TableName"/> exists in database.
+            /// </summary>
             public bool ExistsConstraint
             {
                 get { return existsConstraint; }

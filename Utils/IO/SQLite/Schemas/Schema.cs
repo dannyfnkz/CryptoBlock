@@ -2,32 +2,30 @@
 {
     namespace Utils.IO.SQLite.Schemas
     {
+        /// <summary>
+        /// represents an SQLite schema.
+        /// </summary>
         public abstract class Schema : IExpression
         {
-            private string queryString;
+            private string expressionString;
 
-            string IExpression.ExpressionString
+            /// <summary>
+            /// string representation of the schema, as it appears 
+            /// </summary>
+            public string ExpressionString
             {
                 get
                 {
-                    return QueryString;
-                }
-            }
-
-            public string QueryString
-            {
-                get
-                {
-                    if(queryString == null)
+                    if(expressionString == null)
                     {
-                        queryString = BuildQueryString();
+                        expressionString = BuildExpressionString();
                     }
 
-                    return queryString;
+                    return expressionString;
                 }
             }
 
-            protected abstract string BuildQueryString();
+            protected abstract string BuildExpressionString();
         }
     }
 }

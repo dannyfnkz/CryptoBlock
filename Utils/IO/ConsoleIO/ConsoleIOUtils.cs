@@ -18,6 +18,12 @@ namespace CryptoBlock
             /// the horizontal offset, in characters, of the console cursor from the beginning of the line
             /// it is pointing to.
             /// </summary>
+            /// <exception cref="ArgumentOutOfRangeException">
+            /// <seealso cref="Console.CursorLeft"/>
+            /// </exception>
+            /// <exception cref="IOException">
+            /// <seealso cref="Console.CursorLeft"/>
+            /// </exception>
             public static int CursorLeft
             {
                 get { return Console.CursorLeft; }
@@ -27,6 +33,12 @@ namespace CryptoBlock
             /// <summary>
             /// the vertical offset, in lines, of the console cursor from the top of the console window.
             /// </summary>
+            /// <exception cref="ArgumentOutOfRangeException">
+            /// <seealso cref="Console.CursorTop"/>
+            /// </exception>
+            /// <exception cref="IOException">
+            /// <seealso cref="Console.CursorTop"/>
+            /// </exception>
             public static int CursorTop
             {
                 get { return Console.CursorTop; }
@@ -45,7 +57,7 @@ namespace CryptoBlock
             /// </summary>
             /// <remarks>
             /// <para>the read key is removed from the Console input buffer.</para>
-            /// <para>implemented using <see cref=System.Console.KeyAvailable/></para>
+            /// <para>implemented using <see cref="System.Console.KeyAvailable"/></para>
             /// <para>
             /// <see cref="System.Console.ReadKey()"/>
             /// <see cref="System.Console.SetCursorPosition(int, int)"/>
@@ -57,6 +69,13 @@ namespace CryptoBlock
             /// if Console input buffer is not empty, most recent <see cref="ConsoleKeyInfo"/>
             /// else, <c>default(<see cref="System.ConsoleKeyInfo"/>)</c>
             /// </returns>
+            /// <param name="cursorTop"></param>
+            /// <exception cref="ArgumentOutOfRangeException">
+            /// <seealso cref="Console.SetCursorPosition(int, int)"/>
+            /// </exception>
+            /// <exception cref="IOException">
+            /// <seealso cref="Console.SetCursorPosition(int, int)"/>
+            /// </exception>
             public static ConsoleKeyInfo ReadKey(out bool keyAvailable)
             {
                 keyAvailable = Console.KeyAvailable;
@@ -93,6 +112,12 @@ namespace CryptoBlock
             /// </summary>
             /// <param name="cursorLeft"></param>
             /// <param name="cursorTop"></param>
+            /// <exception cref="ArgumentOutOfRangeException">
+            /// <seealso cref="Console.SetCursorPosition(int, int)"/>
+            /// </exception>
+            /// <exception cref="IOException">
+            /// <seealso cref="Console.SetCursorPosition(int, int)"/>
+            /// </exception>
             public static void SetCursorPosition(int cursorLeft, int cursorTop)
             {
                 Console.SetCursorPosition(cursorLeft, cursorTop);
@@ -101,6 +126,13 @@ namespace CryptoBlock
             /// <summary>
             /// sets the console cursor position to beginning of next line.
             /// </summary>
+            /// <seealso cref="Console.SetCursorPosition(int, int)"/>
+            /// <exception cref="ArgumentOutOfRangeException">
+            /// <seealso cref="SetCursorPosition(int, int)"/>
+            /// </exception>
+            /// <exception cref="IOException">
+            /// <seealso cref="SetCursorPosition(int, int)"/>
+            /// </exception>
             public static void SetCursorToBeginningOfNextLine()
             {
                 SetCursorPosition(0, CursorTop + 1);
@@ -111,6 +143,13 @@ namespace CryptoBlock
             /// if <paramref name="moveAmountHorizontal"/> is negative, moves cursor to the left.
             /// </summary>
             /// <param name="moveAmountHorizontal"></param>
+            /// <seealso cref="Console.SetCursorPosition(int, int)"/>
+            /// <exception cref="ArgumentOutOfRangeException">
+            /// <seealso cref="SetCursorPosition(int, int)"/>
+            /// </exception>
+            /// <exception cref="IOException">
+            /// <seealso cref="SetCursorPosition(int, int)"/>
+            /// </exception>
             public static void MoveCursorHorizontal(int moveAmountHorizontal)
             {
                 SetCursorPosition(CursorLeft + moveAmountHorizontal, CursorTop);
@@ -121,6 +160,13 @@ namespace CryptoBlock
             /// if <paramref name="moveAmountVertical"/> is negative, moves cursor downwards.
             /// </summary>
             /// <param name="moveAmountVertical"></param>
+            /// <seealso cref="Console.SetCursorPosition(int, int)"/>
+            /// <exception cref="ArgumentOutOfRangeException">
+            /// <seealso cref="SetCursorPosition(int, int)"/>
+            /// </exception>
+            /// <exception cref="IOException">
+            /// <seealso cref="SetCursorPosition(int, int)"/>
+            /// </exception>
             public static void MoveCursorVertical(int moveAmountVertical)
             {
                 SetCursorPosition(CursorLeft, CursorTop + moveAmountVertical);
@@ -220,11 +266,22 @@ namespace CryptoBlock
                 Console.Write(formattedOutput);
             }
 
+            /// <summary>
+            /// writes <paramref name="ch"/> to console.
+            /// </summary>
+            /// <seealso cref="ConsoleWrite(String)"/>
+            /// <param name="ch"></param>
             public static void ConsoleWrite(char ch)
             {
                 ConsoleWrite(ch.ToString());
             }
 
+            /// <summary>
+            /// replaces character at <paramref name="horizontalCursorPosition"/> of line cursor is
+            /// currently pointing to with <paramref name="replacementCharacter"/>.
+            /// </summary>
+            /// <param name="horizontalCursorPosition"></param>
+            /// <param name="replacementCharacter"></param>
             public static void ReplaceCharacter(int horizontalCursorPosition, char replacementCharacter)
             {
                 // move cursor to speicfied horizontal position

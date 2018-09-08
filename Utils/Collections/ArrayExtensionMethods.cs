@@ -10,6 +10,9 @@ namespace CryptoBlock
 {
     namespace Utils.Collections
     {
+        /// <summary>
+        /// contains extension methods for arrays.
+        /// </summary>
         public static class ArrayExtensionMethods
         {
             public static K[] CastAll<T,K>(this T[] sourceArray) where K : class where T : class
@@ -24,30 +27,70 @@ namespace CryptoBlock
                 return resultArray;
             }
 
-            // exclusive
-            public static T[] SubArray<T>(this T[] sourceArray, int startIndex, int endIndex)
+            /// <summary>
+            /// returns subarray of <paramref name="sourceArray"/> containing items in range
+            /// [<paramref name="startIndex"/>, <paramref name="sourceArray"/>.Count).
+            /// </summary>
+            /// <seealso cref="Subarray{T}(T[], int, int)"/>
+            /// <typeparam name="T"></typeparam>
+            /// <param name="sourceArray"></param>
+            /// <param name="startIndex"></param>
+            /// <returns>
+            /// subarray of <paramref name="sourceArray"/> containing items in range
+            /// [<paramref name="startIndex"/>, <paramref name="sourceArray"/>.Count).
+            /// </returns>
+            /// <exception cref="IndexOutOfRangeException">
+            /// <seealso cref="Subarray{T}(T[], int, int)"/>
+            /// </exception>
+            public static T[] Subarray<T>(this T[] sourceArray, int startIndex)
             {
-                ListUtils.AssertRangeIndexWithinRange<T>(sourceArray, startIndex, "startIndex");
-                ListUtils.AssertRangeIndexWithinRange<T>(sourceArray, endIndex, "endIndex");
-                CollectionUtils.AssertStartAndEndIndicesValid(startIndex, endIndex);
+                return Subarray(sourceArray, startIndex, sourceArray.Length);
+            }
 
-                T[] subArray;
+
+            /// <summary>
+            /// returns subarray of <paramref name="sourceArray"/> containing items in range
+            /// [<paramref name="startIndex"/>, <paramref name="endIndex"/>).
+            /// </summary>
+            /// <typeparam name="T"></typeparam>
+            /// <param name="sourceArray"></param>
+            /// <param name="startIndex"></param>
+            /// <param name="endIndex"></param>
+            /// <returns>
+            /// subarray of <paramref name="sourceArray"/> containing items in range
+            /// [<paramref name="startIndex"/>, <paramref name="endIndex"/>)
+            /// </returns>
+            /// <exception cref="IndexOutOfRangeException">
+            /// <seealso cref="ListUtils.AssertRangeIndicesValid{T}(int, int, IList{T})"/>
+            /// </exception>
+            public static T[] Subarray<T>(this T[] sourceArray, int startIndex, int endIndex)
+            {
+                ListUtils.AssertRangeIndicesValid(startIndex, endIndex, sourceArray);
+
+                T[] subarray;
 
                 // allocate memory for subArray
-                int subArrayLength = endIndex - startIndex;
-                subArray = new T[subArrayLength];
+                int subarrayLength = endIndex - startIndex;
+                subarray = new T[subarrayLength];
 
                 // copy element from sourceArray into subArray
-                Array.Copy(sourceArray, startIndex, subArray, 0, subArrayLength);
+                Array.Copy(sourceArray, startIndex, subarray, 0, subarrayLength);
 
-                return subArray;
+                return subarray;
             }
 
-            public static T[] SubArray<T>(this T[] sourceArray, int startIndex)
-            {
-                return SubArray<T>(sourceArray, startIndex, sourceArray.Length);
-            }
-
+            /// <summary>
+            /// returns item at <paramref name="index"/> in <paramref name="array"/>
+            /// if <paramref name="index"/>.HasValue, null otherwise.
+            /// </summary>
+            /// <typeparam name="T"></typeparam>
+            /// <param name="array"></param>
+            /// <param name="index"></param>
+            /// <returns>
+            /// item at <paramref name="index"/> in <paramref name="array"/>
+            /// if <paramref name="index"/>.HasValue
+            /// else null
+            /// </returns>
             public static T GetItemAtIndexOrNull<T>(this T[] array, int? index) where T : class
             {
                 T itemAtIndex;
@@ -56,7 +99,7 @@ namespace CryptoBlock
                 {
                     int indexValue = index.GetValueOrDefault();
 
-                    ListUtils.AssertItemIndexWithinRange<T>(array, indexValue, "index");
+                    ListUtils.AssertItemIndexValid(indexValue, array, "index");
 
                     itemAtIndex = array[indexValue];
                 }
@@ -69,5 +112,4 @@ namespace CryptoBlock
             }
         }
     }
-
 }

@@ -10,15 +10,19 @@ namespace CryptoBlock
     {
         /// <summary>
         /// handles a single synchronous HTTP GET request.
+        /// </summary>
         /// <remarks>
         /// each <see cref="HttpGetRequestHandler"/>is intended for a single HTTP request. 
         /// to send an additional request, instantiate a new <see cref="HttpGetRequestHandler"/>object.
         /// </remarks>
-        /// </summary>
         public class HttpGetRequestHandler
         {
             public class GetRequestParameter
             {
+                /// <summary>
+                /// thrown during <see cref="GetRequestParameter"/> array parsing
+                /// if parameter names array and parameter value array don't have the same length.
+                /// </summary>
                 public class ParameterNameValueArrayLengthMismatchException : Exception
                 {
                     public ParameterNameValueArrayLengthMismatchException()
@@ -64,7 +68,16 @@ namespace CryptoBlock
                     return parameters;
                 }
 
-                public void appendToUri(StringBuilder uriStringBuilder, bool firstParameterInUri)
+                /// <summary>
+                /// appends <see cref="GetRequestParameter"/> (name,value) 
+                /// pair to <paramref name="uriStringBuilder"/>ץ
+                /// </summary>
+                /// <param name="uriStringBuilder"></param>
+                /// <param name="firstParameterInUri">
+                /// whether this <see cref="GetRequestParameter"/> is the first parameter in
+                /// <paramref name="firstParameterInUri"/>
+                /// </param>
+                internal void AppendToUri(StringBuilder uriStringBuilder, bool firstParameterInUri)
                 {
                     if(firstParameterInUri)
                     {
@@ -158,12 +171,25 @@ namespace CryptoBlock
 
             public int ParameterCount { get { return parameters.Length; } }
 
+            /// <summary>
+            /// whether request was sent to host.
+            /// </summary>
             public bool RequestSent { get { return requestSent; } }
 
+            /// <summary>
+            /// whether request was not successfuly sent to host.
+            /// </summary>
             public bool RequestFailed { get { return requestFailed; } }
 
-            /// <exception cref="RequestNotSentYetException"><see cref="assertRequestSentSuccessfully()"/></exception>
-            /// <exception cref="RequestFailedException"><see cref="assertRequestSentSuccessfully()"/></exception>
+            /// <summary>
+            /// whether response received from host had a successful status code.
+            /// </summary>
+            /// <exception cref="RequestNotSentYetException">
+            /// <see cref="assertRequestSentSuccessfully()"/>
+            /// </exception>
+            /// <exception cref="RequestFailedException">
+            /// <see cref="assertRequestSentSuccessfully()"/>
+            /// </exception>
             public bool SuccessfulStatusCode
             {
                 get
@@ -173,6 +199,9 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// response string received from host.
+            /// </summary>
             /// <exception cref="RequestNotSentYetException"><see cref="assertRequestSentSuccessfully()"/></exception>
             /// <exception cref="RequestFailedException"><see cref="assertRequestSentSuccessfully()"/></exception>
             public string Response
@@ -184,6 +213,9 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// status code of response received from host.
+            /// </summary>
             /// <exception cref="RequestNotSentYetException"><see cref="assertRequestSentSuccessfully()"/></exception>
             /// <exception cref="RequestFailedException"><see cref="assertRequestSentSuccessfully()"/></exception>
             public HttpStatusCode StatusCode
@@ -195,6 +227,9 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// exception thrown while trying to send request to host.
+            /// </summary>
             /// <exception cref="RequestNotSentYetException"><see cref="assertRequestSent()"/>
             public Exception Exception
             {
@@ -205,6 +240,9 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// message of exception thrown while trying to send request to host.
+            /// </summary>
             /// <exception cref="RequestNotSentYetException"><see cref="assertRequestSent()"/>
             public string ExceptionMessage
             {
@@ -302,7 +340,7 @@ namespace CryptoBlock
 
                 foreach(GetRequestParameter parameter in parameters)
                 {
-                    parameter.appendToUri(uriStringBuilder, firstParameterInUri);
+                    parameter.AppendToUri(uriStringBuilder, firstParameterInUri);
 
                     if(Array.IndexOf(parameters, parameter) < parameters.Length - 1)
                     {

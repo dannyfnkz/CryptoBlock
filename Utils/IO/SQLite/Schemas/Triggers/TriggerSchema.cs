@@ -9,29 +9,35 @@ namespace CryptoBlock
 {
     namespace Utils.IO.SQLite.Schemas.Triggers
     {
+        /// <summary>
+        /// represents a trigger <see cref="Schema"/>.
+        /// </summary>
         public class TriggerSchema : Schema
         {
-            public enum eTime
+            /// <summary>
+            /// time relative to triggering query, when <see cref="TriggeredQuery"/> is triggered.
+            /// </summary>
+            public enum eTriggeredQueryTime
             {
                 Before, After
             }
 
             private readonly string name;
-            private readonly eTime time;
-            private readonly Query.eType queryType;
+            private readonly eTriggeredQueryTime triggeredQueryTime;
+            private readonly Query.eQueryType triggeringQueryType;
             private readonly string triggeredTableName;
             private readonly Query triggeredQuery;
 
             public TriggerSchema(
                 string name,
-                eTime time,
-                Query.eType queryType,
+                eTriggeredQueryTime triggeredQueryTime,
+                Query.eQueryType triggeringQueryType,
                 string triggeredTableName,
                 Query triggeredQuery)
             {
                 this.name = name;
-                this.time = time;
-                this.queryType = queryType;
+                this.triggeredQueryTime = triggeredQueryTime;
+                this.triggeringQueryType = triggeringQueryType;
                 this.triggeredTableName = triggeredTableName;
                 this.triggeredQuery = triggeredQuery;
             }
@@ -41,16 +47,23 @@ namespace CryptoBlock
                 get { return name; }
             }
 
-            public eTime Time
+            /// <summary>
+            /// time relative to triggering query, when <see cref="TriggeredQuery"/> is triggered.
+            /// </summary>
+            public eTriggeredQueryTime TriggeredQueryTime
             {
-                get { return time; }
+                get { return triggeredQueryTime; }
             }
 
-            public Query.eType QueryType
+            /// <summary>
+            /// type of triggering query.
+            /// </summary>
+            public Query.eQueryType TriggeringQueryType
             {
-                get { return queryType; }
+                get { return triggeringQueryType; }
             }
 
+            
             public string TriggeredTableName
             {
                 get { return triggeredTableName; }
@@ -61,21 +74,14 @@ namespace CryptoBlock
                 get { return triggeredQuery; }
             }
 
-            public static string TimeToString(eTime time)
+            public static string TriggeredQueryTimeToString(eTriggeredQueryTime triggeredQueryTime)
             {
-                string timeString = time.ToString().ToUpper();
+                string triggeredQueryTimeString = triggeredQueryTime.ToString().ToUpper();
 
-                return timeString;
+                return triggeredQueryTimeString;
             }
 
-            public static string TypeToString(Query.eType queryType)
-            {
-                string queryTypeString = queryType.ToString().ToUpper();
-
-                return queryTypeString;
-            }
-
-            protected override string BuildQueryString()
+            protected override string BuildExpressionString()
             {
                 StringBuilder queryStringBuilder = new StringBuilder();
 
@@ -83,8 +89,8 @@ namespace CryptoBlock
                 queryStringBuilder.AppendFormat("TRIGGER {0}", this.Name);
                 queryStringBuilder.AppendFormat(
                     " {0} {1} ON {2} FOR EACH ROW",
-                    TimeToString(this.Time),
-                    TypeToString(this.QueryType),
+                    TriggeredQueryTimeToString(this.TriggeredQueryTime),
+                    Query.QueryTypeToString(this.TriggeringQueryType),
                     this.triggeredTableName);
 
                 // append query to be performed for each row

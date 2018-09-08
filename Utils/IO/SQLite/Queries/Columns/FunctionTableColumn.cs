@@ -9,10 +9,14 @@ namespace CryptoBlock
 {
     namespace Utils.IO.SQLite.Queries.Columns
     {
+        /// <summary>
+        /// represents a <see cref="TableColumn"/> having an SQL function applied to it.
+        /// </summary>
         public class FunctionTableColumn : TableColumn
         {
-            // name of enum instance determines string representation in query as follows:
-            // enumInstanceString => enumInstanceString.ToSnakeCase().ToUpper()
+            /// <summary>
+            /// type of SQL function.
+            /// </summary>
             public enum eFunctionType
             {
                 Count, LastInsertRowid
@@ -53,6 +57,17 @@ namespace CryptoBlock
                 return fullyQualifiedName;
             }
 
+            /// <summary>
+            /// returns the string representation of <paramref name="functionType"/>.
+            /// </summary>
+            /// <remarks>
+            /// conversion is as follows:
+            /// functionType => functionType.ToString().ToSnakeCase().ToUpper()
+            /// </remarks>
+            /// <param name="functionType"></param>
+            /// <returns>
+            /// string representation of <paramref name="functionType"/>
+            /// </returns>
             public static string FunctionTypeToString(eFunctionType functionType)
             {
                 string functiontypeString = functionType.ToString();

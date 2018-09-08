@@ -10,8 +10,14 @@ namespace CryptoBlock
 {
     namespace Utils.IO.SQLite.Queries.DataQueries.Read
     {
+        /// <summary>
+        /// represents a <see cref="DataReadQuery"/> which performs a SELECT operation.
+        /// </summary>
         public class SelectQuery : DataReadQuery
         {
+            /// <summary>
+            /// represents a <see cref="SelectQuery"/> join.
+            /// </summary>
             public class Join
             {
                 public enum eJoinType
@@ -19,7 +25,7 @@ namespace CryptoBlock
                     InnerJoin, LeftJoin, RightJoin, FullOuterJoin
                 }
 
-                private static readonly Dictionary<eJoinType, string> typeToString
+                private static readonly Dictionary<eJoinType, string> joinTypeToString
                     = new Dictionary<eJoinType, string>()
                 {
                     { eJoinType.InnerJoin, "INNER JOIN" },
@@ -77,6 +83,11 @@ namespace CryptoBlock
                     get { return queryString; }
                 }
 
+                public static string JoinTypeToString(eJoinType joinType)
+                {
+                    return joinTypeToString[joinType];
+                }
+
                 private static string buildQueryString(
                     string joinedTableName,
                     TableColumn leftAnchorTableColumn,
@@ -85,7 +96,7 @@ namespace CryptoBlock
                 {
                     StringBuilder queryStringBuilder = new StringBuilder();
 
-                    string joinTypeString = joinTypeToString(joinType);
+                    string joinTypeString = JoinTypeToString(joinType);
 
                     return string.Format(
                         "{0} {1} ON {2} = {3}",
@@ -94,37 +105,48 @@ namespace CryptoBlock
                         leftAnchorTableColumn.FullyQualifiedName,
                         rightAnchorTableColumn.FullyQualifiedName);
                 }
-
-                private static string joinTypeToString(eJoinType joinType)
-                {
-                    return typeToString[joinType];
-                }
             }
 
-            public class OrderBy
+            /// <summary>
+            /// represents an <see cref="SelectQuery"/> order by clause.
+            /// </summary>
+            public class OrderBy : IExpression
             {
-                public class TableColumn
+                public class TableColumn : IExpression
                 {
-                    public enum eType
+                    public enum eColumnType
                     {
                         Ascending, Descending
                     }
 
-                    private Dictionary<eType, string> typeToString = new Dictionary<eType, string>()
+                    private static readonly Dictionary<eColumnType, string> columnTypeToString =
+                        new Dictionary<eColumnType, string>()
                     {
-                        {eType.Ascending, "ASC" },
-                        {eType.Descending, "DESC" }
+                        {eColumnType.Ascending, "ASC" },
+                        {eColumnType.Descending, "DESC" }
                     };
 
                     private readonly string name;
                     private readonly string tableName;
-                    private readonly eType type;
+                    private readonly eColumnType columnType;
 
-                    public TableColumn(string name, string tableName, eType type)
+                    public TableColumn(string name, string tableName, eColumnType columnType)
                     {
                         this.name = name;
                         this.tableName = tableName;
-                        this.type = type;
+                        this.columnType = columnType;
+                    }
+
+                    public string ExpressionString
+                    {
+                        get
+                        {
+                            return string.Format(
+                            "{0}.{1} {2}",
+                            this.TableName,
+                            this.Name,
+                            ColumnTypeToString(this.ColumnType));
+                        }
                     }
 
                     public string Name
@@ -137,24 +159,21 @@ namespace CryptoBlock
                         get { return tableName; }
                     }
 
-                    public eType Type
+                    public eColumnType ColumnType
                     {
-                        get { return type; }
+                        get { return columnType; }
                     }
 
-                    public string QueryString
+                    public static string ColumnTypeToString(eColumnType columnType)
                     {
-                        get
-                        {
-                            return string.Format(
-                            "{0}.{1} {2}",
-                            TableName,
-                            Name,
-                            typeToString[Type]);
-                        }
+                        return columnTypeToString[columnType];
                     }
                 }
 
+                /// <summary>
+                /// thrown if <see cref="TableColumn"/> list specified for <see cref="OrderBy"/>
+                /// is empty.
+                /// </summary>
                 public class EmptyTableColumnListException : Exception
                 {
                     public EmptyTableColumnListException()
@@ -171,27 +190,27 @@ namespace CryptoBlock
 
                 private readonly TableColumn[] tableColumnArray;
 
-                private string queryString;
+                private string expressionString;
 
                 public OrderBy(IList<TableColumn> tableColumnList)
                 {
                     this.tableColumnArray = tableColumnList.ToArray();
                 }
 
-                public string QueryString
+                public string ExpressionString
                 {
                     get
                     {
-                        if (queryString == null)
+                        if (expressionString == null)
                         {
-                            queryString = buildQueryString();
+                            expressionString = buildExpressionString();
                         }
 
-                        return queryString;
+                        return expressionString;
                     }
                 }
 
-                private string buildQueryString()
+                private string buildExpressionString()
                 {
                     StringBuilder queryStringBuilder = new StringBuilder();
 
@@ -201,7 +220,7 @@ namespace CryptoBlock
                     for (int i = 0; i < tableColumnArray.Length; i++)
                     {
                         TableColumn tableColumn = tableColumnArray[i];
-                        queryStringBuilder.Append(tableColumn.QueryString);
+                        queryStringBuilder.Append(tableColumn.ExpressionString);
 
                         if (i < tableColumnArray.Length - 1)
                         {
@@ -213,12 +232,13 @@ namespace CryptoBlock
                 }
             }
 
+            // wildcard for selecting all table columns
             private const char SELECT_ALL_COLUMNS_WILDCARD = '*';
 
             private readonly string sourceTableName;
             private readonly TableColumn[] tableColumns;
             private readonly Join[] joins;
-            private readonly Condition queryCondition;
+            private readonly ICondition queryCondition;
             private readonly OrderBy orderByClause;
 
             private readonly string queryStrying;
@@ -227,7 +247,7 @@ namespace CryptoBlock
                 string sourceTableName = null,
                 TableColumn[] tableColumns = null,
                 Join[] joins = null,
-                Condition queryCondition = null,
+                ICondition queryCondition = null,
                 OrderBy orderByClause = null
                 )
             {
@@ -255,7 +275,7 @@ namespace CryptoBlock
                 get { return joins; }
             }
 
-            public Condition QueryCondition
+            public ICondition QueryCondition
             {
                 get { return queryCondition; }
             }
@@ -312,13 +332,13 @@ namespace CryptoBlock
                 // append query condition, if exists
                 if(this.QueryCondition != null)
                 {
-                    queryStringBuilder.AppendFormat(" WHERE {0}", this.QueryCondition.QueryString);
+                    queryStringBuilder.AppendFormat(" WHERE {0}", this.QueryCondition.ExpressionString);
                 }
 
                 // append OrderBy, if exists
                 if(this.OrderByClause != null)
                 {
-                    queryStringBuilder.AppendFormat(" {0}", this.OrderByClause.QueryString);
+                    queryStringBuilder.AppendFormat(" {0}", this.OrderByClause.ExpressionString);
                 }                
 
                 return queryStringBuilder.ToString();

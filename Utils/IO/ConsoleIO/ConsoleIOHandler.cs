@@ -794,7 +794,7 @@ namespace CryptoBlock
                 if (!ConsoleIOUtils.IsCursorPointingToBeginningOfLine())
                 {
                     // clear the current console line (holding user input)
-                    ConsoleGraphicsHandler.ClearCurrentLine();
+                    ConsoleGraphicsHandler.ClearConsoleInputLine();
 
                     // restore user input after flush
                     restoreInputToConsoleFlag = true;

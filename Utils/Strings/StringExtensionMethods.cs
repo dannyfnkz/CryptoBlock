@@ -73,30 +73,6 @@ namespace CryptoBlock
                 return str.Substring(prefix.Length);
             }
 
-            public static string CharactersAtIndicesToUpper(this string str, params int[] indices)
-            {
-                char[] stringCharArray = str.ToCharArray();
-
-                for(int i = 0; i < indices.Length; i++)
-                {
-                    stringCharArray[i] = char.ToUpper(stringCharArray[i]);
-                }
-
-                return new string(stringCharArray);
-            }
-
-            public static string CharactersAtIndicesToLower(this string str, params int[] indices)
-            {
-                char[] stringCharArray = str.ToCharArray();
-
-                for (int i = 0; i < indices.Length; i++)
-                {
-                    stringCharArray[i] = char.ToLower(stringCharArray[i]);
-                }
-
-                return new string(stringCharArray);
-            }
-
             /// <summary>
             /// returns whether <paramref name="str"/> starts with one of the prefixes in <paramref name="prefixes"/>.
             /// </summary>
@@ -192,19 +168,68 @@ namespace CryptoBlock
                 return resultString;
             }
 
-            public static string UppercaseOnlyCharactersInIndices(this string str, params int[] indices)
+            /// <summary>
+            /// returns a copy of <paramref name="str"/> where the characters
+            /// at the specified <paramref name="indices"/> are set to uppercase.
+            /// </summary>
+            /// <param name="str"></param>
+            /// <param name="indices"></param>
+            /// <returns>
+            /// a copy of <paramref name="str"/> where the characters
+            /// at the specified <paramref name="indices"/> are set to uppercase.
+            /// </returns>
+            /// <exception cref="IndexOutOfRangeException">
+            /// <seealso cref="StringUtils.AssertValidIndexInString(int, string, string)"/>
+            /// </exception>
+            public static string CharactersAtIndicesToUpper(this string str, params int[] indices)
             {
-                string upperCaseString;
-
                 // assert that all indices are valid
-                for(int i = 0; i < indices.Length; i++)
+                for (int i = 0; i < indices.Length; i++)
                 {
-                    assertValidIndexInString(
-                        str,
+                    StringUtils.AssertValidIndexInString(
                         indices[i],
+                        str,
                         string.Format("indices[{0}]", i)
                     );
                 }
+
+                char[] stringCharArray = str.ToCharArray();
+
+                foreach (int index in indices)
+                {
+                    stringCharArray[index] = char.ToUpper(stringCharArray[index]);
+                }
+
+                return new string(stringCharArray);
+            }
+
+            /// <summary>
+            /// returns a copy of <paramref name="str"/> where the characters
+            /// at the specified <paramref name="indices"/> are set to uppercase,
+            /// and the rest are set to lowercase.
+            /// </summary>
+            /// <param name="str"></param>
+            /// <param name="indices"></param>
+            /// <returns>
+            /// a copy of <paramref name="str"/> where the characters
+            /// at the specified <paramref name="indices"/> are set to uppercase,
+            /// and the rest are set to lowercase
+            /// </returns>
+            public static string MakeOnlyCharactersAtIndicesUpper(
+                this string str, 
+                params int[] indices)
+            {               
+                // assert that all indices are valid
+                for(int i = 0; i < indices.Length; i++)
+                {
+                    StringUtils.AssertValidIndexInString(
+                        indices[i],
+                        str,
+                        string.Format("indices[{0}]", i)
+                    );
+                }
+
+                string upperCaseString;
 
                 char[] stringCharArray = str.ToCharArray();
                 
@@ -223,30 +248,6 @@ namespace CryptoBlock
                 upperCaseString = new string(stringCharArray);
 
                 return upperCaseString;
-            }
-
-            private static void assertValidIndexInString(
-                this string str,
-                int index, 
-                string indexParameterName)
-            {
-                if(index < 0 || index >= str.Length)
-                {
-                    string exceptionMessage = string.Format(
-                        "Value '{0}' of parameter '{1}' was out of range in string.",
-                        index,
-                        indexParameterName);
-                    throw new IndexOutOfRangeException(exceptionMessage);
-                }
-            }
-
-            public static string ToEnumNameFormat(this string enumName)
-            {
-                const int enumNameFirstLetterIndex = 0;
-                string enumNameInFormat = enumName.UppercaseOnlyCharactersInIndices(
-                    enumNameFirstLetterIndex);
-
-                return enumNameInFormat;
             }
         }
     }

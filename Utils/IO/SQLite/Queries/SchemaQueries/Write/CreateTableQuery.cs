@@ -9,6 +9,9 @@ namespace CryptoBlock
 {
     namespace Utils.IO.SQLite.Queries.SchemaQueries.Write
     {
+        /// <summary>
+        /// represents a <see cref="SchemaWriteQuery"/> which creates a table.
+        /// </summary>
         public class CreateTableQuery : SchemaWriteQuery
         {
             private readonly TableSchema tableSchema;
@@ -31,7 +34,7 @@ namespace CryptoBlock
                 queryStringBuilder.Append("CREATE ");
 
                 // append table schema query string
-                queryStringBuilder.Append(this.tableSchema.QueryString);
+                queryStringBuilder.Append(this.TableSchema.ExpressionString);
 
                 return queryStringBuilder.ToString();
             }

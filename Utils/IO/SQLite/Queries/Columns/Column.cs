@@ -8,6 +8,9 @@ namespace CryptoBlock
 {
     namespace Utils.IO.SQLite.Queries.Columns
     {
+        /// <summary>
+        /// represents an SQL table column.
+        /// </summary>
         public class Column : IExpression
         {
             private readonly string name;
@@ -34,7 +37,6 @@ namespace CryptoBlock
             {
                 get { return Name; }
             }
-
         }
     }
 }

@@ -8,9 +8,12 @@ namespace CryptoBlock
 {
     namespace Utils.IO.SQLite.Queries.Conditions
     {
-        public interface Condition
+        /// <summary>
+        /// represents an SQL query condition.
+        /// </summary>
+        public interface ICondition : IExpression
         {
-            string QueryString { get; }
+
         }
     }
 }

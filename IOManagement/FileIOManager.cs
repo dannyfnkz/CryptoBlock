@@ -1,7 +1,8 @@
 ﻿using CryptoBlock.Utils.IO.FileIO;
+using CryptoBlock.Utils.IO.FileIO.Write;
+using CryptoBlock.Utils.IO.FileIO.Write.Backup;
 using System.IO;
 using System.Xml;
-using static CryptoBlock.Utils.IO.FileIO.FileWriteException;
 
 namespace CryptoBlock
 {
@@ -89,28 +90,29 @@ namespace CryptoBlock
 
                 try
                 {
-                    FileIOUtils.WriteTextToFile(filePath, content, backupFilePath);
+                    FileIOUtils.WriteTextToFileWithBackup(filePath, content, backupFilePath);
                 }
-                catch(FileWriteException fileWriteException)
+                catch(BackupFileWriteException backupFileWriteException)
                 {
                     // backup file could not be renamed to requested file path
-                    if(fileWriteException is FileRenameException)
+                    if(backupFileWriteException is BackupFileRenameException)
                     {
-                        FileRenameException fileRenameException = fileWriteException as FileRenameException;
+                        BackupFileRenameException backupFileRenameException =
+                            backupFileWriteException as BackupFileRenameException;
 
                         try
                         {
                             // try renaming backup file to to requested file path
-                            FileIOUtils.RenameFile(fileRenameException.BackupFilePath, filePath);
+                            FileIOUtils.RenameFile(backupFileRenameException.BackupFilePath, filePath);
                         }
-                        catch(FileWriteException) // renaming failed again
+                        catch(FileRenameException) // renaming failed again
                         {
-                            throw fileWriteException; // throw original exception
+                            throw backupFileWriteException; // throw original exception
                         }
                     }
                     else
                     {
-                        throw fileWriteException; // throw original exception
+                        throw backupFileWriteException; // throw original exception
                     }
                 }
             }

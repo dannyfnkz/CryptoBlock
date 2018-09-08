@@ -6,6 +6,9 @@ namespace CryptoBlock
 {
     namespace Utils
     {
+        /// <summary>
+        /// contains utility methods for handling JSON.
+        /// </summary>
         public static class JsonUtils
         {
             /// <summary>

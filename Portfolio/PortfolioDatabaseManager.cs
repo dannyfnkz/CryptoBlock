@@ -15,6 +15,7 @@ using static Utils.IO.SQLite.ResultSet;
 using CryptoBlock.Utils.IO.SQLite.Queries;
 using CryptoBlock.Utils.IO.SQLite.Queries.DataQueries.Write;
 using CryptoBlock.Utils.IO.SQLite.Queries.DataQueries.Read;
+using CryptoBlock.Utils.IO.SQLite.Xml.Documents;
 
 namespace CryptoBlock
 {
@@ -236,7 +237,7 @@ namespace CryptoBlock
                             DatabaseStructure.PortfolioEntryTableStructure.COIN_ID_COLUMN_NAME,
                             DatabaseStructure.PortfolioEntryTableStructure.TABLE_NAME,
                             coinId),
-                        BasicCondition.eComparisonType.Equal
+                        BasicCondition.eOperatorType.Equal
                         )
                     );
 
@@ -309,7 +310,7 @@ namespace CryptoBlock
                             DatabaseStructure.PortfolioEntryTableStructure.COIN_ID_COLUMN_NAME,
                             DatabaseStructure.PortfolioEntryTableStructure.TABLE_NAME,
                             coinId),
-                        BasicCondition.eComparisonType.Equal));
+                        BasicCondition.eOperatorType.Equal));
 
                 ResultSet resultSet = this.sqliteDatabaseHandler.SelectFromTable(selectQuery);
 
@@ -337,7 +338,7 @@ namespace CryptoBlock
                             DatabaseStructure.PortfolioEntryTableStructure.ID_COLUMN_NAME,
                             DatabaseStructure.PortfolioEntryTableStructure.TABLE_NAME,
                             portfolioEntry.Id),
-                        BasicCondition.eComparisonType.Equal
+                        BasicCondition.eOperatorType.Equal
                         )
                     );
 
@@ -372,7 +373,7 @@ namespace CryptoBlock
                             DatabaseStructure.PortfolioEntryTableStructure.COIN_ID_COLUMN_NAME,
                             DatabaseStructure.PortfolioEntryTableStructure.TABLE_NAME,
                             coinId),
-                        BasicCondition.eComparisonType.Equal
+                        BasicCondition.eOperatorType.Equal
                         )
                     );
 
@@ -450,7 +451,7 @@ namespace CryptoBlock
                             DatabaseStructure.TransactionTypeTableStructure.NAME_COLUMN_NAME,
                             DatabaseStructure.TransactionTypeTableStructure.TABLE_NAME,
                             transactionTypeString),
-                        BasicCondition.eComparisonType.Equal
+                        BasicCondition.eOperatorType.Equal
                         )
                     );
 
@@ -477,7 +478,7 @@ namespace CryptoBlock
                             .PORTFOLIO_ENTRY_ID_COLUMN_NAME,
                             DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
                             portfolioEntryId),
-                        BasicCondition.eComparisonType.Equal
+                        BasicCondition.eOperatorType.Equal
                         )
                     );
 
@@ -489,7 +490,7 @@ namespace CryptoBlock
                             DatabaseStructure.CoinTransactionTableStructure.ID_COLUMN_NAME,
                             DatabaseStructure.CoinTransactionTableStructure.TABLE_NAME,
                             transactionIdSelectQuery),
-                        BasicCondition.eComparisonType.In
+                        BasicCondition.eOperatorType.In
                         )
                     );
 
@@ -511,7 +512,7 @@ namespace CryptoBlock
                                 .PORTFOLIO_ENTRY_ID_COLUMN_NAME,
                                 DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
                                 portfolioEntryId),
-                            BasicCondition.eComparisonType.Equal
+                            BasicCondition.eOperatorType.Equal
                             )
                    );
 
@@ -528,7 +529,7 @@ namespace CryptoBlock
                             DatabaseStructure.PortfolioEntryTableStructure.COIN_ID_COLUMN_NAME,
                             DatabaseStructure.PortfolioEntryTableStructure.TABLE_NAME,
                             coinId),
-                        BasicCondition.eComparisonType.Equal)
+                        BasicCondition.eOperatorType.Equal)
                     );
 
                 sqliteDatabaseHandler.DeleteFromTable(portfolioEntryDeleteQuery);

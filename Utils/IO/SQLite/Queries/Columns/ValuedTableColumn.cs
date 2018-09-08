@@ -8,6 +8,9 @@ namespace CryptoBlock
 {
     namespace Utils.IO.SQLite.Queries.Columns
     {
+        /// <summary>
+        /// represents a <see cref="TableColumn"/> having an associated value.
+        /// </summary>
         public class ValuedTableColumn : TableColumn
         {
             private readonly ColumnValue columnValue;
@@ -24,5 +27,4 @@ namespace CryptoBlock
             }
         }
     }
-
 }

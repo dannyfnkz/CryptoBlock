@@ -8,9 +8,12 @@ namespace CryptoBlock
 {
     namespace Utils.IO.SQLite.Queries
     {
+        /// <summary>
+        /// represents an SQLite query.
+        /// </summary>
         public abstract class Query : IExpression
         {
-            public enum eType
+            public enum eQueryType
             {
                 Select, Insert, Update, Delete
             }
@@ -25,6 +28,9 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// string representation of queryץ
+            /// </summary>
             public string QueryString
             {
                 get
@@ -40,7 +46,7 @@ namespace CryptoBlock
 
             protected abstract string BuildQueryString();
 
-            public static string QueryTypeToString(eType queryType)
+            public static string QueryTypeToString(eQueryType queryType)
             {
                 string queryTypeString = queryType.ToString().ToUpper();
                 return queryTypeString;

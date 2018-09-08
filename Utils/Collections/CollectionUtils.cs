@@ -10,7 +10,7 @@ namespace CryptoBlock
     namespace Utils.Collections
     {
         /// <summary>
-        /// contains methods which provide additional utility for <see cref="System.Collections"/>.
+        /// contains utility methods for various types of collections in the .NET framework.
         /// </summary>
         public static class CollectionUtils
         {
@@ -42,6 +42,7 @@ namespace CryptoBlock
             /// foreach (fieldInfo in instanceFields)
             ///     hash = hash * prime1 + fieldInfo.GetValue(obj);
             /// </c>
+            /// where prime0, prime1 are prime numbers.
             /// </remarks>
             /// <param name="obj"></param>
             /// <returns>
@@ -142,25 +143,6 @@ namespace CryptoBlock
                 }
 
                 return mergedArray;
-            }
-
-            internal static void AssertIndexValid<T>(int index, IEnumerable<T> enumerable)
-            {
-                if(index < 0 || index > enumerable.Count())
-                {
-                    string exceptionMessage = "Index must be non-negative and smaller than " +
-                        "number of elements in collection.";
-                    throw new IndexOutOfRangeException(exceptionMessage);
-                }
-            }
-
-            internal static void AssertStartAndEndIndicesValid(int startIndex, int endIndex)
-            {
-                if(startIndex >= endIndex)
-                {
-                    string exceptionMessage = "Start index must be smaller than end index.";
-                    throw new IndexOutOfRangeException(exceptionMessage);
-                }
             }
         }
     }

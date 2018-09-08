@@ -8,10 +8,19 @@ namespace CryptoBlock
 {
     namespace Utils.IO.ConsoleIO
     {
+        /// <summary>
+        /// handles the console graphics.
+        /// </summary>
         internal static class ConsoleGraphicsHandler
         {
+            // holds contents of input line
             private static StringBuilder inputLineBuffer = new StringBuilder(ConsoleIOUtils.WindowWidth);
 
+            /// <summary>
+            /// handles key press encapsulated in <paramref name="consoleKeyInfo"/>,
+            /// and dislays its textual representation to console, if one exists.
+            /// </summary>
+            /// <param name="consoleKeyInfo"></param>
             internal static void HandleInputKey(ConsoleKeyInfo consoleKeyInfo)
             {
                 if (consoleKeyInfo.Key == ConsoleKey.Enter) // key represents enter
@@ -45,7 +54,7 @@ namespace CryptoBlock
                     else // insert within line
                     {
                         // rewrite current line so that insert within line buffer is visible
-                        rewriteCurrentLine();
+                        rewriteInputLineToCosole();
 
                         // move 1 character to the right
                         ConsoleIOUtils.MoveCursorHorizontal(1);
@@ -53,18 +62,43 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// handles <paramref name="output"/> and displays it to console.
+            /// </summary>
+            /// <param name="output"></param>
             internal static void HandleOutput(string output)
             {
                 ConsoleIOUtils.ConsoleWrite(output);
                 setLineBufferToOutputLastLine(output);
             }
 
+            /// <summary>
+            /// overwrites the content of the input line with <paramref name="newInput"/>.
+            /// </summary>
+            /// <param name="newInput"></param>
             internal static void OverwriteInputLine(string newInput)
             {
-                ClearCurrentLine();
+                ClearConsoleInputLine();
                 HandleOutput(newInput);
             }
 
+            /// <summary>
+            /// clears the console input line.
+            /// </summary>
+            internal static void ClearConsoleInputLine()
+            {
+                ConsoleIOUtils.ClearCurrentConsoleLine();
+                ConsoleIOUtils.PointCursorToBeginningOfLine();
+
+                // clear input line buffer
+                inputLineBuffer.Clear();
+            }
+
+            /// <summary>
+            /// sets the contents of <see cref="inputLineBuffer"/> to be the last line of 
+            /// <paramref name="output"/>.
+            /// </summary>
+            /// <param name="output"></param>
             private static void setLineBufferToOutputLastLine(string output)
             {
                 int indexOfLastNewline = output.LastIndexOf(Environment.NewLine);
@@ -81,15 +115,6 @@ namespace CryptoBlock
                 {
                     inputLineBuffer.Append(output);
                 }
-            }
-
-            internal static void ClearCurrentLine()
-            {
-                ConsoleIOUtils.ClearCurrentConsoleLine();
-                ConsoleIOUtils.PointCursorToBeginningOfLine();
-
-                // clear line buffer
-                inputLineBuffer.Clear();
             }
 
             /// <summary>
@@ -112,21 +137,24 @@ namespace CryptoBlock
                     ConsoleIOUtils.MoveCursorHorizontal(-1);
 
                     // remove current character from line buffer
-                    removeFromLineBufferAtCurrentPosition();
+                    removeCharacterFromLineBufferAtCurrentPosition();
 
-                    // rewrite current line without removed character
-                    rewriteCurrentLine();
+                    // rewrite console input line without removed character
+                    rewriteInputLineToCosole();
                 }
             }
 
-            private static void rewriteCurrentLine()
+            /// <summary>
+            /// rewrites the contents of <see cref="inputLineBuffer"/> to the console input line.
+            /// </summary>
+            private static void rewriteInputLineToCosole()
             {
                 // save current line and cursor position
                 string currentLine = inputLineBuffer.ToString();
                 int cursorLeft = ConsoleIOUtils.CursorLeft;
 
                 // clear line
-                ClearCurrentLine();
+                ClearConsoleInputLine();
 
                 // rewrite line and restore cursor position
                 HandleOutput(currentLine);
@@ -157,11 +185,23 @@ namespace CryptoBlock
                 }
             }
 
-            private static void removeFromLineBufferAtCurrentPosition()
+            /// <summary>
+            /// removes from <see cref="inputLineBuffer"/> the character located at the position
+            /// cursor is currently pointing to.
+            /// </summary>
+            /// <exception cref="ArgumentOutOfRangeException">
+            /// thrown if cursor is pointing to start of input line
+            /// </exception>
+            private static void removeCharacterFromLineBufferAtCurrentPosition()
             {
                 inputLineBuffer.Remove(ConsoleIOUtils.CursorLeft, 1);
             }
 
+            /// <summary>
+            /// inserts <paramref name="insertString"/> into <see cref="inputLineBuffer"/> at the position
+            /// cursor is currently pointing to.
+            /// </summary>
+            /// <param name="insertString"></param>
             private static void insertToLineBufferAtCurrentPosition(string insertString)
             {
                 inputLineBuffer.Insert(ConsoleIOUtils.CursorLeft, insertString);

@@ -8,6 +8,9 @@ namespace CryptoBlock
 {
     namespace Utils.IO.SQLite.Queries
     {
+        /// <summary>
+        /// represents a <see cref="Query"/> which performs a read operation.
+        /// </summary>
         public abstract class ReadQuery : Query
         {
         }
