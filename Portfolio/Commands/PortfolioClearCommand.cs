@@ -40,7 +40,8 @@ namespace CryptoBlock
 
                     // log successful removal notice to console
                     ConsoleIOManager.Instance.LogNotice(
-                        "All entries were successfully removed from portfolio.");
+                        "All entries were successfully removed from portfolio.",
+                        ConsoleIOManager.eOutputReportType.CommandExecution);
 
                     commandExecutedSuccessfuly = true;
 

@@ -44,7 +44,7 @@ namespace CryptoBlock
             /// <returns>
             /// string containing specified message preceded by the current datetime.
             /// </returns>
-            public static string GetLogMessage(string message)
+            public static string FormatLogMessage(string message)
             {
                 string dateTimeHeader = GetCurrentDateTimeString();
 

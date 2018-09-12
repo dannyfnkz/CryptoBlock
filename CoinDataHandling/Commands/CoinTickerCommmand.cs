@@ -72,7 +72,9 @@ namespace CryptoBlock
                         string coinTickerTableString =
                             CoinTickerManager.Instance.GetCoinTickerDisplayTableString(
                                 coinIdsWithInitalizedTicker.ToArray());
-                        ConsoleIOManager.Instance.PrintData(coinTickerTableString);
+                        ConsoleIOManager.Instance.PrintData(
+                            coinTickerTableString,
+                            ConsoleIOManager.eOutputReportType.CommandExecution);
                     }
 
                     // if data for coin ids with uninitialized tickers was requested, 
@@ -84,14 +86,18 @@ namespace CryptoBlock
                             ", ",
                             coinNamesWithoutInitalizedTicker.ToArray())
                             + ".";
-                        ConsoleIOManager.Instance.LogError(errorMessage);
+                        ConsoleIOManager.Instance.LogError(
+                            errorMessage,
+                            ConsoleIOManager.eOutputReportType.CommandExecution);
                     }
 
                     commandExecutedSuccessfuly = true;
                 }
                 catch (CoinListingManager.CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                 {
-                    ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
+                    ConsoleIOManager.Instance.LogError(
+                        coinNameOrSymbolNotFoundException.Message,
+                        ConsoleIOManager.eOutputReportType.CommandExecution);
                     commandExecutedSuccessfuly = false;
                 }
 

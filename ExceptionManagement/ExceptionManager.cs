@@ -3,6 +3,7 @@ using CryptoBlock.Utils;
 using System;
 using System.IO;
 using System.Text;
+using static CryptoBlock.IOManagement.ConsoleIOManager;
 
 namespace CryptoBlock
 {
@@ -47,18 +48,30 @@ namespace CryptoBlock
             /// <summary>
             /// logs message refering user to error log file for more information.
             /// </summary>
-            public void ConsoleLogReferToErrorLogFileMessage()
+            /// <param name="outputReportType"></param>
+            public void ConsoleLogReferToErrorLogFileMessage(eOutputReportType outputReportType)
             {
-                ConsoleIOManager.Instance.LogError("Refer to error log file for more information.");
+                ConsoleIOManager.Instance.LogError(
+                    "Refer to error log file for more information.",
+                    outputReportType);
             }
 
             /// <summary>
             /// logs <paramref name="exception"/> to error log file.
             /// </summary>
             /// <param name="exception"></param>
-            public void LogToErrorFile(Exception exception)
+            public void LogException(Exception exception)
             {
-                logToErrorFile(exception, false);
+                string exceptionLog = ExceptionUtils.GetExceptionMessageString(exception);
+
+                // log exception log to error log file and to console
+                logExceptionToErrorFile(exceptionLog, false);
+                logExceptionToConsole(exceptionLog);
+            }
+
+            private void logExceptionToConsole(string exceptionLog)
+            {
+                ConsoleIOManager.Instance.LogError(exceptionLog, eOutputReportType.ExceptionLog);
             }
 
             /// <summary>
@@ -74,7 +87,7 @@ namespace CryptoBlock
             /// </summary>
             /// <param name="exception"></param>
             /// <param name="previousLogAttemptFailed"></param>
-            private void logToErrorFile(Exception exception, bool previousLogAttemptFailed)
+            private void logExceptionToErrorFile(string exceptionLog, bool previousLogAttemptFailed)
             {
                 try
                 {
@@ -97,9 +110,7 @@ namespace CryptoBlock
 
                     stringBuilder.Append(exceptionMessageHeader);
 
-                    string exceptionMessage = ExceptionUtils.GetExceptionMessageString(exception);
-
-                    stringBuilder.Append(exceptionMessage);
+                    stringBuilder.Append(exceptionLog);
 
                     stringBuilder.Append(Environment.NewLine);
 
@@ -110,7 +121,13 @@ namespace CryptoBlock
                 {
                     if(!previousLogAttemptFailed) // first failed attempt to write to log file
                     {
-                        logToErrorFile(new ErrorLogFileWriteException(ex), true);
+                        ErrorLogFileWriteException errorLogFileWriteException
+                            = new ErrorLogFileWriteException(ex);
+
+                        // write ErrorLogFileWriteException exception log to file
+                        string errorLogFileWriteExceptionLog = ExceptionUtils.GetExceptionMessageString(
+                            errorLogFileWriteException);
+                        logExceptionToErrorFile(errorLogFileWriteExceptionLog, true);
                     }                 
                 }
             }

@@ -24,7 +24,9 @@ namespace CryptoBlock
                 void ICommandArgumentConstraint.OnInvalidCommandArgumentArray(string[] commandArgumentArray)
                 {
                     string errorMessage = "Invalid format: number of arguments must be odd.";
-                    ConsoleIOManager.Instance.LogError(errorMessage);
+                    ConsoleIOManager.Instance.LogError(
+                        errorMessage,
+                        ConsoleIOManager.eOutputReportType.CommandExecution);
                 }
             }
 
@@ -130,7 +132,9 @@ namespace CryptoBlock
                         " and smaller than {1}.",
                         0,
                         PortfolioManager.MaxNumericalValueAllowed);
-                    ConsoleIOManager.Instance.LogError(errorMessage);
+                    ConsoleIOManager.Instance.LogError(
+                        errorMessage,
+                        ConsoleIOManager.eOutputReportType.CommandExecution);
 
                     transaction = null;
                     parseResult = false;

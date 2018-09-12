@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static CryptoBlock.IOManagement.ConsoleIOManager;
 using static CryptoBlock.PortfolioManagement.PortfolioManager;
 
 namespace CryptoBlock
@@ -20,9 +21,11 @@ namespace CryptoBlock
                 DatabaseCommunicationException databaseCommunicationException)
             {
                 ConsoleIOManager.Instance.LogError(
-                    "An error occurred while trying to access portfolio database.");
-                ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
-                ExceptionManager.Instance.LogToErrorFile(databaseCommunicationException);
+                    "An error occurred while trying to access portfolio database.",
+                    eOutputReportType.CommandExecution);
+                ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage(
+                    eOutputReportType.CommandExecution);
+                ExceptionManager.Instance.LogException(databaseCommunicationException);
             }
 
             /// <summary>

@@ -118,7 +118,9 @@ namespace CryptoBlock
                                 "{0} Specified sales made successfully.",
                                 sellTransactions.Length);
 
-                        ConsoleIOManager.Instance.LogNotice(successfulSaleNoticeMessage);
+                        ConsoleIOManager.Instance.LogNotice(
+                            successfulSaleNoticeMessage,
+                            ConsoleIOManager.eOutputReportType.CommandExecution);
 
                         commandExecutedSuccessfuly = true;
                     }
@@ -130,7 +132,9 @@ namespace CryptoBlock
                 catch (CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                 {
                     // coin with specified name / symbol not found in listing repository
-                    ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
+                    ConsoleIOManager.Instance.LogError(
+                        coinNameOrSymbolNotFoundException.Message,
+                        ConsoleIOManager.eOutputReportType.CommandExecution);
 
                     commandExecutedSuccessfuly = false;
                 }
@@ -142,6 +146,7 @@ namespace CryptoBlock
 
                     ConsoleIOManager.Instance.LogErrorFormat(
                         false,
+                        ConsoleIOManager.eOutputReportType.CommandExecution,
                         "There's no entry in portfolio manager for '{0}'.",
                         coinName);
 
@@ -157,6 +162,7 @@ namespace CryptoBlock
 
                     ConsoleIOManager.Instance.LogErrorFormat(
                         false,
+                        ConsoleIOManager.eOutputReportType.CommandExecution,
                         "Not enough funds for requested sell operation(s). {0} holdings: {1} {2}.",
                         coinName,
                         insufficientFundsForSellTransactionsException.CoinHoldings,

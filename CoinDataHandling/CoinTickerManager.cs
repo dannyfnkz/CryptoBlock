@@ -5,7 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using static CryptoBlock.CMCAPI.RequestHandler;
+using static CryptoBlock.CMCAPI.CMCRequestHandler;
+using static CryptoBlock.IOManagement.ConsoleIOManager;
 
 namespace CryptoBlock
 {
@@ -464,7 +465,7 @@ namespace CryptoBlock
                     try
                     {
                         // fetch data of current coin section
-                        CoinTicker[] currentCoinTickerSection = RequestHandler.RequestCoinTicker(
+                        CoinTicker[] currentCoinTickerSection = CMCRequestHandler.RequestCoinTicker(
                             leastRecentlyUpdatedCoinIndex,
                             CoinTickerRequestMaxNumberOfCoins);
 
@@ -505,7 +506,9 @@ namespace CryptoBlock
                             }
                             else // notify user that update run is complete
                             {
-                                ConsoleIOManager.Instance.LogNotice("Coin ticker repository updated.");
+                                ConsoleIOManager.Instance.LogNotice(
+                                    "Coin ticker repository updated.",
+                                    ConsoleIOManager.eOutputReportType.System);
                             }
 
                             // wait until next update run
@@ -565,11 +568,13 @@ namespace CryptoBlock
             {
                 // notify user of excpetion
                 ConsoleIOManager.Instance.LogError(
-                    "An exception occurred while trying to update coin ticker repository.");
-                ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
+                    "An exception occurred while trying to update coin ticker repository.",
+                    eOutputReportType.CommandExecution);
+                ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage(
+                    eOutputReportType.CommandExecution);
 
                 // log exception to file
-                ExceptionManager.Instance.LogToErrorFile(dataRequestException);
+                ExceptionManager.Instance.LogException(dataRequestException);
             }
         }
     }

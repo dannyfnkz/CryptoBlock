@@ -16,6 +16,7 @@ using CryptoBlock.Utils.IO.SQLite.Queries;
 using CryptoBlock.Utils.IO.SQLite.Queries.DataQueries.Write;
 using CryptoBlock.Utils.IO.SQLite.Queries.DataQueries.Read;
 using CryptoBlock.Utils.IO.SQLite.Xml.Documents;
+using CryptoBlock.Utils.IO.FileIO;
 
 namespace CryptoBlock
 {
@@ -60,14 +61,14 @@ namespace CryptoBlock
                     internal static readonly string AVERAGE_BUY_PRICE_COLUMN_NAME = "averageBuyPrice";
                 }
 
-                internal static class PortfolioEntryTransactionTableStructure
-                {
-                    internal static readonly string TABLE_NAME = "PortfolioEntryCoinTransaction";
+                //internal static class PortfolioEntryTransactionTableStructure
+                //{
+                //    internal static readonly string TABLE_NAME = "PortfolioEntryCoinTransaction";
 
-                    internal static readonly string ID_COLUMN_NAME = "_id";
-                    internal static readonly string PORTFOLIO_ENTRY_ID_COLUMN_NAME = "portfolioEntryId";
-                    internal static readonly string COIN_TRANSACTION_ID_COLUMN_NAME = "coinTransactionId";
-                }
+                //    internal static readonly string ID_COLUMN_NAME = "_id";
+                //    internal static readonly string PORTFOLIO_ENTRY_ID_COLUMN_NAME = "portfolioEntryId";
+                //    internal static readonly string COIN_TRANSACTION_ID_COLUMN_NAME = "coinTransactionId";
+                //}
 
                 internal static class TransactionTypeTableStructure
                 {
@@ -82,6 +83,7 @@ namespace CryptoBlock
                     internal static readonly string TABLE_NAME = "CoinTransaction";
 
                     internal static readonly string ID_COLUMN_NAME = "_id";
+                    internal static readonly string PORTFOLIO_ENTRY_ID_COLUMN_NAME = "portfolioEntryId";
                     internal static readonly string TRANSACTIO_TYPE_ID_COLUMN_NAME = "coinTransactionTypeId";
                     internal static readonly string AMOUNT_COLUMN_NAME = "amount";
                     internal static readonly string PRICE_PER_COIN_COLUMN_NAME = "pricePerCoin";
@@ -103,11 +105,19 @@ namespace CryptoBlock
 
             private PortfolioDatabaseManager()
             {
-                if (!FileIOManager.Instance.FileExists(SQLite_DATABASE_FILE_PATH))
+                if (!FileIOUtils.FileExists(SQLite_DATABASE_FILE_PATH)) // data file does not exist
                 {
                     try
                     {
+                        ConsoleIOManager.Instance.LogNotice(
+                            "Portfolio data file not found. Creating new data file ..",
+                            ConsoleIOManager.eOutputReportType.SystemCritical);
+
                         createNewPortfolioDatabaseFile();
+
+                        ConsoleIOManager.Instance.LogNotice(
+                            "New portfolio data file created successfully.",
+                            ConsoleIOManager.eOutputReportType.SystemCritical);
                     }
                     catch(Exception exception) 
                     {
@@ -121,8 +131,12 @@ namespace CryptoBlock
                         throw exception;
                     }                  
                 }
-                else
+                else // data file exists
                 {
+                    ConsoleIOManager.Instance.LogNotice(
+                        "Portfolio data file found. Using existing file.",
+                        ConsoleIOManager.eOutputReportType.System);
+
                     useExistingPortfolioDatabaseFile();
                 }
             }
@@ -267,7 +281,12 @@ namespace CryptoBlock
                                 new ValuedColumn[]
                                 {
                                 new ValuedColumn(
-                                    DatabaseStructure.CoinTransactionTableStructure.TRANSACTIO_TYPE_ID_COLUMN_NAME,
+                                    DatabaseStructure.CoinTransactionTableStructure.
+                                    PORTFOLIO_ENTRY_ID_COLUMN_NAME,
+                                    portfolioEntry.Id),
+                                new ValuedColumn(
+                                    DatabaseStructure.CoinTransactionTableStructure.
+                                    TRANSACTIO_TYPE_ID_COLUMN_NAME,
                                     transactionTypeIdSelectQuery),
                                 new ValuedColumn(
                                     DatabaseStructure.CoinTransactionTableStructure.AMOUNT_COLUMN_NAME,
@@ -283,9 +302,9 @@ namespace CryptoBlock
 
                             sqliteDatabaseHandler.InsertIntoTable(insertTransactionIntoTableQuery);
 
-                            // create database association between inserted Transaction
-                            // and its corresponding PortfolioEntry
-                            associatePortfolioEntryAndLastInsertedTransaction(portfolioEntry.Id);
+                            //// create database association between inserted Transaction
+                            //// and its corresponding PortfolioEntry
+                            //associatePortfolioEntryAndLastInsertedTransaction(portfolioEntry.Id);
                         }
                 );
 
@@ -461,63 +480,75 @@ namespace CryptoBlock
             // assumes SQL transaction is underway
             private void deleteTransactionsAssociatedWithPortfolioEntry(long portfolioEntryId)
             {
-                // select transactionIds associated with portfolioEntryId
-                SelectQuery transactionIdSelectQuery = new SelectQuery
-                    (DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
-                    new TableColumn[]
-                    {
-                        new TableColumn(
-                            DatabaseStructure.PortfolioEntryTransactionTableStructure
-                            .COIN_TRANSACTION_ID_COLUMN_NAME,
-                            DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME)
-                    },
-                    null,
-                    new BasicCondition(
-                        new ValuedTableColumn(
-                            DatabaseStructure.PortfolioEntryTransactionTableStructure
-                            .PORTFOLIO_ENTRY_ID_COLUMN_NAME,
-                            DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
-                            portfolioEntryId),
-                        BasicCondition.eOperatorType.Equal
-                        )
-                    );
+                //// select transactionIds associated with portfolioEntryId
+                //SelectQuery transactionIdSelectQuery = new SelectQuery
+                //    (DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
+                //    new TableColumn[]
+                //    {
+                //        new TableColumn(
+                //            DatabaseStructure.PortfolioEntryTransactionTableStructure
+                //            .COIN_TRANSACTION_ID_COLUMN_NAME,
+                //            DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME)
+                //    },
+                //    null,
+                //    new BasicCondition(
+                //        new ValuedTableColumn(
+                //            DatabaseStructure.PortfolioEntryTransactionTableStructure
+                //            .PORTFOLIO_ENTRY_ID_COLUMN_NAME,
+                //            DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
+                //            portfolioEntryId),
+                //        BasicCondition.eOperatorType.Equal
+                //        )
+                //    );
 
-                // delete Transactions with selected transactionIds from "CoinTransaction" table
+                //// delete Transactions with selected transactionIds from "CoinTransaction" table
+                //DeleteQuery transactionDeleteQuery = new DeleteQuery(
+                //    DatabaseStructure.CoinTransactionTableStructure.TABLE_NAME,
+                //    new BasicCondition(
+                //        new ValuedTableColumn(
+                //            DatabaseStructure.CoinTransactionTableStructure.ID_COLUMN_NAME,
+                //            DatabaseStructure.CoinTransactionTableStructure.TABLE_NAME,
+                //            transactionIdSelectQuery),
+                //        BasicCondition.eOperatorType.In
+                //        )
+                //    );
+
+                //sqliteDatabaseHandler.DeleteFromTable(transactionDeleteQuery);
+
+                //// delete association between deleted Transactions and deleted PortfolioEntry
+                //// from "PortfolioEntryTransaction" table
+                //deletePortfolioEntryTransactionAssociations(portfolioEntryId);
+
                 DeleteQuery transactionDeleteQuery = new DeleteQuery(
                     DatabaseStructure.CoinTransactionTableStructure.TABLE_NAME,
                     new BasicCondition(
                         new ValuedTableColumn(
-                            DatabaseStructure.CoinTransactionTableStructure.ID_COLUMN_NAME,
+                            DatabaseStructure.CoinTransactionTableStructure.PORTFOLIO_ENTRY_ID_COLUMN_NAME,
                             DatabaseStructure.CoinTransactionTableStructure.TABLE_NAME,
-                            transactionIdSelectQuery),
-                        BasicCondition.eOperatorType.In
+                            portfolioEntryId),
+                        BasicCondition.eOperatorType.Equal
                         )
                     );
-
-                sqliteDatabaseHandler.DeleteFromTable(transactionDeleteQuery);
-
-                // delete association between deleted Transactions and deleted PortfolioEntry
-                // from "PortfolioEntryTransaction" table
-                deletePortfolioEntryTransactionAssociations(portfolioEntryId);
+                this.sqliteDatabaseHandler.DeleteFromTable(transactionDeleteQuery);
             }
 
-            private void deletePortfolioEntryTransactionAssociations(long portfolioEntryId)
-            {
-                DeleteQuery transactionToPortfolioEntryAssociationDeleteQuery =
-                    new DeleteQuery(
-                        DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
-                        new BasicCondition(
-                            new ValuedTableColumn(
-                                DatabaseStructure.PortfolioEntryTransactionTableStructure
-                                .PORTFOLIO_ENTRY_ID_COLUMN_NAME,
-                                DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
-                                portfolioEntryId),
-                            BasicCondition.eOperatorType.Equal
-                            )
-                   );
+            //private void deletePortfolioEntryTransactionAssociations(long portfolioEntryId)
+            //{
+            //    DeleteQuery transactionToPortfolioEntryAssociationDeleteQuery =
+            //        new DeleteQuery(
+            //            DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
+            //            new BasicCondition(
+            //                new ValuedTableColumn(
+            //                    DatabaseStructure.PortfolioEntryTransactionTableStructure
+            //                    .PORTFOLIO_ENTRY_ID_COLUMN_NAME,
+            //                    DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
+            //                    portfolioEntryId),
+            //                BasicCondition.eOperatorType.Equal
+            //                )
+            //       );
 
-                sqliteDatabaseHandler.DeleteFromTable(transactionToPortfolioEntryAssociationDeleteQuery);
-            }
+            //    sqliteDatabaseHandler.DeleteFromTable(transactionToPortfolioEntryAssociationDeleteQuery);
+            //}
 
             private void deletePortfolioEntry(long coinId)
             {
@@ -535,35 +566,35 @@ namespace CryptoBlock
                 sqliteDatabaseHandler.DeleteFromTable(portfolioEntryDeleteQuery);
             }
 
-            private void associatePortfolioEntryAndLastInsertedTransaction(long portfolioEntryId)
-            {
-                // get id of inserted Transaction
-                SelectQuery transactionIdSelectQuery = new SelectQuery(
-                    null,
-                    new TableColumn[]
-                    {
-                                new FunctionTableColumn(FunctionTableColumn.eFunctionType.LastInsertRowid)
-                    });
+            //private void associatePortfolioEntryAndLastInsertedTransaction(long portfolioEntryId)
+            //{
+            //    // get id of inserted Transaction
+            //    SelectQuery transactionIdSelectQuery = new SelectQuery(
+            //        null,
+            //        new TableColumn[]
+            //        {
+            //                    new FunctionTableColumn(FunctionTableColumn.eFunctionType.LastInsertRowid)
+            //        });
 
-                // create association between inserted Transaction and PortfolioEntry
-                // by INSERTing into "PortfolioEntryTransaction" table
-                InsertQuery associateTransactionWithPortfolioEntryInsertQuery = new InsertQuery(
-                    DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
-                    new ValuedColumn[]
-                    {
-                                new ValuedColumn(
-                                    DatabaseStructure.PortfolioEntryTransactionTableStructure
-                                    .PORTFOLIO_ENTRY_ID_COLUMN_NAME,
-                                    portfolioEntryId),
-                                new ValuedColumn(
-                                    DatabaseStructure.PortfolioEntryTransactionTableStructure
-                                    .COIN_TRANSACTION_ID_COLUMN_NAME,
-                                    transactionIdSelectQuery)
-                    });
+            //    // create association between inserted Transaction and PortfolioEntry
+            //    // by INSERTing into "PortfolioEntryTransaction" table
+            //    InsertQuery associateTransactionWithPortfolioEntryInsertQuery = new InsertQuery(
+            //        DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
+            //        new ValuedColumn[]
+            //        {
+            //                    new ValuedColumn(
+            //                        DatabaseStructure.PortfolioEntryTransactionTableStructure
+            //                        .PORTFOLIO_ENTRY_ID_COLUMN_NAME,
+            //                        portfolioEntryId),
+            //                    new ValuedColumn(
+            //                        DatabaseStructure.PortfolioEntryTransactionTableStructure
+            //                        .COIN_TRANSACTION_ID_COLUMN_NAME,
+            //                        transactionIdSelectQuery)
+            //        });
 
-                sqliteDatabaseHandler.InsertIntoTable(
-                    associateTransactionWithPortfolioEntryInsertQuery);
-            }
+            //    sqliteDatabaseHandler.InsertIntoTable(
+            //        associateTransactionWithPortfolioEntryInsertQuery);
+            //}
 
             private void createNewPortfolioDatabaseFile()
             {

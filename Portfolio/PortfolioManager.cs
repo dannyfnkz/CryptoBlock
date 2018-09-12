@@ -266,7 +266,6 @@ namespace CryptoBlock
             /// <exception cref="DatabaseCommunicationException">
             /// <seealso cref="handleDatabaseHandlerException(string, SQLiteDatabaseHandlerException)"/>
             /// </exception> 
-            [JsonIgnore]
             public long[] CoinIds
             {
                 get

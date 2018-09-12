@@ -2,6 +2,9 @@
 using CryptoBlock.CommandHandling.Arguments;
 using CryptoBlock.IOManagement;
 using CryptoBlock.SystemManagement.Commands;
+using CryptoBlock.SystemManagement.Commands.Settings.Get;
+using CryptoBlock.SystemManagement.Commands.Settings.Set;
+using CryptoBlock.SystemManagement.Commands.Status;
 using CryptoBlock.Utils.InternetUtils;
 using System;
 
@@ -20,7 +23,9 @@ namespace CryptoBlock
             {
                 // add associations between commands and their prefixes
                 AddCommandPrefixToCommandPair(
-                    new InternetConnectivityStatusCommand());
+                    new InternetConnectivityStatusCommand(),
+                    new ReportingProfileSettingSetCommand(),
+                    new ReportingProfileSettingGetCommand());
             }
 
             public override string CommandType

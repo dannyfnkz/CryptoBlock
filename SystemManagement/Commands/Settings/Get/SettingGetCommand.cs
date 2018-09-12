@@ -1,6 +1,4 @@
-﻿using CryptoBlock.CommandHandling;
-using CryptoBlock.CommandHandling.Arguments;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,23 +6,17 @@ using System.Threading.Tasks;
 
 namespace CryptoBlock
 {
-    namespace SystemManagement.Commands
+    namespace SystemManagement.Commands.Settings.Get
     {
-        /// <summary>
-        /// represents an executable status command.
-        /// </summary>
-        internal abstract class StatusCommand : SystemCommand
+        internal abstract class SettingGetCommand : SettingCommand
         {
-            private const int MIN_NUMBER_OF_ARGUMENTS = 0;
-            private const int MAX_NUMBER_OF_ARGUMENTS = 0;
+            private const string PREFIX = "get";
 
-            private const string PREFIX = "status";
-
-            internal StatusCommand(string inheritingCommandPrefix)
-                : base(
-                      formatPrefix(inheritingCommandPrefix),
-                      MIN_NUMBER_OF_ARGUMENTS,
-                      MAX_NUMBER_OF_ARGUMENTS)
+            internal SettingGetCommand(
+                string inheritingCommandPrefix,
+                int minNumberOfArguments,
+                int maxNumberOfArguments)
+                : base(formatPrefix(inheritingCommandPrefix), minNumberOfArguments, maxNumberOfArguments)
             {
 
             }

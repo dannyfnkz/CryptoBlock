@@ -16,7 +16,7 @@ namespace CryptoBlock
         /// <remarks>
         /// uses coinmarkcap public API Version 2.
         /// </remarks>
-        public static class RequestHandler
+        public static class CMCRequestHandler
         {
             public enum eSortType
             {

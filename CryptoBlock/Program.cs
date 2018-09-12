@@ -5,11 +5,13 @@ using CryptoBlock.Utils.IO.SQLite.Queries.Columns;
 using CryptoBlock.Utils.IO.SQLite.Queries.Conditions;
 using CryptoBlock.Utils.IO.SQLite.Schema;
 using CryptoBlock.Utils.IO.SQLite.Schemas;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Utils.IO.SQLite;
 
 namespace CryptoBlock
@@ -17,9 +19,32 @@ namespace CryptoBlock
 
     class Program
     {
+        class TempJsonObject
+        {
+            private int intField;
+            private string stringField;
+
+            [JsonConstructor]
+            public TempJsonObject(int intField, string stringField)
+            {
+                this.intField = intField;
+                this.stringField = stringField;
+            }
+
+            [JsonProperty]
+            internal int IntField
+            {
+                get { return intField; }
+            }
+
+            [JsonProperty]
+            internal string StringField
+            {
+                get { return stringField; }
+            }
+        }
         static void Main(string[] args)
         {
-
             new ProgramManager().StartProgram();
 
             //SQLiteDatabaseHandler handler = new SQLiteDatabaseHandler(

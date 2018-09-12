@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace CryptoBlock
 {
-    namespace SystemManagement.Commands
+    namespace SystemManagement.Commands.Status
     {
         /// <summary>
         /// <para>
@@ -39,7 +39,9 @@ namespace CryptoBlock
             {
                 bool commandExecutedSuccessfuly;
 
-                ConsoleIOManager.Instance.LogNotice("Checking internet connectivity ..");
+                ConsoleIOManager.Instance.LogNotice(
+                    "Checking internet connectivity ..",
+                    ConsoleIOManager.eOutputReportType.CommandExecution);
 
                 bool connectedToInternet = InternetUtils.IsConnectedToInternet();
 
@@ -47,7 +49,9 @@ namespace CryptoBlock
                     "Device is connected to internet."
                     : "No internet connection.";
 
-                ConsoleIOManager.Instance.LogNotice(notice);
+                ConsoleIOManager.Instance.LogNotice(
+                    notice,
+                    ConsoleIOManager.eOutputReportType.CommandExecution);
 
                 commandExecutedSuccessfuly = true;
 

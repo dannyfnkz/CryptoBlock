@@ -1,4 +1,5 @@
 ﻿using CryptoBlock.Utils;
+using CryptoBlock.Utils.Collections;
 using CryptoBlock.Utils.IO.ConsoleIO;
 using System;
 
@@ -7,7 +8,7 @@ namespace CryptoBlock
     namespace IOManagement
     {
         /// <summary>
-        /// manages Console input / output operations.
+        /// manages console input / output operations.
         /// </summary>
         /// <remarks>
         /// only one instance of <see cref="ConsoleIOHandler"/> exists in the application.
@@ -15,11 +16,36 @@ namespace CryptoBlock
         /// <seealso cref="Utils.ConsoleIOHandler"/>
         public class ConsoleIOManager : ConsoleIOHandler
         {
+            public enum eOutputReportType
+            {
+                ExceptionLog, System, SystemCritical, CommandExecution
+            }
+
+            private static readonly eOutputReportType[] DEFAULT_OUTPUT_REPORT_TYPES =
+                new eOutputReportType[]
+                {
+                    eOutputReportType.SystemCritical,
+                    eOutputReportType.CommandExecution  
+                };
+
             private static readonly ConsoleIOManager instance = new ConsoleIOManager();
+
+            private eOutputReportType[] outputReportTypes = DEFAULT_OUTPUT_REPORT_TYPES;
+       //     private int reportLevel = getReportLevel(DEFAULT_REPORT_Entities);
 
             public static ConsoleIOManager Instance
             {
                 get { return instance; }
+            }
+
+            public eOutputReportType[] OutputReportTypes
+            {
+                get { return outputReportTypes; }
+                set
+                {
+                    outputReportTypes = value ?? throw new ArgumentNullException("OutputReportTypes");
+    //                reportLevel = getReportLevel(reportEntities);
+                }
             }
 
             /// <summary>
@@ -38,10 +64,14 @@ namespace CryptoBlock
             /// <exception cref="ObjectDisposedException">
             /// <seealso cref="LogNotice(string, bool)"/>
             /// </exception>
-            public void LogNoticeFormat(bool flushOutputBuffer, string format, params object[] args)
+            public void LogNoticeFormat(
+                bool flushOutputBuffer,
+                eOutputReportType outputReportType,
+                string format,
+                params object[] args)
             {
                 string message = string.Format(format, args);
-                LogNotice(message, flushOutputBuffer);
+                LogNotice(message, outputReportType, flushOutputBuffer);
             }
 
             /// <summary>
@@ -52,10 +82,13 @@ namespace CryptoBlock
             /// <param name="flushOutputBuffer"></param>
             /// <exception cref="ObjectDisposedException"><see cref="ConsoleIOHandler.QueueOutput(string, bool)"/>
             /// </exception>
-            public void LogNotice(string message, bool flushOutputBuffer = false)
+            public void LogNotice(
+                string message,
+                eOutputReportType outputReportType, 
+                bool flushOutputBuffer = false)
             {
-                string outputString = getLogMessage(message);
-                base.QueueOutput(outputString, flushOutputBuffer);
+                string outputString = formatLogMessage(message);
+                logoutput(outputString, outputReportType, flushOutputBuffer);
             }
 
             /// <summary>
@@ -66,10 +99,13 @@ namespace CryptoBlock
             /// <seealso cref="ConsoleIOHandler.QueueOutput(string, bool)"/> 
             /// <param name="message"></param>
             /// <param name="flushOutputBuffer"></param>
-            public void LogError(string message, bool flushOutputBuffer = false)
+            public void LogError(
+                string message,
+                eOutputReportType outputReportType
+                , bool flushOutputBuffer = false)
             {
-                string outputString = getLogMessage(message);
-                base.QueueOutput(outputString, flushOutputBuffer);
+                string outputString = formatLogMessage(message);
+                logoutput(outputString, outputReportType, flushOutputBuffer);
             }
 
             /// <summary>
@@ -88,10 +124,14 @@ namespace CryptoBlock
             /// <exception cref="ObjectDisposedException">
             /// <seealso cref="LogError(string, bool)"/>
             /// </exception> 
-            public void LogErrorFormat(bool flushOutputBuffer, string format, params object[] args)
+            public void LogErrorFormat(
+                bool flushOutputBuffer,
+                eOutputReportType outputReportType,
+                string format,
+                params object[] args)
             {
-                string message = string.Format(format, args);
-                LogError(message, flushOutputBuffer);
+                string outputString = string.Format(format, args);
+                logoutput(outputString, outputReportType, flushOutputBuffer);
             }
 
             /// <summary>
@@ -106,10 +146,10 @@ namespace CryptoBlock
             /// <exception cref="ObjectDisposedException">
             /// <seealso cref="QueueOutput(string,bool)"/>
             /// </exception>
-            public void PrintData(string data, bool flushOutputBuffer = false)
+            public void PrintData(string data, eOutputReportType outputReportType, bool flushOutputBuffer = false)
             {
-                string outputString = data + Environment.NewLine;
-                base.QueueOutput(outputString, flushOutputBuffer);
+                string outputString = data;
+                logoutput(outputString, outputReportType, flushOutputBuffer);
             }
 
             /// <summary>
@@ -120,16 +160,16 @@ namespace CryptoBlock
             /// <exception cref="ObjectDisposedException">
             /// <see cref="ConsoleIOHandler.QueueOutput(string, bool)"/>
             /// </exception>
-            public void PrintNewLine(bool flushOutputBuffer = false)
+            public void PrintNewLine(eOutputReportType outputReportType, bool flushOutputBuffer = false)
             {
-                string outputString = Environment.NewLine;
-                QueueOutput(outputString, flushOutputBuffer);
+                string outputString = string.Empty;
+                logoutput(outputString, outputReportType, flushOutputBuffer);
             }
 
-            public void showPressAnyKeyToContinueDialog()
+            public void ShowPressAnyKeyToContinueDialog(eOutputReportType outputReportType)
             {
                 string dialogPromptMessage = "Press any key to continue ..";
-                LogNotice(dialogPromptMessage);
+                LogNotice(dialogPromptMessage, outputReportType);
 
                 // wait for key press
                 base.ReadKey();
@@ -148,13 +188,13 @@ namespace CryptoBlock
             /// <exception cref="ObjectDisposedException">
             /// <seealso cref="LogNotice(string, bool)"/>
             /// </exception>
-            public bool ShowConfirmationDialog(string promptMessage)
+            public bool ShowConfirmationDialog(string promptMessage, eOutputReportType outputReportType)
             {
                 bool userChoice;
 
                 // construct dialog display message
                 string dialogPromptMessage = promptMessage + " (Y/N)";
-                LogNotice(dialogPromptMessage);
+                LogNotice(dialogPromptMessage, outputReportType);
 
                 // read user input
                 string userInput = base.ReadLine().ToLower();
@@ -162,7 +202,7 @@ namespace CryptoBlock
                 // keep requesting input so long as it's not valid
                 while(userInput != "y" && userInput != "n")
                 {
-                    LogNotice("Invalid input, please select 'Y' or 'N'");
+                    LogNotice("Invalid input, please select 'Y' or 'N'", outputReportType);
                     userInput = base.ReadLine().ToLower();
                 }
 
@@ -171,15 +211,67 @@ namespace CryptoBlock
                 return userChoice;
             }
 
+            public int ShowMenuDialog(MenuDialog menuDialog, eOutputReportType outputReportType)
+            {
+                // display menu dialog
+                LogNotice(menuDialog.DisplayString, outputReportType);
+
+                // read user input
+                string userInput = base.ReadLine();
+
+                // parse int from user input
+                bool parseSuccessful = int.TryParse(userInput, out int userSelectedOptionIndex);
+
+                // keep requesting input so long as it's not valid
+                while (!(parseSuccessful && menuDialog.IsValidOptionIndex(userSelectedOptionIndex)))
+                {
+                    LogNoticeFormat(
+                        false,
+                        outputReportType,
+                        "Invalid input, please select an option in range [{0} - {1}]:", 
+                         menuDialog.MinValidOptionIndex,
+                         menuDialog.MaxValidOptionIndex);
+
+                    userInput = base.ReadLine();
+                    parseSuccessful = int.TryParse(userInput, out userSelectedOptionIndex);
+                }
+
+                return userSelectedOptionIndex;
+            }
+
+            private void logoutput(
+                string output,
+                eOutputReportType outputReportType,
+                bool flushOutputBuffer)
+            {
+                string outputWithNewline = output + Environment.NewLine;
+                if (this.OutputReportTypes.Contains(outputReportType))
+                {
+                    base.QueueOutput(outputWithNewline, flushOutputBuffer);
+                }
+            }
+
+            //private static int getReportLevel(params eOutputReportType[] reportEntities)
+            //{
+            //    int reportLevel = 0;
+
+            //    foreach (eOutputReportType outputReportType in reportEntities)
+            //    {
+            //        reportLevel |= (int)outputReportType;
+            //    }
+
+            //    return reportLevel;
+            //}
+
             /// <summary>
             /// returns a log message containing <paramref name="message"/>.
             /// </summary>
             /// <seealso cref="Utils.DateTimeUtils.GetLogMessage(string)"/>
             /// <param name="message"></param>
             /// <returns></returns>
-            private string getLogMessage(string message)
+            private string formatLogMessage(string message)
             {
-                return DateTimeUtils.GetLogMessage(message) + Environment.NewLine; ;
+                return DateTimeUtils.FormatLogMessage(message);
             }
         }
     }

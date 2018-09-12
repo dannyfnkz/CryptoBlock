@@ -40,6 +40,7 @@ namespace CryptoBlock
             {
                 ConsoleIOManager.Instance.LogErrorFormat(
                     false,
+                    ConsoleIOManager.eOutputReportType.CommandExecution,
                     "Wrong number of arguments for command: should be between {0} and {1}.",
                     minNumberOfArguments,
                     maxNumberOfArguments);

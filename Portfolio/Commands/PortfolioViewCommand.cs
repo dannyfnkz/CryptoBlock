@@ -90,12 +90,16 @@ namespace CryptoBlock
                         string portfolioEntryDisplayTableString =
                             PortfolioManager.Instance.GetPortfolioEntryDisplayTableString(
                                 coinIdsWithPortfolioEntry.ToArray());
-                        ConsoleIOManager.Instance.PrintData(portfolioEntryDisplayTableString);
+                        ConsoleIOManager.Instance.PrintData(
+                            portfolioEntryDisplayTableString,
+                            ConsoleIOManager.eOutputReportType.CommandExecution);
                     }
                     else // no PortfolioEntries to display
                     {
                         string noticeMessage = "No portfolio entries to display.";
-                        ConsoleIOManager.Instance.LogNotice(noticeMessage);
+                        ConsoleIOManager.Instance.LogNotice(
+                            noticeMessage,
+                            ConsoleIOManager.eOutputReportType.CommandExecution);
                     }
 
                     // if data for coin ids which don't have corresponding porfolio entries was requested, 
@@ -107,14 +111,18 @@ namespace CryptoBlock
                             ", ",
                             coinNamesWithoutPortfolioEntry.ToArray())
                             + ".";
-                        ConsoleIOManager.Instance.LogNotice(noticeMessage);
+                        ConsoleIOManager.Instance.LogNotice(
+                            noticeMessage,
+                            ConsoleIOManager.eOutputReportType.CommandExecution);
                     }
 
                     commandExecutedSuccessfuly = true;
                 }
                 catch (CoinListingManager.CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                 {
-                    ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
+                    ConsoleIOManager.Instance.LogError(
+                        coinNameOrSymbolNotFoundException.Message,
+                        ConsoleIOManager.eOutputReportType.CommandExecution);
                     commandExecutedSuccessfuly = false;
                 }
                 catch (DatabaseCommunicationException databaseCommunicationException)

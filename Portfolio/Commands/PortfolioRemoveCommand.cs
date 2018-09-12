@@ -60,14 +60,18 @@ namespace CryptoBlock
 
                     // log success notice
                     string portfolioRemoveSuccessNotice = buildPortfolioRemoveSuccessNotice(coinIds);
-                    ConsoleIOManager.Instance.LogNotice(portfolioRemoveSuccessNotice);
+                    ConsoleIOManager.Instance.LogNotice(
+                        portfolioRemoveSuccessNotice,
+                        ConsoleIOManager.eOutputReportType.CommandExecution);
 
                     commandExecutedSuccessfuly = true;
                 }
                 catch (CoinListingManager.CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                 {
                     // coin with specified name / symbol not found in listing repository
-                    ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
+                    ConsoleIOManager.Instance.LogError(
+                        coinNameOrSymbolNotFoundException.Message,
+                        ConsoleIOManager.eOutputReportType.CommandExecution);
 
                     commandExecutedSuccessfuly = false;
                 }
@@ -79,6 +83,7 @@ namespace CryptoBlock
 
                     ConsoleIOManager.Instance.LogErrorFormat(
                         false,
+                        ConsoleIOManager.eOutputReportType.CommandExecution,
                         "There's no entry in portfolio manager for '{0}'.",
                         coinName);
 

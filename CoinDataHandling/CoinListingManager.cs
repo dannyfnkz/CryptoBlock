@@ -1,7 +1,7 @@
 ﻿using CryptoBlock.CMCAPI;
 using System;
 using System.Collections.Generic;
-using static CryptoBlock.CMCAPI.RequestHandler;
+using static CryptoBlock.CMCAPI.CMCRequestHandler;
 
 namespace CryptoBlock
 {
@@ -540,7 +540,7 @@ namespace CryptoBlock
             {
                 try
                 {
-                    CoinListing[] coinListingArray = RequestHandler.RequestCoinListings();
+                    CoinListing[] coinListingArray = CMCRequestHandler.RequestCoinListings();
 
                     // update id-to-CoinListing, name-to-CoinListing, symbol-to-CoinListing dictionaries
                     for (int i = 0; i < coinListingArray.Length; i++)

@@ -15,6 +15,11 @@ namespace CryptoBlock
         /// </summary>
         public static class ArrayExtensionMethods
         {
+            public static bool Contains<T>(this T[] array, T element)
+            {
+                return Array.IndexOf(array, element) > -1;
+            }
+
             public static K[] CastAll<T,K>(this T[] sourceArray) where K : class where T : class
             {
                 K[] resultArray = new K[sourceArray.Length];

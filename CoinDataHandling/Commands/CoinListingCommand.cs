@@ -48,13 +48,17 @@ namespace CryptoBlock
                     // to fetched coin ids
                     string coinListingTableString =
                         CoinListingManager.Instance.GetCoinListingTableDisplayString(coinIds);
-                    ConsoleIOManager.Instance.PrintData(coinListingTableString);
+                    ConsoleIOManager.Instance.PrintData(
+                        coinListingTableString,
+                        ConsoleIOManager.eOutputReportType.CommandExecution);
 
                     commandExecutedSuccessfuly = true;
                 }
                 catch (CoinListingManager.CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                 {
-                    ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
+                    ConsoleIOManager.Instance.LogError(
+                        coinNameOrSymbolNotFoundException.Message,
+                        ConsoleIOManager.eOutputReportType.CommandExecution);
                     commandExecutedSuccessfuly = false;
                 }
 

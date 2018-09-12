@@ -5,11 +5,17 @@ using System.Threading;
 using CryptoBlock.CommandHandling;
 using CryptoBlock.PortfolioManagement;
 using static CryptoBlock.PortfolioManagement.PortfolioManager;
+using CryptoBlock.SettingsManagement;
+using static CryptoBlock.IOManagement.ConsoleIOManager;
+using static CryptoBlock.SettingsManagement.SettingsManager;
+using System;
 
 namespace CryptoBlock
 {
     internal class ProgramManager
     {
+        private const int USER_COMMAND_LISTEN_SLEEP_TIME_MILLIS = 10;
+
         private readonly EventWaitHandle userHitReturnKeyWaitHandle = new AutoResetEvent(false);
 
         internal void StartProgram()
@@ -48,7 +54,8 @@ namespace CryptoBlock
 
         private void coinDataManager_RepositoryInitialized(CoinTickerManager coinDataManager)
         {
-            ConsoleIOManager.Instance.LogNotice("Coin ticker repository initialized successfully.");
+            ConsoleIOManager.Instance.LogNotice("Coin ticker repository initialized successfully.",
+                ConsoleIOManager.eOutputReportType.System);
         }
 
         private void initializeManagers()
@@ -62,12 +69,10 @@ namespace CryptoBlock
             catch (DatabaseCommunicationException databaseCommunicationException)
             {
                 ConsoleIOManager.Instance.LogError(
-                    "An exception occurred while trying to initialize portfolio data file." +
-                    " Program cannot be started.");
-                ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
-                ExceptionManager.Instance.LogToErrorFile(databaseCommunicationException);
-
-                ConsoleIOManager.Instance.showPressAnyKeyToContinueDialog();
+                    "An exception occurred while trying to initialize Portfolio Manager." +
+                    " Program cannot be started.",
+                    eOutputReportType.SystemCritical);
+                logExceptionAndEndProgram(databaseCommunicationException);
 
                 return;
             }
@@ -75,6 +80,21 @@ namespace CryptoBlock
             initializeCoinTickerManager(CoinListingManager.Instance.RepositoryCount);
 
             initializeCommandParsingManager();
+
+            try
+            { 
+                initializeSettingsManager(); 
+            }
+            catch (SettingsManagerInitializationException settingsManagerInitializationException)
+            {
+                ConsoleIOManager.Instance.LogError(
+                    "An exception occurred while trying to initialize Settings Manager." +
+                    " Program cannot be started.",
+                    eOutputReportType.SystemCritical);
+                logExceptionAndEndProgram(settingsManagerInitializationException);
+
+                return;
+            }
         }
 
         private void initializeCoinListingManager()
@@ -83,7 +103,9 @@ namespace CryptoBlock
 
             while (!coinListingRepositoryInitialized)
             {
-                ConsoleIOManager.Instance.LogNotice("Initializing coin listing repository ..");
+                ConsoleIOManager.Instance.LogNotice(
+                    "Initializing coin listing repository ..",
+                    ConsoleIOManager.eOutputReportType.SystemCritical);
 
                 try
                 {
@@ -92,18 +114,24 @@ namespace CryptoBlock
                 }
                 catch (CoinListingManager.RepositoryUpdateException repositoryUpdateException)
                 {
-                    ExceptionManager.Instance.LogToErrorFile(repositoryUpdateException);
+                    ExceptionManager.Instance.LogException(repositoryUpdateException);
 
-                    ConsoleIOManager.Instance.LogError("An error occurred while trying to" +
-                        " initialize coin listing repository.");
-                    ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
-                    ConsoleIOManager.Instance.LogNotice("Retrying ..");
+                    ConsoleIOManager.Instance.LogError(
+                        "An error occurred while trying to initialize coin listing repository.",
+                        eOutputReportType.SystemCritical);
+                    ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage(
+                        eOutputReportType.CommandExecution);
+                    ConsoleIOManager.Instance.LogNotice(
+                        "Retrying ..",
+                        eOutputReportType.SystemCritical);
 
                     Thread.Sleep(5000);
                 }
             }
 
-            ConsoleIOManager.Instance.LogNotice("Coin listing repository initialized successfully.");
+            ConsoleIOManager.Instance.LogNotice(
+                "Coin listing repository initialized successfully.",
+                ConsoleIOManager.eOutputReportType.SystemCritical);
         }
 
         private void initializeCoinTickerManager(int numberOfCoins)
@@ -120,6 +148,21 @@ namespace CryptoBlock
         private void initializeCommandParsingManager()
         {
             CommandParsingManager.Initialize();
+        }
+
+        private void initializeSettingsManager()
+        {
+            SettingsManager.Initialize();
+        }
+
+        private void logExceptionAndEndProgram(Exception exception)
+        {
+            ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage(
+                eOutputReportType.SystemCritical);
+            ExceptionManager.Instance.LogException(exception);
+
+            ConsoleIOManager.Instance.ShowPressAnyKeyToContinueDialog(
+                eOutputReportType.SystemCritical);
         }
     }
 }

@@ -78,13 +78,16 @@ namespace CryptoBlock
                             // portfolio has no entry with specified id
                             ConsoleIOManager.Instance.LogErrorFormat(
                                 false,
+                                ConsoleIOManager.eOutputReportType.CommandExecution,
                                 "There's no entry in portfolio manager for '{0}'.",
                                 coinName);
 
                             // ask user if they want to create a new portfolio entry
                             string promptMessage = "Create new entry?";
                             createNewPortfolioEntry =
-                                ConsoleIOManager.Instance.ShowConfirmationDialog(promptMessage);
+                                ConsoleIOManager.Instance.ShowConfirmationDialog(
+                                    promptMessage,
+                                    ConsoleIOManager.eOutputReportType.CommandExecution);
 
                             if (createNewPortfolioEntry) // user chose to create a new portfolio entry
                             {
@@ -92,7 +95,9 @@ namespace CryptoBlock
                             }
                             else // user chose not to create a new portfolio entry
                             {
-                                ConsoleIOManager.Instance.LogNotice("Purchase cancelled.");
+                                ConsoleIOManager.Instance.LogNotice(
+                                    "Purchase cancelled.",
+                                    ConsoleIOManager.eOutputReportType.CommandExecution);
                                 executeBuyTransactions = false;
                             }
                         }
@@ -110,6 +115,7 @@ namespace CryptoBlock
                                 // log coin add notice
                                 ConsoleIOManager.Instance.LogNoticeFormat(
                                     false,
+                                    ConsoleIOManager.eOutputReportType.CommandExecution,
                                     "'{0}' successfully added to portfolio.",
                                     coinName);
                             }
@@ -129,7 +135,9 @@ namespace CryptoBlock
                                     "{0} Specified purchases made successfully.",
                                     buyTransactions.Length);
 
-                            ConsoleIOManager.Instance.LogNotice(successfulPurchaseNoticeMessage);
+                            ConsoleIOManager.Instance.LogNotice(
+                                successfulPurchaseNoticeMessage,
+                                ConsoleIOManager.eOutputReportType.CommandExecution);
 
                             commandExecutedSuccessfuly = true;
                         }
@@ -146,7 +154,9 @@ namespace CryptoBlock
                 catch (CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                 {
                     // coin with specified name / symbol not found in listing repository
-                    ConsoleIOManager.Instance.LogError(coinNameOrSymbolNotFoundException.Message);
+                    ConsoleIOManager.Instance.LogError(
+                        coinNameOrSymbolNotFoundException.Message,
+                        ConsoleIOManager.eOutputReportType.CommandExecution);
 
                     commandExecutedSuccessfuly = false;
                 }

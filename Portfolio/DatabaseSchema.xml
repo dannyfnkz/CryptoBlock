@@ -14,18 +14,6 @@
     <column name="averageBuyPrice" type="REAL">
     </column>
   </table>
-  <table name="PortfolioEntryCoinTransaction">
-    <primary_key column_index="0" />
-    <column name="_id" type="INTEGER">
-    </column>
-    <column name="portfolioEntryId" type="INTEGER">
-      <not_null />
-    </column>
-    <column name="coinTransactionId" type="INTEGER">
-      <not_null />
-      <unique />
-    </column>
-  </table>
   <table name="CoinTransactionType">
     <not_auditable />
     <primary_key column_index="0" />
@@ -40,6 +28,9 @@
   <table name="CoinTransaction">
     <primary_key column_index="0" />
     <column name="_id" type="INTEGER">
+    </column>
+    <column name="portfolioEntryId" type="INTEGER">
+      <not_null />
     </column>
     <column name="coinTransactionTypeId" type="INTEGER">
       <not_null />

@@ -40,8 +40,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Commands\InternetConnectivityStatusCommand.cs" />
-    <Compile Include="Commands\StatusCommand.cs" />
+    <Compile Include="Commands\Settings\Get\ReportingProfileSettingGetCommand.cs" />
+    <Compile Include="Commands\Settings\Get\SettingGetCommand.cs" />
+    <Compile Include="Commands\Settings\SettingCommand.cs" />
+    <Compile Include="Commands\Settings\Set\ReportingProfileSettingSetCommand.cs" />
+    <Compile Include="Commands\Settings\Set\SettingSetCommand.cs" />
+    <Compile Include="Commands\Status\InternetConnectivityStatusCommand.cs" />
+    <Compile Include="Commands\Status\StatusCommand.cs" />
     <Compile Include="Commands\SystemCommand.cs" />
     <Compile Include="SystemCommandExecutor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -58,6 +63,10 @@
     <ProjectReference Include="..\IOManagement\IOManagement.csproj">
       <Project>{9eb0f624-9a4c-4999-96b0-0aa192427b43}</Project>
       <Name>IOManagement</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SettingsManagement\SettingsManagement.csproj">
+      <Project>{F0CF4F62-9F83-4D27-ABB7-E1FFCF5719ED}</Project>
+      <Name>SettingsManagement</Name>
     </ProjectReference>
     <ProjectReference Include="..\Utils\Utils.csproj">
       <Project>{6f6a790c-b7fd-4be0-bc50-d9405654eb6b}</Project>

@@ -33,14 +33,18 @@ namespace CryptoBlock
 
                     string noticeMessage = "Changes made to portfolio by last command were successfully" +
                         " undone.";
-                    ConsoleIOManager.Instance.LogNotice(noticeMessage);
+                    ConsoleIOManager.Instance.LogNotice(
+                        noticeMessage,
+                        ConsoleIOManager.eOutputReportType.CommandExecution);
 
                     commandExecutedSuccessfuly = true;
                 }
                 else
                 {
                     string errorMessage = "No changes were recently made to portfolio.";
-                    ConsoleIOManager.Instance.LogError(errorMessage);
+                    ConsoleIOManager.Instance.LogError(
+                        errorMessage,
+                        ConsoleIOManager.eOutputReportType.CommandExecution);
 
                     commandExecutedSuccessfuly = false;
                 }

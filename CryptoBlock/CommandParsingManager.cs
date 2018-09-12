@@ -14,60 +14,6 @@ namespace CryptoBlock
     {
         private class CommandParsingManagerCommandExecutor : CommandExecutor
         {
-            private class CommandReverseCommand : Command
-            {
-                private const int MIN_NUMBER_OF_ARGUMENTS = 0;
-                private const int MAX_NUMBER_OF_ARGUMENTS = 0;
-
-                private const string PREFIX = "undo";
-
-                internal CommandReverseCommand()
-                    : base(PREFIX)
-                {
-                    base.commandArgumentConstraintList.Add(
-                        new NumberOfArgumentsCommandArgumentConstraint(
-                            MIN_NUMBER_OF_ARGUMENTS,
-                            MAX_NUMBER_OF_ARGUMENTS)
-                        );
-                }
-
-                protected override bool Execute(string[] commandArguments)
-                {
-                    bool commandExecutedSuccessfuly;
-
-                    Command lastExecutedCommand = CommandParsingManager.instance.lastExecutedCommand;
-
-                    if (lastExecutedCommand != null)
-                    {
-                        if(lastExecutedCommand.Executed)
-                        {
-                            if(lastExecutedCommand is RevertableCommand)
-                            {
-                                (lastExecutedCommand as RevertableCommand).HandleRevert(commandArguments);
-                                commandExecutedSuccessfuly = true;
-                            }
-                            else
-                            {
-                                ConsoleIOManager.Instance.LogError("Last command is not reversible.");
-                                commandExecutedSuccessfuly = false;
-                            }
-                        }
-                        else
-                        {
-                            ConsoleIOManager.Instance.LogError("Last command was not executed successfully.");
-                            commandExecutedSuccessfuly = false;
-                        }
-                    }
-                    else
-                    {
-                        ConsoleIOManager.Instance.LogError("No command executed yet.");
-                        commandExecutedSuccessfuly = false;
-                    }
-
-                    return commandExecutedSuccessfuly;
-                }
-            }
-
             private const string COMMAND_TYPE = "CommandParser";
 
             public CommandParsingManagerCommandExecutor()
@@ -174,6 +120,7 @@ namespace CryptoBlock
         {
             ConsoleIOManager.Instance.LogErrorFormat(
                 false,
+                ConsoleIOManager.eOutputReportType.CommandExecution,
                 "Unrecognized command: '{0}'.",             
                 userInput);
         }
