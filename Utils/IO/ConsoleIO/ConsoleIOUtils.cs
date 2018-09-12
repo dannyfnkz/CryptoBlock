@@ -321,7 +321,7 @@ namespace CryptoBlock
             /// <param name="value"></param>
             public static void LogLine(string value)
             {
-                string logMessage = DateTimeUtils.GetLogMessage(value);
+                string logMessage = DateTimeUtils.FormatLogMessage(value);
                 ConsoleWriteLine(logMessage);
             }
         }

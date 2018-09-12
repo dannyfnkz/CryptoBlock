@@ -229,7 +229,7 @@ namespace CryptoBlock
                 this.inputHistoryManager = new InputHistoryManager(this);
 
                 // start listening to console input
-                startConsoleInputListenThread();
+                startInputListenThread();
 
                 // start output flush thread
                 startOutputFlushThread();
@@ -566,37 +566,32 @@ namespace CryptoBlock
             }
 
             /// <summary>
-            /// starts input listen thread, which registers Console key presses.
-            /// </summary>
-            /// <seealso cref="ReadKeyIfAvailable()"/>
-            [MethodImpl(MethodImplOptions.Synchronized)]
-            private void startConsoleInputListenThread()
-            {
-                Task consoleInputListenTask = new Task(new Action(listenToConsoleInput));
-                consoleInputListenTask.Start();
-            }
-
-            /// <summary>
-            /// continuously reads a user-pressed key from console input buffer(if available),
+            /// starts input listen thread, which continuously reads a user-pressed key from console
+            /// input buffer(if available),
             /// then sleeps for a specified timeout period.
             /// runs as long as <see cref="consoleInputListenThreadRunning"/> is set to true.
             /// </summary>
-            /// <seealso cref="readKeyIfAvailable"/>
-            /// <seealso cref="System.Threading.Thread.Sleep(int)"/>
-            private void listenToConsoleInput()
+            /// <seealso cref="ReadKeyIfAvailable()"/>
+            [MethodImpl(MethodImplOptions.Synchronized)]
+            private void startInputListenThread()
             {
-                while (consoleInputListenThreadRunning)
+                Task consoleInputListenTask = new Task(() =>
                 {
-                    readKeyIfAvailable();
-                    try
+                    while (consoleInputListenThreadRunning)
                     {
-                        Task.Delay(INPUT_LISTEN_DELAY_TIME_MILLIS).Wait();
-                    }
-                    catch(AggregateException) // thrown by Task.Delay(int).wait()
-                    {
+                        readKeyIfAvailable();
+                        try
+                        {
+                            Task.Delay(INPUT_LISTEN_DELAY_TIME_MILLIS).Wait();
+                        }
+                        catch (AggregateException) // thrown by Task.Delay(int).wait()
+                        {
 
+                        }
                     }
-                }
+                });
+
+                consoleInputListenTask.Start();
             }
 
             /// <summary>
@@ -611,19 +606,19 @@ namespace CryptoBlock
                 {
                     while (outputFlushThreadRunning)
                     {
-                        if(OutputAvailable && (outputAutoFlush || outputFlushRequested))
+                        if(this.OutputAvailable && (this.outputAutoFlush || this.outputFlushRequested))
                         {
                             flushOutputBuffer();
-                            outputFlushRequested = false;
+                            this.outputFlushRequested = false;
+                        }
 
-                            try
-                            {
-                                Task.Delay(OUTPUT_FLUSH_DELAY_TIME_MILLIS).Wait();
-                            }
-                            catch (AggregateException) // thrown by Task.Delay(int).wait()
-                            {
+                        try
+                        {
+                            Task.Delay(OUTPUT_FLUSH_DELAY_TIME_MILLIS).Wait();
+                        }
+                        catch (AggregateException) // thrown by Task.Delay(int).wait()
+                        {
 
-                            }
                         }
                     }
                 });
