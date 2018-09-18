@@ -1,5 +1,7 @@
 ﻿using CryptoBlock.Utils;
+using CryptoBlock.Utils.Collections.List;
 using CryptoBlock.Utils.Strings;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -49,9 +51,13 @@ namespace CryptoBlock
                 }
             }
 
+            private readonly static List<string> reservedCommandPrefixes = new List<string>();
+
             // mapping of command prefixes to corresponding commands
             private readonly Dictionary<string, Command> commandPrefixToCommmand
                 = new Dictionary<string, Command>();
+
+    //        private string[] reservedCommandAliases;
 
             /// <summary>
             /// type of commands <see cref="CommandExecutor"/> handles.
@@ -59,6 +65,16 @@ namespace CryptoBlock
             public abstract string CommandType
             {
                 get;
+            }
+
+            public static string[] ReservedCommandPrefixes
+            {
+                get { return reservedCommandPrefixes.ToArray(); }
+            }
+
+            protected Command[] Commands
+            {
+                get { return commandPrefixToCommmand.Values.ToArray(); }
             }
 
             /// <summary>
@@ -190,7 +206,10 @@ namespace CryptoBlock
             /// <param name="command"></param>
             protected void AddCommandPrefixToCommandPair(string commandPrefix, Command command)
             {
-                commandPrefixToCommmand.Add(commandPrefix, command);
+                this.commandPrefixToCommmand.Add(commandPrefix, command);
+
+                // add command prefix as reserved command alias
+                reservedCommandPrefixes.Add(commandPrefix);
             }
 
             /// <summary>
@@ -206,12 +225,12 @@ namespace CryptoBlock
             protected Command GetCommand(string commandPrefix)
             {
                 // no command associated with commandPrefix
-                if (!commandPrefixToCommmand.ContainsKey(commandPrefix))
+                if (!this.commandPrefixToCommmand.ContainsKey(commandPrefix))
                 {
                     throw new NoCommandAssociatedWithCommandPrefix(commandPrefix);
                 }
 
-                return commandPrefixToCommmand[commandPrefix];
+                return this.commandPrefixToCommmand[commandPrefix];
             }
         }
     }

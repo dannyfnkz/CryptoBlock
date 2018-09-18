@@ -1,5 +1,7 @@
 ﻿using CryptoBlock.CommandHandling.Arguments;
+using CryptoBlock.ExceptionManagement;
 using CryptoBlock.IOManagement;
+using System;
 using System.Collections.Generic;
 
 namespace CryptoBlock
@@ -84,6 +86,13 @@ namespace CryptoBlock
                 }
             }
 
+            protected static string FormatPrefix(
+                string baseCommandPrefix,
+                string inheritingCommandPrefix)
+            {
+                return string.Format("{0} {1}", baseCommandPrefix, inheritingCommandPrefix);
+            }
+
             /// <summary>
             /// executes command with given <paramref name="commandArguments"/>.
             /// returns whether command was executed successfully.
@@ -94,7 +103,74 @@ namespace CryptoBlock
             /// </returns>
             protected abstract bool Execute(string[] commandArguments);
 
-    //        public abstract void UndoCommand();
+            protected static void PrintCommandData(string message, bool flushOutputBuffer = false)
+            {
+                ConsoleIOManager.Instance.PrintData(
+                    message,
+                    ConsoleIOManager.eOutputReportType.CommandExecution,
+                    flushOutputBuffer);
+            }
+
+            protected static void PrintCommandDataFormat(
+                bool flushOutputBuffer,
+                string format,
+                params object[] args)
+            {
+                ConsoleIOManager.Instance.PrintDataFormat(
+                    flushOutputBuffer,
+                    ConsoleIOManager.eOutputReportType.CommandExecution,
+                    format,
+                    args);
+            }
+
+            protected static void LogCommandNotice(string message, bool flushOutputBuffer = false)
+            {
+                ConsoleIOManager.Instance.LogNotice(
+                    message, 
+                    ConsoleIOManager.eOutputReportType.CommandExecution,
+                    flushOutputBuffer);
+            }
+
+            protected static void LogCommandNoticeFormat(
+                bool flushOutputBuffer,
+                string format,
+                params object[] args)
+            {
+                ConsoleIOManager.Instance.LogNoticeFormat(
+                    flushOutputBuffer,
+                    ConsoleIOManager.eOutputReportType.CommandExecution,
+                    format,
+                    args);
+            }
+
+            protected static void LogCommandError(string message, bool flushOutputBuffer = false)
+            {
+                ConsoleIOManager.Instance.LogError(
+                    message,
+                    ConsoleIOManager.eOutputReportType.CommandExecution,
+                    flushOutputBuffer);
+            }
+
+            protected static void LogCommandErrorFormat(
+                bool flushOutputBuffer,
+                string format,
+                params object[] args)
+            {
+                ConsoleIOManager.Instance.LogErrorFormat(
+                    flushOutputBuffer,
+                    ConsoleIOManager.eOutputReportType.CommandExecution,
+                    format,
+                    args);
+            }
+
+            protected static void LogCommandReferToErrorLogFileMessage(bool flushOutputBuffer = false)
+            {
+                ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage(
+                    ConsoleIOManager.eOutputReportType.CommandExecution, 
+                    flushOutputBuffer);
+            }
+
+            //        public abstract void UndoCommand();
 
             private bool checkCommandArgumentConstraints(string[] commandArgumentArray)
             {

@@ -5,6 +5,7 @@ using CryptoBlock.Utils.IO.SQLite.Queries.Columns;
 using CryptoBlock.Utils.IO.SQLite.Queries.Conditions;
 using CryptoBlock.Utils.IO.SQLite.Schema;
 using CryptoBlock.Utils.IO.SQLite.Schemas;
+using CryptoBlock.Utils.Strings;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -45,7 +46,8 @@ namespace CryptoBlock
         }
         static void Main(string[] args)
         {
-            new ProgramManager().StartProgram();
+              new ProgramManager().StartProgram();
+
 
             //SQLiteDatabaseHandler handler = new SQLiteDatabaseHandler(
             //    "temp123.sqlite");

@@ -5,10 +5,10 @@ using System.Threading;
 using CryptoBlock.CommandHandling;
 using CryptoBlock.PortfolioManagement;
 using static CryptoBlock.PortfolioManagement.PortfolioManager;
-using CryptoBlock.SettingsManagement;
 using static CryptoBlock.IOManagement.ConsoleIOManager;
-using static CryptoBlock.SettingsManagement.SettingsManager;
 using System;
+using static CryptoBlock.ConfigurationManagement.ConfigurationManager;
+using CryptoBlock.ConfigurationManagement;
 
 namespace CryptoBlock
 {
@@ -83,15 +83,15 @@ namespace CryptoBlock
 
             try
             { 
-                initializeSettingsManager(); 
+                initializeConfigurationManager(); 
             }
-            catch (SettingsManagerInitializationException settingsManagerInitializationException)
+            catch (ConfigurationManagerInitializationException configurationManagerInitializationException)
             {
                 ConsoleIOManager.Instance.LogError(
-                    "An exception occurred while trying to initialize Settings Manager." +
+                    "An exception occurred while trying to initialize the Configuration Manager." +
                     " Program cannot be started.",
                     eOutputReportType.SystemCritical);
-                logExceptionAndEndProgram(settingsManagerInitializationException);
+                logExceptionAndEndProgram(configurationManagerInitializationException);
 
                 return;
             }
@@ -150,9 +150,9 @@ namespace CryptoBlock
             CommandParsingManager.Initialize();
         }
 
-        private void initializeSettingsManager()
+        private void initializeConfigurationManager()
         {
-            SettingsManager.Initialize();
+            ConfigurationManager.Initialize();
         }
 
         private void logExceptionAndEndProgram(Exception exception)

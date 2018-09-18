@@ -22,7 +22,7 @@ namespace CryptoBlock
                     new NumberOfArgumentsCommandArgumentConstraint(
                         minNumberOfArguments,
                         maxNumberOfArguments)
-                    );
+                );
             }
         }
     }

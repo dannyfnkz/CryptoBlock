@@ -1,13 +1,13 @@
-﻿using CryptoBlock.ExceptionManagement;
+﻿using CryptoBlock.ConfigurationManagement;
+using CryptoBlock.ExceptionManagement;
 using CryptoBlock.IOManagement;
-using CryptoBlock.SettingsManagement;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static CryptoBlock.ConfigurationManagement.ConfigurationManager;
 using static CryptoBlock.IOManagement.ConsoleIOManager;
-using static CryptoBlock.SettingsManagement.SettingsManager;
 
 namespace CryptoBlock
 {
@@ -55,7 +55,8 @@ namespace CryptoBlock
                 try
                 {
                     // set user selected OutputReportingProfile in SettingManager
-                    SettingsManager.Instance.OutputReportingProfile = userSelectedOutputReportingProfile;
+                    ConfigurationManager.Instance.OutputReportingProfile =
+                        userSelectedOutputReportingProfile;
 
                     // log success notice
                     ConsoleIOManager.Instance.LogNoticeFormat(
@@ -66,7 +67,7 @@ namespace CryptoBlock
 
                     commandExecutedSuccessfuly = true;
                 }
-                catch(SettingsManagerUpdateException settingsManagerUpdateException)
+                catch(SettingsUpdateException settingsUpdateException)
                 {
                     // log failure notice
                     ConsoleIOManager.Instance.LogError(
@@ -76,7 +77,7 @@ namespace CryptoBlock
                         eOutputReportType.CommandExecution);
 
                     // log exception in error log file
-                    ExceptionManager.Instance.LogException(settingsManagerUpdateException);
+                    ExceptionManager.Instance.LogException(settingsUpdateException);
 
                     commandExecutedSuccessfuly = false;
                 }

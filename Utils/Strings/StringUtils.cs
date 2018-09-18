@@ -281,6 +281,15 @@ namespace CryptoBlock
                 }
             }
 
+            internal static void AssertValidRangeIndicesInString(
+                int startIndex,
+                int endIndex,
+                string str)
+            {
+                AssertValidRangeIndexInString(startIndex, "startIndex", str);
+                AssertValidRangeIndexInString(endIndex, "endIndex", str);
+            }
+
             /// <summary>
             /// asserts that all string lengths in <paramref name="stringLengths"/> are non-negative.
             /// </summary>
@@ -298,6 +307,21 @@ namespace CryptoBlock
                             "string length must be non-negative.",
                             (Exception)null);
                     }
+                }
+            }
+
+            private static void AssertValidRangeIndexInString(
+                int rangeIndex,
+                string rangeIndexParameterName,
+                string str)
+            {
+                if (rangeIndex < 0 || rangeIndex > str.Length)
+                {
+                    string exceptionMessage = string.Format(
+                        "Value '{0}' of parameter '{1}' was out of range in string.",
+                        rangeIndex,
+                        rangeIndexParameterName);
+                    throw new IndexOutOfRangeException(exceptionMessage);
                 }
             }
         }

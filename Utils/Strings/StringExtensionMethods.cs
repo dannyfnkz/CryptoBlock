@@ -3,16 +3,91 @@ using System.Reflection;
 using System.Text;
 using System.Linq;
 using static CryptoBlock.Utils.ExceptionUtils;
+using System.Collections.Generic;
 
 namespace CryptoBlock
 {
     namespace Utils.Strings
     {
         /// <summary>
-        /// string utility class.
+        /// contains <see cref="string"/> extension methods.
         /// </summary>
         public static class StringExtensionMethods
         {
+            public static string[] SplitByBlocks(
+                this string str,
+                string blockDelimiter,
+                string blockStartMarker,
+                string blockEndMarker)
+            {
+                List<string> splitParts = new List<string>();
+
+                bool blockStarted = false;
+                int remainingSubstringStartIndex = 0;
+                int curStringIndex = 0;
+
+                while(curStringIndex < str.Length)
+                {
+                    if(blockStarted) // in the middle of a block
+                    {
+                        if(str.StartsWith(curStringIndex, blockEndMarker)) // blockEndMarker detected
+                        {
+                            blockStarted = false;
+
+                            // skip to last character of blockEndMarker
+                            curStringIndex += blockEndMarker.Length - 1; 
+                        }
+                    }
+                    else // not in the middle of a block
+                    {
+                        if(str.StartsWith(curStringIndex, blockStartMarker)) // blockStartMarker detected
+                        {
+                            blockStarted = true;
+
+                            // skip to last character of blockStartMarker
+                            curStringIndex += blockStartMarker.Length - 1; 
+                        }  
+                        else if (str.StartsWith(curStringIndex, blockDelimiter)) // blockSeparator detected
+                        {
+                            // get a substring of str, starting at character immediately after
+                            // last split, and ending at character immediately before
+                            // blockSeparator, omitting blockStartMarker and blockEndMarker
+                            string splitPart = str.SubstringByIndexWithout(
+                                remainingSubstringStartIndex, 
+                                curStringIndex,
+                                blockStartMarker,
+                                blockEndMarker);
+                            splitParts.Add(splitPart);
+
+                            // skip to last character of blockStartMarker
+                            curStringIndex += blockDelimiter.Length - 1; 
+
+                            // update index of character immediately after split
+                            remainingSubstringStartIndex = curStringIndex + 1; 
+                        }
+                    }
+
+                    // go to next character in str
+                    curStringIndex++;
+                }
+
+                // some characters at end of str were not added as a split part
+                if (remainingSubstringStartIndex < str.Length) 
+                {
+                    // get a substring of str, starting at character immediately after
+                    // last split, and ending at last character of str,
+                    // omitting blockStartMarker and blockEndMarker
+                    string splitPart = str.SubstringByIndexWithout(
+                        remainingSubstringStartIndex, 
+                        str.Length,
+                        blockStartMarker,
+                        blockEndMarker);
+                    splitParts.Add(splitPart);
+                }
+
+                return splitParts.ToArray();
+            }
+
             /// <summary>
             /// splits <paramref name="str"/> into multiple strings, according to parameter list 
             /// <paramref name="parameters"/>.
@@ -35,12 +110,15 @@ namespace CryptoBlock
                 return str.Split(parameters, splitOptions);
             }
 
+            
             /// <summary>
             /// splits <paramref name="str"/> into multiple strings, according to parameter list 
             /// <paramref name="parameters"/>.
             /// </summary>
+            /// <remarks>
             /// this method calls <see cref="Split(string, StringSplitOptions, string[])"/> with argument
             /// <c>StringSplitOptions.None</c>.
+            /// </remarks>
             /// <param name="str"></param>
             /// <param name="parameters">an array of strings used to split <paramref name="str"/>.</param>
             /// <returns>
@@ -49,6 +127,128 @@ namespace CryptoBlock
             public static string[] Split(this string str, params string[] parameters)
             {
                 return Split(str, StringSplitOptions.None, parameters);
+            }
+
+            public static string SubstringByIndexWithout(
+                this string str,
+                int startIndex, 
+                int endIndex,
+                params string[] expressionsToOmit)
+            {
+                StringUtils.AssertValidRangeIndicesInString(startIndex, endIndex, str);
+                StringUtils.AssertValidStringLengths(endIndex - startIndex);
+
+                StringBuilder substringBuilder = new StringBuilder();
+
+                // current index in str, starting at startIndex
+                int curStringIndex = startIndex;
+
+                // index of the first occurrence of any of the specified expressionsToOmit,
+                // starting at curStringIndex
+                int indexOfFirstOccurrenceOfChosenExpressionToOmit;
+
+                // expression whose occurrence is the first to appear, starting at curStringIndex
+                string chosenExpressionToOmit;
+
+                // get index of first occurrence of any of the specified expressionsToOmit,
+                // starting at beginning of str
+                indexOfFirstOccurrenceOfChosenExpressionToOmit = str.IndexOfAny(
+                        curStringIndex,
+                        expressionsToOmit,
+                        out chosenExpressionToOmit);
+
+                // occurrence of an expression to omit, starting at index in range 
+                // [curStringIndex, endIndex), was found
+                while (
+                    indexOfFirstOccurrenceOfChosenExpressionToOmit != -1
+                    && indexOfFirstOccurrenceOfChosenExpressionToOmit < endIndex)
+                {
+                    // append all characters from str, upto first occurrence of expressionToOmit,
+                    // to substringBuilder
+                    while (curStringIndex < indexOfFirstOccurrenceOfChosenExpressionToOmit)
+                    {
+                        substringBuilder.Append(str[curStringIndex]);
+                        curStringIndex++;
+                    }
+
+                    // skip over expressionToOmit
+                    curStringIndex += chosenExpressionToOmit.Length;
+
+                    if(curStringIndex < endIndex) // endIndex not yet reached
+                    {
+                        // get index of first occurrence of any of the specified expressionsToOmit,
+                        // starting at curStringIndex
+                        indexOfFirstOccurrenceOfChosenExpressionToOmit = str.IndexOfAny(
+                                curStringIndex,
+                                expressionsToOmit,
+                                out chosenExpressionToOmit);
+                    }
+                    else // endIndex reached - no next occurrence available
+                    {
+                        indexOfFirstOccurrenceOfChosenExpressionToOmit = -1;
+                    }
+                }
+
+                // append the remainder of str (after last occurrence of an expression to omit)
+                // to substringBuilder
+                while (curStringIndex < endIndex)
+                {
+                    substringBuilder.Append(str[curStringIndex]);
+                    curStringIndex++;
+                }
+
+                return substringBuilder.ToString();
+            }
+
+            public static int IndexOfAny(
+                this string str,
+                int startIndex,
+                string[] expressions,
+                out string chosenExpression)
+            {
+                StringUtils.AssertValidIndexInString(startIndex, str, "startIndex");
+
+                int indexOfFirstOccurrenceOfChosenExpression = int.MaxValue;
+                chosenExpression = null;
+
+                // get the index of the first occurrence of any of the specified expressions
+                foreach (string expression in expressions)
+                {
+                    // get index of first occurrence of expression, starting at startIndex
+                    int indexOfNextOccurrenceOfExpressionToOmit = str.IndexOf(
+                        expression,
+                        startIndex);
+
+                    // first occurrence of expression, starting at startIndex, found in str
+                    if (indexOfNextOccurrenceOfExpressionToOmit != -1)
+                    {
+                        // get the min index of the first expression occurrence between
+                        // all specified expressions
+                        indexOfFirstOccurrenceOfChosenExpression = Math.Min(
+                            indexOfFirstOccurrenceOfChosenExpression,
+                            indexOfNextOccurrenceOfExpressionToOmit);
+                        chosenExpression = expression;
+                    }
+                }
+
+                // no occurrence of any of the specified expressions was found in str
+                if (indexOfFirstOccurrenceOfChosenExpression == int.MaxValue)
+                {
+                    indexOfFirstOccurrenceOfChosenExpression = -1;
+                }
+
+                return indexOfFirstOccurrenceOfChosenExpression;
+            }
+
+            // exclusive
+            public static string SubstringByIndex(this string str, int startIndex, int endIndex)
+            {
+                StringUtils.AssertValidRangeIndicesInString(startIndex, endIndex, str);
+
+                int substringLength = endIndex - startIndex;
+                StringUtils.AssertValidStringLengths(substringLength);
+
+                return str.Substring(startIndex, substringLength);
             }
 
             /// <summary>
@@ -73,8 +273,55 @@ namespace CryptoBlock
                 return str.Substring(prefix.Length);
             }
 
+            public static bool StartsWith(this string str, int startIndex, params string[] prefixes)
+            {
+                bool startsWithOneOfPrefixes = false;
+
+                foreach(string prefix in prefixes)
+                {
+                    startsWithOneOfPrefixes = str.StartsWith(startIndex, prefix);
+
+                    if(startsWithOneOfPrefixes)
+                    {
+                        break;
+                    }
+                }
+
+                return startsWithOneOfPrefixes;
+            }
+
+            public static bool StartsWith(this string str, int startIndex, string prefix)
+            {
+                StringUtils.AssertValidIndexInString(startIndex, str, "startIndex");
+
+                bool startsWithPrefix;
+
+                int curStringIndex;
+                int curPrefixIndex;
+
+                // run through str, starting at startIndex, and compare each of its characters
+                // with the corresponding character in prefix
+                for (curStringIndex = startIndex, curPrefixIndex = 0;
+                    curPrefixIndex < prefix.Length && curStringIndex < str.Length;
+                    curStringIndex++, curPrefixIndex++)
+                {
+                    // mismatch between character in str and its corresponding character in prefix
+                    if (str[curStringIndex] != prefix[curPrefixIndex])
+                    {
+                        break;
+                    }
+                }
+
+                // string starts with prefix (at startIndex)
+                // iff end of prefix was reached, i.e all characters of prefix and str match
+                startsWithPrefix = curPrefixIndex == prefix.Length;
+
+                return startsWithPrefix;
+            }
+
             /// <summary>
-            /// returns whether <paramref name="str"/> starts with one of the prefixes in <paramref name="prefixes"/>.
+            /// returns whether <paramref name="str"/> starts with one of the 
+            /// specified <paramref name="prefixes"/>.
             /// </summary>
             /// <param name="str"></param>
             /// <param name="prefixes"></param>

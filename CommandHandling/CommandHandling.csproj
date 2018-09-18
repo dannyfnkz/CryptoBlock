@@ -53,6 +53,10 @@
       <Project>{576249a0-f9ee-456d-a64f-67032c86aae9}</Project>
       <Name>TableDisplay</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ExceptionManagement\ExceptionManagement.csproj">
+      <Project>{8F6FEEE8-262E-4BCC-A5AC-67E9D2D35710}</Project>
+      <Name>ExceptionManagement</Name>
+    </ProjectReference>
     <ProjectReference Include="..\IOManagement\IOManagement.csproj">
       <Project>{9eb0f624-9a4c-4999-96b0-0aa192427b43}</Project>
       <Name>IOManagement</Name>

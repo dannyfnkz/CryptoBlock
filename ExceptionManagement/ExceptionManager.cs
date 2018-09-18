@@ -45,15 +45,14 @@ namespace CryptoBlock
                 get { return instance; }
             }
 
-            /// <summary>
-            /// logs message refering user to error log file for more information.
-            /// </summary>
-            /// <param name="outputReportType"></param>
-            public void ConsoleLogReferToErrorLogFileMessage(eOutputReportType outputReportType)
+            public void ConsoleLogReferToErrorLogFileMessage(
+                eOutputReportType outputReportType,
+                bool flushOutputBuffer = false)
             {
                 ConsoleIOManager.Instance.LogError(
                     "Refer to error log file for more information.",
-                    outputReportType);
+                    outputReportType,
+                    flushOutputBuffer);
             }
 
             /// <summary>

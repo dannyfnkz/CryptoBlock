@@ -21,7 +21,7 @@ namespace CryptoBlock
             /// <param name="converter"><see cref="Converter{TInput, TOutput}"/> from
             /// <typeparamref name="T"/> to <typeparamref name="K"/>
             /// </param>
-            public static void ConvertEachElement<T, K>(
+            public static void ConvertAll<T, K>(
                 this IList<T> list,
                 Converter<T, K> converter) where K : T
             {
@@ -29,6 +29,20 @@ namespace CryptoBlock
                 {
                     list[i] = converter(list[i]);
                 }
+            }
+
+            public static K[] TransformAllToNewArray<T, K>(
+                this IList<T> list,
+                Converter<T, K> converter)
+            {
+                K[] convertedElements = new K[list.Count];
+
+                for(int i = 0; i < list.Count; i++)
+                {
+                    convertedElements[i] = converter(list[i]);
+                }
+
+                return convertedElements;
             }
 
             /// <summary>

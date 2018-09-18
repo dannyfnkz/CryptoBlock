@@ -1,5 +1,5 @@
-﻿using CryptoBlock.IOManagement;
-using CryptoBlock.SettingsManagement;
+﻿using CryptoBlock.ConfigurationManagement;
+using CryptoBlock.IOManagement;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,7 +30,7 @@ namespace CryptoBlock
 
                 // get current OutputReportingProfile 
                 OutputReportingProfile outputReportingProfile =
-                    SettingsManager.Instance.OutputReportingProfile;
+                    ConfigurationManager.Instance.OutputReportingProfile;
 
                 // log OutputReportingProfile title to console
                 string notice = string.Format("" +

@@ -70,6 +70,7 @@
     <Compile Include="Collections\ArrayExtensionMethods.cs" />
     <Compile Include="Collections\ArrayRange.cs" />
     <Compile Include="Collections\CollectionExtensionMethods.cs" />
+    <Compile Include="Collections\EnumerableExtensionMethods.cs" />
     <Compile Include="Collections\IndexableStack.cs" />
     <Compile Include="Collections\CollectionUtils.cs" />
     <Compile Include="Collections\List\ListExtensionMethods.cs" />

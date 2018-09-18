@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace CryptoBlock
 {
-    namespace SettingsManagement
+    namespace ConfigurationManagement
     {
         internal class SettingsContainer
         {

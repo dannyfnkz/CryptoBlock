@@ -70,8 +70,8 @@ namespace CryptoBlock
                 string format,
                 params object[] args)
             {
-                string message = string.Format(format, args);
-                LogNotice(message, outputReportType, flushOutputBuffer);
+                string noticeMessage = string.Format(format, args);
+                LogNotice(noticeMessage, outputReportType, flushOutputBuffer);
             }
 
             /// <summary>
@@ -80,31 +80,15 @@ namespace CryptoBlock
             /// <seealso cref="ConsoleIOHandler.QueueOutput(string, bool)"/> 
             /// <param name="message"></param>
             /// <param name="flushOutputBuffer"></param>
-            /// <exception cref="ObjectDisposedException"><see cref="ConsoleIOHandler.QueueOutput(string, bool)"/>
+            /// <exception cref="ObjectDisposedException">
+            /// <see cref="ConsoleIOHandler.QueueOutput(string, bool)"/>
             /// </exception>
             public void LogNotice(
-                string message,
+                string noticeMessage,
                 eOutputReportType outputReportType, 
                 bool flushOutputBuffer = false)
             {
-                string outputString = formatLogMessage(message);
-                logoutput(outputString, outputReportType, flushOutputBuffer);
-            }
-
-            /// <summary>
-            /// logs an error message to console.
-            /// </summary>
-            /// <exception cref="ObjectDisposedException"><see cref="ConsoleIOHandler.QueueOutput(string, bool)"/>
-            /// </exception>
-            /// <seealso cref="ConsoleIOHandler.QueueOutput(string, bool)"/> 
-            /// <param name="message"></param>
-            /// <param name="flushOutputBuffer"></param>
-            public void LogError(
-                string message,
-                eOutputReportType outputReportType
-                , bool flushOutputBuffer = false)
-            {
-                string outputString = formatLogMessage(message);
+                string outputString = formatLogMessage(noticeMessage);
                 logoutput(outputString, outputReportType, flushOutputBuffer);
             }
 
@@ -122,16 +106,43 @@ namespace CryptoBlock
             /// <seealso cref="string.Format(string, object[])"/>
             /// </exception>
             /// <exception cref="ObjectDisposedException">
-            /// <seealso cref="LogError(string, bool)"/>
-            /// </exception> 
+            /// <seealso cref="LogError(string, eOutputReportType, bool)"/>
+            /// </exception>
             public void LogErrorFormat(
                 bool flushOutputBuffer,
                 eOutputReportType outputReportType,
                 string format,
                 params object[] args)
             {
-                string outputString = string.Format(format, args);
+                string errorMessage = string.Format(format, args);
+                LogError(errorMessage, outputReportType, flushOutputBuffer);
+            }
+
+            /// <summary>
+            /// logs an error message to console.
+            /// </summary>
+            /// <exception cref="ObjectDisposedException"><see cref="ConsoleIOHandler.QueueOutput(string, bool)"/>
+            /// </exception>
+            /// <seealso cref="ConsoleIOHandler.QueueOutput(string, bool)"/> 
+            /// <param name="message"></param>
+            /// <param name="flushOutputBuffer"></param>
+            public void LogError(
+                string errorMessage,
+                eOutputReportType outputReportType
+                , bool flushOutputBuffer = false)
+            {
+                string outputString = formatLogMessage(errorMessage);
                 logoutput(outputString, outputReportType, flushOutputBuffer);
+            }
+
+            public void PrintDataFormat(
+                bool flushOutputBuffer,
+                eOutputReportType outputReportType,
+                string format,
+                params object[] args)
+            {
+                string dataString = string.Format(format, args);
+                PrintData(dataString, outputReportType, flushOutputBuffer);
             }
 
             /// <summary>
@@ -146,7 +157,10 @@ namespace CryptoBlock
             /// <exception cref="ObjectDisposedException">
             /// <seealso cref="QueueOutput(string,bool)"/>
             /// </exception>
-            public void PrintData(string data, eOutputReportType outputReportType, bool flushOutputBuffer = false)
+            public void PrintData(
+                string data, 
+                eOutputReportType outputReportType,
+                bool flushOutputBuffer = false)
             {
                 string outputString = data;
                 logoutput(outputString, outputReportType, flushOutputBuffer);

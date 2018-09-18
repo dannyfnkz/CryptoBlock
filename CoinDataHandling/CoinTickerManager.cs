@@ -570,8 +570,6 @@ namespace CryptoBlock
                 ConsoleIOManager.Instance.LogError(
                     "An exception occurred while trying to update coin ticker repository.",
                     eOutputReportType.CommandExecution);
-                ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage(
-                    eOutputReportType.CommandExecution);
 
                 // log exception to file
                 ExceptionManager.Instance.LogException(dataRequestException);

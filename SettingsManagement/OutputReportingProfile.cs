@@ -9,7 +9,7 @@ using static CryptoBlock.IOManagement.ConsoleIOManager;
 
 namespace CryptoBlock
 {
-    namespace SettingsManagement
+    namespace ConfigurationManagement
     {
         public class OutputReportingProfile
         {

@@ -259,7 +259,7 @@ namespace CryptoBlock
                     1, tableSchema.ColumnSchemas.Length);
 
                 // strip constraints
-                strippedColumnSchemas.ConvertEachElement<ColumnSchema, ColumnSchema>(
+                strippedColumnSchemas.ConvertAll<ColumnSchema, ColumnSchema>(
                     columnSchemas => ColumnSchema.GetColumnSchemaWithConstraintsStripped(columnSchemas));
 
                 // add stripped columns to audit column schema list

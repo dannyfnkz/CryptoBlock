@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using CryptoBlock.CommandHandling;
 using CryptoBlock.CommandHandling.Arguments;
+using CryptoBlock.ConfigurationManagement;
 using CryptoBlock.IOManagement;
 using CryptoBlock.PortfolioManagement;
 using CryptoBlock.ServerDataManagement;
@@ -62,9 +64,15 @@ namespace CryptoBlock
                 new SystemCommandExecutor()
         };
 
+        private const string COMMAND_ARGUMENT_DELIMITER = @" ";
+        private const string COMMAND_ARGUMENT_WRAPPER = @"'";
+
         private static CommandParsingManager instance;
 
-        private Command lastExecutedCommand;
+        private CommandParsingManager()
+        {
+            
+        }
 
         public static void Initialize()
         {
@@ -81,18 +89,31 @@ namespace CryptoBlock
             // commands are case insensitive
             string userInputLowercase = userInput.ToLower();
 
+            string commandString;
+
+            // user input represents a UserDefinedCommand alias 
+            if(ConfigurationManager.Instance.UserDefinedCommandExists(userInputLowercase))
+            {
+                commandString = ConfigurationManager.Instance
+                    .GetUserDefinedCommand(userInputLowercase).CommandString;
+            }
+            else // user input does not represent a UserDefinedCommand alias 
+            {
+                commandString = userInputLowercase;
+            }
+
             // look for a command executor which recognizes user input as a command
             foreach (CommandExecutor commandExecutor in commandExecutors)
             {
-                if (commandExecutor.IsValidCommand(userInputLowercase)) // command recognized
+                if (commandExecutor.IsValidCommand(commandString)) // command recognized
                 {
-                    string prefix = commandExecutor.GetCommandPrefix(userInputLowercase);
+                    string prefix = commandExecutor.GetCommandPrefix(commandString);
 
                     // if there's a space directly after prefix, split by prefix + space
                     // else split by prefix
-                    string splitPrefix = userInputLowercase.Contains(prefix + " ") ? prefix + " " : prefix;
-                    string commandArgumentString = 
-                        userInputLowercase.GetSubstringAfterPrefix(splitPrefix);
+                    string splitPrefix = commandString.Contains(prefix + " ") ? prefix + " " : prefix;
+                    string commandArgumentString =
+                        commandString.GetSubstringAfterPrefix(splitPrefix);
 
                     // get command arguments array
                     string[] commandArguments;
@@ -103,26 +124,31 @@ namespace CryptoBlock
                     }
                     else // non-empty command args string
                     {
-                        commandArguments = commandArgumentString.Split(" ");
+                        // extract command arguments from commandArgumentString
+                        commandArguments = commandArgumentString.SplitByBlocks(
+                            COMMAND_ARGUMENT_DELIMITER,
+                            COMMAND_ARGUMENT_WRAPPER,
+                            COMMAND_ARGUMENT_WRAPPER);
                     }
 
-                    this.lastExecutedCommand = commandExecutor.HandleCommand(prefix, commandArguments);
+                    // handle command
+                    commandExecutor.HandleCommand(prefix, commandArguments);
 
                     return;
                 }         
             }
 
             // user input not recognized by any command executor
-            logUnrecognizedCommandExecption(userInput);
+            logUnrecognizedCommandExecption(commandString);
         }
 
-        private void logUnrecognizedCommandExecption(string userInput)
+        private void logUnrecognizedCommandExecption(string commandString)
         {
             ConsoleIOManager.Instance.LogErrorFormat(
                 false,
                 ConsoleIOManager.eOutputReportType.CommandExecution,
-                "Unrecognized command: '{0}'.",             
-                userInput);
+                "Unrecognized command: '{0}'.",
+                commandString);
         }
     }
 }

@@ -45,8 +45,10 @@
   <ItemGroup>
     <Compile Include="OutputReportingProfile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SavedCommands\UserDefinedCommand.cs" />
+    <Compile Include="SavedCommands\UserDefinedCommandContainer.cs" />
     <Compile Include="SettingsContainer.cs" />
-    <Compile Include="SettingsManager.cs" />
+    <Compile Include="ConfigurationManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ExceptionManagement\ExceptionManagement.csproj">

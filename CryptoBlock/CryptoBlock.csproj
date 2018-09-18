@@ -119,9 +119,9 @@
       <Project>{22928362-4d96-41e2-835a-e0e01f8867c0}</Project>
       <Name>PortfolioManagement</Name>
     </ProjectReference>
-    <ProjectReference Include="..\SettingsManagement\SettingsManagement.csproj">
+    <ProjectReference Include="..\SettingsManagement\ConfigurationManagement.csproj">
       <Project>{F0CF4F62-9F83-4D27-ABB7-E1FFCF5719ED}</Project>
-      <Name>SettingsManagement</Name>
+      <Name>ConfigurationManagement</Name>
     </ProjectReference>
     <ProjectReference Include="..\SystemManagement\SystemManagement.csproj">
       <Project>{62140fd7-6aad-441a-bfce-ed674cd7e898}</Project>
