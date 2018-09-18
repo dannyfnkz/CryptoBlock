@@ -1,4 +1,5 @@
 ﻿using CryptoBlock.ConfigurationManagement;
+using CryptoBlock.ConfigurationManagement.Settings;
 using CryptoBlock.IOManagement;
 using System;
 using System.Collections.Generic;

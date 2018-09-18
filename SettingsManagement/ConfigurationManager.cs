@@ -1,4 +1,5 @@
-﻿using CryptoBlock.ExceptionManagement;
+﻿using CryptoBlock.ConfigurationManagement.Settings;
+using CryptoBlock.ExceptionManagement;
 using CryptoBlock.IOManagement;
 using CryptoBlock.SettingsManagement.SavedCommands;
 using CryptoBlock.Utils;
@@ -12,14 +13,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static CryptoBlock.ConfigurationManagement.SettingsContainer;
+using static CryptoBlock.ConfigurationManagement.Settings.SettingsContainer;
 
 namespace CryptoBlock
 {
     namespace ConfigurationManagement
     {
+        /// <summary>
+        /// manages program configuration.
+        /// </summary>
         public class ConfigurationManager
         {
+            /// <summary>
+            /// thrown if an exception occurs while performing an operation on
+            /// <see cref="ConfigurationManager"/>.
+            /// </summary>
             public abstract class ConfigurationManagerException : Exception
             {
                 protected ConfigurationManagerException(
@@ -31,6 +39,10 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if an operation which requires that <see cref="ConfigurationManager"/> be
+            /// initialized is called before <see cref="ConfigurationManager"/> was initialized.
+            /// </summary>
             public class ConifgurationManagerNotInitializedException : ConfigurationManagerException
             {
                 private readonly string operationName;
@@ -56,6 +68,11 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if an operation which requires that <see cref="ConfigurationManager"/> not be
+            /// initialized is called after <see cref="ConfigurationManager"/> has already
+            /// been initialized.
+            /// </summary>
             public class ConifgurationManagerAlreadyInitializedException : ConfigurationManagerException
             {
                 public ConifgurationManagerAlreadyInitializedException()
@@ -70,6 +87,9 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if initialization of <see cref="ConfigurationManager"/> failed.
+            /// </summary>
             public abstract class ConfigurationManagerInitializationException :
                 ConfigurationManagerException
             {
@@ -83,6 +103,10 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if initialization of <see cref="SettingsContainer"/> and / or corresponding data
+            /// file failed.
+            /// </summary>
             public abstract class SettingsInitializationException :
                 ConfigurationManagerInitializationException
             {
@@ -103,6 +127,10 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if reading <see cref="SettingsContainer"/> data file failed while trying to
+            /// initialize <see cref="SettingsContainer"/>.
+            /// </summary>
             public class FileReadSettingsInitializationException :
                 SettingsInitializationException
             {
@@ -122,6 +150,10 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if creation of <see cref="SettingsContainer"/> data file failed while trying to
+            /// initialize <see cref="SettingsContainer"/>.
+            /// </summary>
             public class FileCreateSettingsInitializationException :
                 SettingsInitializationException
             {
@@ -141,6 +173,10 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if <see cref="SettingsContainer"/> data file, used for
+            /// <see cref="SettingsContainer"/> initialization, was corrupt.
+            /// </summary>
             public class CorruptFileSettingsInitializationException :
                 SettingsInitializationException
             {
@@ -160,6 +196,10 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if updating <see cref="SettingsContainer"/> and / or its corresponding
+            /// data file failed.
+            /// </summary>
             public class SettingsUpdateException : ConfigurationManagerException
             {
                 public SettingsUpdateException(Exception innerException)
@@ -174,6 +214,10 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if initialization of <see cref="UserDefinedCommandContainer"/>
+            /// and / or corresponding data file failed.
+            /// </summary>
             public abstract class UserDefinedCommandsInitializationException :
                 ConfigurationManagerInitializationException
             {
@@ -194,6 +238,11 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if reading <see cref="UserDefinedCommandContainer"/>
+            /// data file failed while trying to
+            /// initialize <see cref="UserDefinedCommandContainer"/>.
+            /// </summary>
             public class FileReadUserDefinedCommandsInitializationException :
                 UserDefinedCommandsInitializationException
             {
@@ -216,6 +265,11 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if creation of <see cref="UserDefinedCommandContainer"/> 
+            /// data file failed while trying to
+            /// initialize <see cref="UserDefinedCommandContainer"/>.
+            /// </summary>
             public class FileCreateUserDefinedCommandsInitializationException :
                 UserDefinedCommandsInitializationException
             {
@@ -235,6 +289,10 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if <see cref="UserDefinedCommandContainer"/> data file, used for
+            /// <see cref="UserDefinedCommandContainer"/> initialization, was corrupt.
+            /// </summary>
             public class CorruptFileUserDefinedCommandsInitializationException :
                 UserDefinedCommandsInitializationException
             {
@@ -257,6 +315,10 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if updating <see cref="UserDefinedCommandContainer"/> and / or its corresponding
+            /// data file failed.
+            /// </summary>
             public class UserDefinedCommandsUpdateException : ConfigurationManagerException
             {
                 public UserDefinedCommandsUpdateException(Exception innerException)
@@ -293,6 +355,15 @@ namespace CryptoBlock
                 get { return instance; }
             }
 
+            /// <summary>
+            /// current defined <see cref="OutputReportingProfile"/>.
+            /// </summary>
+            /// <exception cref="ConifgurationManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
+            /// <exception cref="SettingsUpdateException">
+            /// <seealso cref="updateSettingsContainerDataFile"/>
+            /// </exception>
             public OutputReportingProfile OutputReportingProfile
             {
                 get
@@ -309,13 +380,37 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// all <see cref="UserDefinedCommand"/>s which were added.
+            /// </summary>
+            /// <exception cref="ConifgurationManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
             public UserDefinedCommand[] UserDefinedCommands
             {
-                get { return userDefinedCommandContainer.UserDefinedCommands; }
+                get
+                {
+                    assertManagerInitialized("UserDefinedCommands");
+                    return userDefinedCommandContainer.UserDefinedCommands;
+                }
             }
 
+            /// <summary>
+            /// adds specified <see cref="UserDefinedCommand"/>.
+            /// </summary>
+            /// <seealso cref="updateUserDefinedCommandContainerDataFile"/>
+            /// <seealso cref="UserDefinedCommandContainer.AddUserDefinedCommand(UserDefinedCommand)"/>
+            /// <param name="userDefinedCommand"></param>
+            /// <exception cref="UserDefinedCommandsUpdateException">
+            /// <seealso cref="updateUserDefinedCommandContainerDataFile"/>
+            /// </exception>
+            /// <exception cref="ConifgurationManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
             public void AddUserDefinedCommand(UserDefinedCommand userDefinedCommand)
             {
+                assertManagerInitialized("AddUserDefinedCommand");
+
                 // write updated UserDefinedCommandContainer data to file
                 updateUserDefinedCommandContainerDataFile();
 
@@ -323,8 +418,27 @@ namespace CryptoBlock
                 this.userDefinedCommandContainer.AddUserDefinedCommand(userDefinedCommand);
             }
 
+            /// <summary>
+            /// removes <see cref="UserDefinedCommand"/> associated with specified
+            /// <paramref name="userDefinedCommandAlias"/>.
+            /// </summary>
+            /// <seealso cref="updateUserDefinedCommandContainerDataFile"/>
+            /// <seealso cref="UserDefinedCommandContainer.RemoveUserDefinedCommand(string)"/>
+            /// <param name="userDefinedCommandAlias"></param>
+            /// <exception cref="UserDefinedCommandsUpdateException">
+            /// <seealso cref="updateUserDefinedCommandContainerDataFile"/>
+            /// </exception>
+            /// <exception cref="UserDefinedCommandContainer.RemoveUserDefinedCommand(string)">
+            /// thrown if <see cref="UserDefinedCommand"/> associated with specified
+            /// <paramref name="userDefinedCommandAlias"/> does not exist
+            /// </exception>
+            /// <exception cref="ConifgurationManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
             public void RemoveUserDefinedCommand(string userDefinedCommandAlias)
             {
+                assertManagerInitialized("RemoveUserDefinedCommand");
+
                 // write updated UserDefinedCommandContainer data to file
                 updateUserDefinedCommandContainerDataFile();
 
@@ -332,8 +446,21 @@ namespace CryptoBlock
                 this.userDefinedCommandContainer.RemoveUserDefinedCommand(userDefinedCommandAlias);
             }
 
+            /// <summary>
+            /// removes all <see cref="UserDefinedCommand"/>s.
+            /// </summary>
+            /// <seealso cref="updateUserDefinedCommandContainerDataFile"/>
+            /// <seealso cref="UserDefinedCommandContainer.ClearUserDefinedCommands"/>
+            /// <exception cref="UserDefinedCommandsUpdateException">
+            /// <seealso cref="updateUserDefinedCommandContainerDataFile"/>
+            /// </exception>
+            /// <exception cref="ConifgurationManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
             public void ClearUserDefinedCommands()
             {
+                assertManagerInitialized("ClearUserDefinedCommands");
+
                 // write updated UserDefinedCommandContainer data to file
                 updateUserDefinedCommandContainerDataFile();
 
@@ -341,16 +468,54 @@ namespace CryptoBlock
                 this.userDefinedCommandContainer.ClearUserDefinedCommands();
             }
 
+            /// <summary>
+            /// returns whether <see cref="UserDefinedCommand"/> associated with specified
+            /// <paramref name="userDefinedCommandAlias"/> exists.
+            /// </summary>
+            /// <seealso cref="UserDefinedCommandContainer.UserDefinedCommandExists(string)"/>
+            /// <param name="userDefinedCommandAlias"></param>
+            /// <returns>
+            /// true if <see cref="UserDefinedCommand"/> associated with specified
+            /// <paramref name="userDefinedCommandAlias"/> exists,
+            /// else false
+            /// </returns>
+            /// <exception cref="ConifgurationManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
             public bool UserDefinedCommandExists(string userDefinedCommandAlias)
             {
+                assertManagerInitialized("UserDefinedCommandExists");
                 return this.userDefinedCommandContainer.UserDefinedCommandExists(userDefinedCommandAlias);
             }
 
+            /// <summary>
+            /// returns <see cref="UserDefinedCommand"/> associated with specified
+            /// <paramref name="userDefinedCommandAlias"/>.
+            /// </summary>
+            /// <seealso cref="UserDefinedCommandContainer.GetUserDefinedCommand(string)"/>
+            /// <param name="userDefinedCommandAlias"></param>
+            /// <returns>
+            /// <see cref="UserDefinedCommand"/> associated with specified
+            /// <paramref name="userDefinedCommandAlias"/>
+            /// </returns>
+            /// <exception cref="UserDefinedCommandContainer.UserDefinedCommandNotFoundException">
+            /// <seealso cref="UserDefinedCommandContainer.GetUserDefinedCommand(string)"/>
+            /// </exception>
+            /// <exception cref="ConifgurationManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
             public UserDefinedCommand GetUserDefinedCommand(string userDefinedCommandAlias)
             {
+                assertManagerInitialized("GetUserDefinedCommand");
                 return this.userDefinedCommandContainer.GetUserDefinedCommand(userDefinedCommandAlias);
             }
 
+            /// <summary>
+            /// initializes <see cref="ConfigurationManager"/>.
+            /// </summary>
+            /// <exception cref="ConifgurationManagerAlreadyInitializedException">
+            /// <seealso cref="assertManagerNotInitialized"/>
+            /// </exception>
             public static void Initialize()
             {
                 assertManagerNotInitialized();
@@ -358,6 +523,13 @@ namespace CryptoBlock
                 instance = new ConfigurationManager();
             }
 
+            /// <summary>
+            /// asserts that this manager has been initialized.
+            /// </summary>
+            /// <param name="operationName"></param>
+            /// <exception cref="ConifgurationManagerNotInitializedException">
+            /// thrown if this manager has not yet been initialized
+            /// </exception>
             private static void assertManagerInitialized(string operationName)
             {
                 if (Instance == null)
@@ -366,6 +538,12 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// asserts that this manager was not yet initialized.
+            /// </summary>
+            /// <exception cref="ConifgurationManagerAlreadyInitializedException">
+            /// thrown if this manager has already been initialized
+            /// </exception>
             private static void assertManagerNotInitialized()
             {
                 if (Instance != null)
@@ -374,6 +552,22 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// initializes <see cref="SettingsContainer"/> and corresponding data file.
+            /// </summary>
+            /// <seealso cref="initializeSettingsContainerFromExistingDataFile"/>
+            /// <seealso cref="initializeDefaultSettingsContainerAndDataFile"/>
+            /// <exception cref="FileReadSettingsInitializationException">
+            /// thrown if reading data from <see cref="SettingsContainer"/> file failed
+            /// </exception>
+            /// <exception cref="CorruptFileSettingsInitializationException">
+            /// thrown if <see cref="SettingsContainer"/> file data is not in a valid JSON format,
+            /// or <see cref="SettingsContainer"/> parsing from data failed
+            /// </exception>
+            /// <exception cref="FileCreateSettingsInitializationException">
+            /// thrown if creating a <see cref="SettingsContainer"/> data file with default settings
+            /// failed
+            /// </exception>
             private void initializeSettings()
             {
                 if (FileIOUtils.FileExists(SETTINGS_FILE_PATH)) // settings file exists
@@ -384,7 +578,7 @@ namespace CryptoBlock
 
                     try
                     {
-                        useExistingSettingsFile();
+                        initializeSettingsContainerFromExistingDataFile();
                     }
                     catch (Exception exception)
                     {
@@ -394,9 +588,10 @@ namespace CryptoBlock
                                 SETTINGS_FILE_PATH,
                                 exception);
                         }
+                        // corrupt settings file 
                         else if (
                             exception is JsonSerializationException
-                            || exception is SettingsContainerObjectParseException) // corrupt settings file 
+                            || exception is SettingsContainerJsonObjectParseException) 
                         {
                             throw new CorruptFileSettingsInitializationException(
                                 SETTINGS_FILE_PATH,
@@ -416,7 +611,7 @@ namespace CryptoBlock
 
                     try
                     {
-                        createNewSettingsFile();
+                        initializeDefaultSettingsContainerAndDataFile();
 
                         ConsoleIOManager.Instance.LogNotice(
                             "New Settings file created successfully.",
@@ -431,7 +626,22 @@ namespace CryptoBlock
                 }
             }
 
-            private void useExistingSettingsFile()
+            /// <summary>
+            /// initializes <see cref="SettingsContainer"/> with data from existing
+            /// corresponding data file.
+            /// </summary>
+            /// <exception cref="FileReadException">
+            /// thrown if reading from <see cref="SettingsContainer"/> data file failed
+            /// </exception>
+            /// <exception cref="JsonSerializationException">
+            /// thrown if <see cref="SettingsContainer"/> data file content is not in a valid
+            /// JSON format.
+            /// </exception>
+            /// <exception cref="SettingsContainerJsonObjectParseException">
+            /// thrown if parsing <see cref="SettingsContainer"/> from <see cref="SettingsContainer"/>
+            /// data file content failed
+            /// </exception>
+            private void initializeSettingsContainerFromExistingDataFile()
             {
                 // initialize settings container with values from settings file
                 string settingsContainerJsonString = FileIOUtils.ReadTextFromFile(SETTINGS_FILE_PATH);
@@ -440,7 +650,14 @@ namespace CryptoBlock
                 this.settingsContainer = SettingsContainer.Parse(settingsContainerJsonObject);
             }
 
-            private void createNewSettingsFile()
+            /// <summary>
+            /// initializes a <see cref="SettingsContainer"/> with default values,
+            /// and creates a corresponding <see cref="SettingsContainer"/> data file.
+            /// </summary>
+            /// <exception cref="FileWriteException">
+            /// <seealso cref="FileIOUtils.WriteTextToFile(string, string)"/>
+            /// </exception>
+            private void initializeDefaultSettingsContainerAndDataFile()
             {
                 // initialize settings container with default values
                 this.settingsContainer = new SettingsContainer();
@@ -450,7 +667,13 @@ namespace CryptoBlock
                 FileIOUtils.WriteTextToFile(SETTINGS_FILE_PATH, settingsContainerJsonString);
             }
 
-
+            /// <summary>
+            /// updates <see cref="SettingsContainer"/> data file with present contents
+            /// of <see cref="SettingsContainer"/>.
+            /// </summary>
+            /// <exception cref="SettingsUpdateException">
+            /// thrown if updating <see cref="SettingsContainer"/> data file failed
+            /// </exception>
             private void updateSettingsContainerDataFile()
             {
                 try
@@ -463,6 +686,19 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// writes <see cref="SettingsContainer"/> object JSON serialization to
+            /// data file.
+            /// </summary>
+            /// <exception cref="BackupFileCreateException">
+            /// <seealso cref="FileIOUtils.WriteTextToFileWithBackup(string, string, string)"/>
+            /// </exception>
+            /// <exception cref="BackupFileRenameException">
+            /// <seealso cref="FileIOUtils.WriteTextToFileWithBackup(string, string, string)"/>
+            /// </exception>
+            /// <exception cref="BackupFileDeleteException">
+            /// <seealso cref="FileIOUtils.WriteTextToFileWithBackup(string, string, string)"/>
+            /// </exception>
             private void writeSettingsContainerDataToFile()
             {
                 // get SettingsContainer JSON string
@@ -475,6 +711,17 @@ namespace CryptoBlock
                     BACKUP_SETTINGS_FILE_PATH);
             }
 
+            /// <summary>
+            /// initializes <see cref="UserDefinedCommandContainer"/> and corresponding data file.
+            /// </summary>
+            /// <exception cref="FileReadUserDefinedCommandsInitializationException">
+            /// thrown if reading data from existing <see cref="UserDefinedCommandContainer"/>
+            /// data file failed
+            /// </exception>
+            /// <exception cref="CorruptFileUserDefinedCommandsInitializationException">
+            /// thrown if data in existing <see cref="UserDefinedCommandContainer"/> data file
+            /// is invalid
+            /// </exception>
             private void initializeUserDefinedCommands()
             {
                 if(FileIOUtils.FileExists(USER_DEFINED_COMMANDS_FILE_PATH)) // saved commands file exists
@@ -489,13 +736,15 @@ namespace CryptoBlock
                     }
                     catch(Exception exception)
                     {
-                        if(exception is FileReadException) // saved commands file read failed
+                        // reading from user defined commands file failed
+                        if (exception is FileReadException) 
                         {
                             throw new FileReadUserDefinedCommandsInitializationException(
                                 USER_DEFINED_COMMANDS_FILE_PATH,
                                 exception);
                         }
-                        else if(exception is JsonSerializationException) // corrupt saved commands file
+                        // corrupt user defined commands file
+                        else if (exception is JsonSerializationException) 
                         {
                             throw new CorruptFileUserDefinedCommandsInitializationException(
                                 USER_DEFINED_COMMANDS_FILE_PATH,
@@ -517,6 +766,13 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// updates <see cref="UserDefinedCommandContainer"/> data file with present contents
+            /// of <see cref="UserDefinedCommandContainer"/>.
+            /// </summary>
+            /// <exception cref="UserDefinedCommandsUpdateException">
+            /// thrown if updating <see cref="UserDefinedCommandContainer"/> data file failed
+            /// </exception>
             private void updateUserDefinedCommandContainerDataFile()
             {
                 try
@@ -530,6 +786,19 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// writes <see cref="UserDefinedCommandContainer"/> object JSON serialization to
+            /// data file.
+            /// </summary>
+            /// <exception cref="BackupFileCreateException">
+            /// <seealso cref="FileIOUtils.WriteTextToFileWithBackup(string, string, string)"/>
+            /// </exception>
+            /// <exception cref="BackupFileRenameException">
+            /// <seealso cref="FileIOUtils.WriteTextToFileWithBackup(string, string, string)"/>
+            /// </exception>
+            /// <exception cref="BackupFileDeleteException">
+            /// <seealso cref="FileIOUtils.WriteTextToFileWithBackup(string, string, string)"/>
+            /// </exception>
             private void writeUserDefinedCommandContainerDataToFile()
             {
                 // get UserDefinedCommandContainer JSON string
