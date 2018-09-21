@@ -57,8 +57,6 @@ namespace CryptoBlock
             private readonly Dictionary<string, Command> commandPrefixToCommmand
                 = new Dictionary<string, Command>();
 
-    //        private string[] reservedCommandAliases;
-
             /// <summary>
             /// type of commands <see cref="CommandExecutor"/> handles.
             /// </summary>
@@ -67,11 +65,18 @@ namespace CryptoBlock
                 get;
             }
 
+            /// <summary>
+            /// command prefixes associated with this CommandExecutor
+            /// which cannot be used as prefixes for other commands.
+            /// </summary>
             public static string[] ReservedCommandPrefixes
             {
                 get { return reservedCommandPrefixes.ToArray(); }
             }
 
+            /// <summary>
+            /// commands associated with this CommandExecutor.
+            /// </summary>
             protected Command[] Commands
             {
                 get { return commandPrefixToCommmand.Values.ToArray(); }

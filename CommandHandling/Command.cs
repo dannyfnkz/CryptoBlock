@@ -13,29 +13,11 @@ namespace CryptoBlock
         /// </summary>
         public abstract class Command
         {
-            ///// <summary>
-            ///// thrown if user gave a wrong number of arguments for command. 
-            ///// </summary>
-            //public class WrongNumberOfArgumentsException : CommandExecutionException
-            //{
-            //    public WrongNumberOfArgumentsException(int minNumberOfArguments, int maxNumberOfArguments)
-            //        : base(formatExceptionMessage(minNumberOfArguments, maxNumberOfArguments))
-            //    {
-
-            //    }
-
-            //    private static string formatExceptionMessage(int minNumberOfArguments, int maxNumberOfArguments)
-            //    {
-            //        return string.Format("Wrong number of arguments: should be between {0} and {1}.",
-            //            minNumberOfArguments,
-            //            maxNumberOfArguments);
-            //    }
-            //}
-
             private readonly string prefix;
             
-            private bool executed;
+            private bool successfullyExecuted;
 
+            // list of ICommandArgumentConstraints which apply to this command
             protected readonly List<ICommandArgumentConstraint> commandArgumentConstraintList
                 = new List<ICommandArgumentConstraint>();
 
@@ -47,50 +29,49 @@ namespace CryptoBlock
             }
 
             /// <summary>
-            /// unique prefix determines what command the user requested.
+            /// unique prefix which determines what command the user requested.
             /// </summary>
             public string Prefix
             {
                 get { return prefix; }
             }
 
-            public bool Executed
+            /// <summary>
+            /// whether command was successfully executed.
+            /// </summary>
+            public bool SuccessfullyExecuted
             {
-                get { return executed; }
-                protected set { executed = value; }
+                get { return successfullyExecuted; }
+                protected set { successfullyExecuted = value; }
             }
 
-            ///// <summary>
-            ///// minimum number of arguments allowed for command.
-            ///// </summary>
-            //public int MinNumberOfArguments
-            //{
-            //    get { return minNumberOfArguments; }
-            //}
-
-            ///// <summary>
-            ///// maximum number of arguments allowed for command.
-            ///// </summary>
-            //public int MaxNumberOfArguments
-            //{
-            //    get { return maxNumberOfArguments; }
-            //}
-
+            /// <summary>
+            /// handles this command, having specified <paramref name="commandArguments"/>.
+            /// </summary>
+            /// <param name="commandArguments"></param>
             public void Handle(string[] commandArguments)
             {
                 bool commandArgumentsValid = checkCommandArgumentConstraints(commandArguments);
 
                 if(commandArgumentsValid)
                 {
-                    this.executed = Execute(commandArguments);
+                    this.successfullyExecuted = Execute(commandArguments);
                 }
             }
 
+            /// <summary>
+            /// formats the <see cref="Prefix"/> of a command derived from a base command,
+            /// by concatenating <paramref name="baseCommandPrefix"/> and
+            /// <paramref name="derivedCommandPrefix"/>.
+            /// </summary>
+            /// <param name="baseCommandPrefix"></param>
+            /// <param name="derivedCommandPrefix"></param>
+            /// <returns></returns>
             protected static string FormatPrefix(
                 string baseCommandPrefix,
-                string inheritingCommandPrefix)
+                string derivedCommandPrefix)
             {
-                return string.Format("{0} {1}", baseCommandPrefix, inheritingCommandPrefix);
+                return string.Format("{0} {1}", baseCommandPrefix, derivedCommandPrefix);
             }
 
             /// <summary>
@@ -103,6 +84,14 @@ namespace CryptoBlock
             /// </returns>
             protected abstract bool Execute(string[] commandArguments);
 
+            /// <summary>
+            /// print specified data <paramref name="message"/> to console,
+            /// having <see cref="ConsoleIOManager.eOutputReportType"/> of 
+            /// <see cref="ConsoleIOManager.eOutputReportType.CommandExecution"/>.
+            /// </summary>
+            /// <seealso cref="ConsoleIOManager.PrintData(string, ConsoleIOManager.eOutputReportType, bool)"/>
+            /// <param name="message"></param>
+            /// <param name="flushOutputBuffer"></param>
             protected static void PrintCommandData(string message, bool flushOutputBuffer = false)
             {
                 ConsoleIOManager.Instance.PrintData(
@@ -111,6 +100,16 @@ namespace CryptoBlock
                     flushOutputBuffer);
             }
 
+            /// <summary>
+            /// prints data with specified <paramref name="format"/>
+            /// having attached <paramref name="args"/>,
+            /// to console, having <see cref="ConsoleIOManager.eOutputReportType"/> of 
+            /// <see cref="ConsoleIOManager.eOutputReportType.CommandExecution"/>.
+            /// </summary>
+            /// <seealso cref="ConsoleIOManager.PrintDataFormat(bool, ConsoleIOManager.eOutputReportType, string, object[])"/>
+            /// <param name="flushOutputBuffer"></param>
+            /// <param name="format"></param>
+            /// <param name="args"></param>
             protected static void PrintCommandDataFormat(
                 bool flushOutputBuffer,
                 string format,
@@ -123,6 +122,14 @@ namespace CryptoBlock
                     args);
             }
 
+            /// <summary>
+            /// logs specified notice <paramref name="message"/> to console,
+            /// having <see cref="ConsoleIOManager.eOutputReportType"/> of 
+            /// <see cref="ConsoleIOManager.eOutputReportType.CommandExecution"/>. 
+            /// </summary>
+            /// <seealso cref="ConsoleIOManager.LogNotice(string, ConsoleIOManager.eOutputReportType, bool)"/>
+            /// <param name="message"></param>
+            /// <param name="flushOutputBuffer"></param>
             protected static void LogCommandNotice(string message, bool flushOutputBuffer = false)
             {
                 ConsoleIOManager.Instance.LogNotice(
@@ -131,6 +138,16 @@ namespace CryptoBlock
                     flushOutputBuffer);
             }
 
+            /// <summary>
+            /// logs notice with specified <paramref name="format"/>
+            /// having attached <paramref name="args"/>,
+            /// to console, having <see cref="ConsoleIOManager.eOutputReportType"/> of 
+            /// <see cref="ConsoleIOManager.eOutputReportType.CommandExecution"/>.
+            /// </summary>
+            /// <seealso cref="ConsoleIOManager.LogNoticeFormat(bool, ConsoleIOManager.eOutputReportType, string, object[])"/>
+            /// <param name="flushOutputBuffer"></param>
+            /// <param name="format"></param>
+            /// <param name="args"></param>
             protected static void LogCommandNoticeFormat(
                 bool flushOutputBuffer,
                 string format,
@@ -143,6 +160,14 @@ namespace CryptoBlock
                     args);
             }
 
+            /// <summary>
+            /// logs specified error <paramref name="message"/> to console,
+            /// having <see cref="ConsoleIOManager.eOutputReportType"/> of 
+            /// <see cref="ConsoleIOManager.eOutputReportType.CommandExecution"/>.
+            /// </summary>
+            /// <seealso cref="ConsoleIOManager.LogError(string, ConsoleIOManager.eOutputReportType, bool)"/>
+            /// <param name="message"></param>
+            /// <param name="flushOutputBuffer"></param>
             protected static void LogCommandError(string message, bool flushOutputBuffer = false)
             {
                 ConsoleIOManager.Instance.LogError(
@@ -151,6 +176,16 @@ namespace CryptoBlock
                     flushOutputBuffer);
             }
 
+            /// <summary>
+            /// logs error with specified <paramref name="format"/>,
+            /// having attached <paramref name="args"/>,
+            /// to console, having <see cref="ConsoleIOManager.eOutputReportType"/> of 
+            /// <see cref="ConsoleIOManager.eOutputReportType.CommandExecution"/>.
+            /// </summary>
+            /// <seealso cref="ConsoleIOManager.LogErrorFormat(bool, ConsoleIOManager.eOutputReportType, string, object[])"/>
+            /// <param name="flushOutputBuffer"></param>
+            /// <param name="format"></param>
+            /// <param name="args"></param>
             protected static void LogCommandErrorFormat(
                 bool flushOutputBuffer,
                 string format,
@@ -163,6 +198,13 @@ namespace CryptoBlock
                     args);
             }
 
+            /// <summary>
+            /// logs "refer to error log file" messsage to console, having 
+            /// <see cref="ConsoleIOManager.eOutputReportType"/> of
+            /// <see cref="ConsoleIOManager.eOutputReportType.CommandExecution"/>.
+            /// </summary>
+            /// <seealso cref="ExceptionManager.ConsoleLogReferToErrorLogFileMessage(ConsoleIOManager.eOutputReportType, bool)"/>
+            /// <param name="flushOutputBuffer"></param>
             protected static void LogCommandReferToErrorLogFileMessage(bool flushOutputBuffer = false)
             {
                 ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage(
@@ -170,11 +212,20 @@ namespace CryptoBlock
                     flushOutputBuffer);
             }
 
-            //        public abstract void UndoCommand();
-
+            /// <summary>
+            /// returns whether <paramref name="commandArgumentArray"/> is valid in respect to
+            /// <see cref="ICommandArgumentConstraint"/>s associated with this command.
+            /// </summary>
+            /// <param name="commandArgumentArray"></param>
+            /// <returns>
+            /// true if <paramref name="commandArgumentArray"/> is valid in respect to
+            /// <see cref="ICommandArgumentConstraint"/>s associated with this command,
+            /// else false
+            /// </returns>
             private bool checkCommandArgumentConstraints(string[] commandArgumentArray)
             {
-                foreach(ICommandArgumentConstraint commandArgumentConstrint in this.commandArgumentConstraintList)
+                foreach(ICommandArgumentConstraint commandArgumentConstrint 
+                    in this.commandArgumentConstraintList)
                 {
                     bool commandArgumentArrayValid = commandArgumentConstrint.IsValid(commandArgumentArray);
 
@@ -188,37 +239,6 @@ namespace CryptoBlock
 
                 return true;
             }
-
-            ///// <summary>
-            ///// checks whether user entered a wrong number of arguments,
-            ///// and logs appropriate message to console in that case. 
-            ///// </summary>
-            ///// <param name="commandArguments"></param>
-            ///// <param name="invalidNumberOfArguments">
-            ///// set to true if user entered a wrong number of argument, else false
-            ///// </param>
-            //protected void HandleWrongNumberOfArguments(
-            //    string[] commandArguments,
-            //    out bool wrongNumberOfArguments)
-            //{
-            //    int numberOfArguments = commandArguments.Length;
-
-            //    if (numberOfArguments < minNumberOfArguments || numberOfArguments > maxNumberOfArguments)
-            //    {
-            //        // wrong number of arguments
-            //        wrongNumberOfArguments = true;
-
-            //        ConsoleIOManager.Instance.LogErrorFormat(
-            //            false,
-            //            "Wrong number of arguments for command: should be between {0} and {1}.",                        
-            //            minNumberOfArguments,
-            //            maxNumberOfArguments);
-            //    }
-            //    else // valid number of arguments
-            //    {
-            //        wrongNumberOfArguments = false;
-            //    }
-            //}
         }
     }
 }
