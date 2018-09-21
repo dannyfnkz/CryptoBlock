@@ -45,6 +45,12 @@ namespace CryptoBlock
                 get { return instance; }
             }
 
+            /// <summary>
+            /// logs "refer to erorr log file" message to console.
+            /// </summary>
+            /// <seealso cref="ConsoleIOManager.LogError(string, eOutputReportType, bool)"/>
+            /// <param name="outputReportType"></param>
+            /// <param name="flushOutputBuffer"></param>
             public void ConsoleLogReferToErrorLogFileMessage(
                 eOutputReportType outputReportType,
                 bool flushOutputBuffer = false)
