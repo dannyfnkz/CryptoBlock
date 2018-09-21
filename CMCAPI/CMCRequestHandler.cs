@@ -88,7 +88,7 @@ namespace CryptoBlock
             }
 
             /// <summary>
-            /// thrown if coin id provided as argument was invalid (<c>coinId <= 0</c>)
+            /// thrown if coin id provided as argument is invalid (<c>coinId <= 0</c>)
             /// </summary>
             public class InvalidCoinIdException : DataRequestException
             {
@@ -98,6 +98,9 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if coin id provided as argument does not exist in CMC database.
+            /// </summary>
             public class CoinIdDoesNotExistException : DataRequestException
             {
                 public CoinIdDoesNotExistException(int coinId)
@@ -114,7 +117,7 @@ namespace CryptoBlock
 
                 private static string formatExceptionMessage(int coinId)
                 {
-                    return string.Format("Coin id does not exist in database: {0}.", coinId);
+                    return string.Format("Coin id does not exist in CMC database: {0}.", coinId);
                 }
             }
 
@@ -368,5 +371,4 @@ namespace CryptoBlock
             }
         }
     }
-
 }
