@@ -1,9 +1,9 @@
 ﻿using CryptoBlock.CMCAPI;
-using CryptoBlock.TableDisplay;
+using CryptoBlock.Utils.Tables;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static CryptoBlock.TableDisplay.PropertyTable;
+using static CryptoBlock.Utils.Tables.PropertyTable;
 
 namespace CryptoBlock
 {

@@ -1,6 +1,6 @@
 ﻿using CryptoBlock.CMCAPI;
-using CryptoBlock.TableDisplay;
-using static CryptoBlock.TableDisplay.PropertyTable;
+using CryptoBlock.Utils.Tables;
+using static CryptoBlock.Utils.Tables.PropertyTable;
 
 namespace CryptoBlock
 {

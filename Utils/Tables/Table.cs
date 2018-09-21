@@ -8,7 +8,7 @@ using System.Text;
 
 namespace CryptoBlock
 {
-    namespace TableDisplay
+    namespace Utils.Tables
     {
         /// <summary>
         /// represents a table consisting a header (<see cref="GetTableHeaderString"/>, <see cref="Column"/>s,

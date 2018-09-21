@@ -3,11 +3,11 @@ using CryptoBlock.Utils.Collections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static CryptoBlock.TableDisplay.Table;
+using static CryptoBlock.Utils.Tables.Table;
 
 namespace CryptoBlock
 {
-    namespace TableDisplay
+    namespace Utils.Tables
     {
         /// <summary>
         /// represents a table where each column's value type is a <see cref="Property"/>.

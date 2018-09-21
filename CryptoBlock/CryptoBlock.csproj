@@ -103,10 +103,6 @@
       <Project>{9808d72e-9760-4e7a-84fb-1f3f8bde222b}</Project>
       <Name>CommandHandling</Name>
     </ProjectReference>
-    <ProjectReference Include="..\DisplayTable\TableDisplay.csproj">
-      <Project>{576249a0-f9ee-456d-a64f-67032c86aae9}</Project>
-      <Name>TableDisplay</Name>
-    </ProjectReference>
     <ProjectReference Include="..\ExceptionManagement\ExceptionManagement.csproj">
       <Project>{8f6feee8-262e-4bcc-a5ac-67e9d2d35710}</Project>
       <Name>ExceptionManagement</Name>

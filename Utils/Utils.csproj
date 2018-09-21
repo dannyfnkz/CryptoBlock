@@ -153,6 +153,8 @@
     <Compile Include="Strings\StringExtensionMethods.cs" />
     <Compile Include="Strings\StringUtils.cs" />
     <Compile Include="GeneralUtils.cs" />
+    <Compile Include="Tables\PropertyTable.cs" />
+    <Compile Include="Tables\Table.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
