@@ -4,6 +4,11 @@ namespace CryptoBlock
 {
     namespace CommandHandling.Arguments
     {
+        /// <summary>
+        /// thrown if a command argument could not be parsed from a corresponding element
+        /// in (string) command argument array passed to <see cref="Command"/> on
+        /// <see cref="Command.Execute(string[])"/>.
+        /// </summary>
         public class CommandArgumentParseException : CommandExecutionException
         {
             public CommandArgumentParseException(
