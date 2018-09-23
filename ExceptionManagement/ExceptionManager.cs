@@ -65,18 +65,28 @@ namespace CryptoBlock
             /// logs <paramref name="exception"/> to error log file.
             /// </summary>
             /// <param name="exception"></param>
+            /// <exception cref="ObjectDisposedException">
+            /// <seealso cref="logExceptionToConsole(string)"/>
+            /// </exception>
             public void LogException(Exception exception)
             {
-                string exceptionLog = ExceptionUtils.GetExceptionMessageString(exception);
+                string exceptionMessage = ExceptionUtils.GetExceptionMessageString(exception);
 
                 // log exception log to error log file and to console
-                logExceptionToErrorFile(exceptionLog, false);
-                logExceptionToConsole(exceptionLog);
+                logExceptionToErrorFile(exceptionMessage, false);
+                logExceptionToConsole(exceptionMessage);
             }
 
-            private void logExceptionToConsole(string exceptionLog)
+            /// <summary>
+            /// logs <paramref name="exceptionMessage"/> to console.
+            /// </summary>
+            /// <param name="exceptionMessage"></param>
+            /// <exception cref="ObjectDisposedException">
+            /// <seealso cref="ConsoleIOManager.LogError(string, eOutputReportType, bool)"/>
+            /// </exception>
+            private void logExceptionToConsole(string exceptionMessage)
             {
-                ConsoleIOManager.Instance.LogError(exceptionLog, eOutputReportType.ExceptionLog);
+                ConsoleIOManager.Instance.LogError(exceptionMessage, eOutputReportType.ExceptionLog);
             }
 
             /// <summary>
