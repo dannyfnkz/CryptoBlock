@@ -16,7 +16,8 @@ namespace CryptoBlock
     {
         /// <summary>
         /// <para>
-        /// buys specified amount of specified coin, for a specified price per coin.
+        /// represents a <see cref="PortfolioTransactionCommand{T}"/> which performs a purchase of specified 
+        /// amount of specified coin, for a specified price per coin.
         /// </para>
         /// <para>
         /// command syntax:
@@ -162,7 +163,7 @@ namespace CryptoBlock
                 }
                 catch (DatabaseCommunicationException databaseCommunicationException)
                 {
-                    PortfolioCommandUtils.HandleDatabaseCommunicationException(databaseCommunicationException);
+                    PortfolioCommand.HandleDatabaseCommunicationException(databaseCommunicationException);
                     commandExecutedSuccessfuly = false;
                 }
 

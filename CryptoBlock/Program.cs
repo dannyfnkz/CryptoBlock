@@ -1,5 +1,4 @@
 ﻿using CryptoBlock.Utils;
-using CryptoBlock.Utils.IO.SqLite;
 using CryptoBlock.Utils.IO.SQLite.Queries;
 using CryptoBlock.Utils.IO.SQLite.Queries.Columns;
 using CryptoBlock.Utils.IO.SQLite.Queries.Conditions;

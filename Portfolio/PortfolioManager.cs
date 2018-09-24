@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using static CryptoBlock.PortfolioManagement.PortfolioEntry;
-using static CryptoBlock.Utils.IO.SqLite.SQLiteDatabaseHandler;
+using static CryptoBlock.Utils.IO.SQLite.SQLiteDatabaseHandler;
 
 namespace CryptoBlock
 {
@@ -77,6 +77,9 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if an exception occurs while trying to performe a database operation.
+            /// </summary>
             public class DatabaseCommunicationException : PortfolioManagerException
             {
                 public DatabaseCommunicationException(string operationName, Exception innerException)
@@ -94,6 +97,10 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if an undo action operation was attempted to be performed, while an
+            /// undoable action was not available.
+            /// </summary>
             public class UndoableLastActionNotAvailableException : PortfolioManagerException
             {
                 public UndoableLastActionNotAvailableException()
@@ -252,6 +259,10 @@ namespace CryptoBlock
                 get { return instance; }
             }
 
+            /// <summary>
+            /// whether there exists a portfolio action, which was most recently performed and 
+            /// can be undone.
+            /// </summary>
             internal bool UndoableLastActionAvailable
             {
                 get { return PortfolioDatabaseManager.Instance.UndoableLastActionAvailable; }
@@ -318,6 +329,13 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// undoes most recent undoable action which was performed on portfolio, if one exists.
+            /// </summary>
+            /// <seealso cref="PortfolioDatabaseManager.UndoLastAction"/>
+            /// <exception cref="UndoableLastActionNotAvailableException">
+            /// <seealso cref="assertUndoableLastActionAvailable"/>
+            /// </exception>
             internal void UndoLastAction()
             {
                 assertUndoableLastActionAvailable();
@@ -363,12 +381,59 @@ namespace CryptoBlock
                 return isInPortfolio;
             }
 
+            /// <summary>
+            /// adds <see cref="PortfolioEntry"/> corresponding to specified <paramref name="coinId"/>
+            /// and performs specified <paramref name="buyTransaction"/> on it.
+            /// </summary>
+            /// <seealso cref="AddAndBuyCoin(long, IEnumerable{BuyTransaction})"/>
+            /// <param name="coinId"></param>
+            /// <param name="buyTransaction"></param>
+            /// <exception cref="ManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
+            /// <exception cref="InvalidCoinIdException">
+            /// <seealso cref="AddAndBuyCoin(long, IEnumerable{BuyTransaction})"/>
+            /// </exception>
+            /// <exception cref="CoinAlreadyInPortfolioException">
+            /// <seealso cref="AddAndBuyCoin(long, IEnumerable{BuyTransaction})"/>
+            /// </exception>
+            /// <exception cref="DatabaseCommunicationException">
+            /// <seealso cref="AddAndBuyCoin(long, IEnumerable{BuyTransaction})"/>
+            /// </exception>
+            /// <exception cref="InvalidPriceException">
+            /// <seealso cref="AddAndBuyCoin(long, IEnumerable{BuyTransaction})"/>
+            /// </exception>
             public void AddAndBuyCoin(long coinId, BuyTransaction buyTransaction)
             {
+                assertManagerInitialized("AddAndBuyCoin");
                 AddAndBuyCoin(coinId, new BuyTransaction[] { buyTransaction });
             }
 
-            public void AddAndBuyCoin(long coinId, IEnumerable<BuyTransaction> buyTransactions)
+            /// <summary>
+            /// adds <see cref="PortfolioEntry"/> corresponding to specified <paramref name="coinId"/>
+            /// and performs specified <paramref name="buyTransactions"/> on it.
+            /// </summary>
+            /// <seealso cref="AddCoin(long)"/>
+            /// <seealso cref="BuyCoin(IList{BuyTransaction})"/>
+            /// <param name="coinId"></param>
+            /// <param name="buyTransactions"></param>
+            /// <exception cref="ManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
+            /// <exception cref="InvalidCoinIdException">
+            /// <seealso cref="AddCoin(long)"/>
+            /// </exception>
+            /// <exception cref="CoinAlreadyInPortfolioException">
+            /// <seealso cref="AddCoin(long)"/>
+            /// </exception>
+            /// <exception cref="DatabaseCommunicationException">
+            /// <seealso cref="AddCoin(long)"/>
+            /// <seealso cref="BuyCoin(IList{BuyTransaction})"/>
+            /// </exception>
+            /// <exception cref="InvalidPriceException">
+            /// <seealso cref="BuyCoin(IList{BuyTransaction})"/>
+            /// </exception>
+            public void AddAndBuyCoin(long coinId, IList<BuyTransaction> buyTransactions)
             {
                 assertManagerInitialized("AddAndBuyCoin");
 
@@ -413,8 +478,22 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// adds <see cref="PortfolioEntry"/>s corresponding to specified <paramref name="coinIds"/>.
+            /// </summary>
+            /// <seealso cref="PortfolioDatabaseManager.AddCoins(IEnumerable{long})"/>
+            /// <param name="coinIds"></param>
+            /// <exception cref="InvalidCoinIdException">
+            /// <seealso cref="assertCoinIdValid(long)"/>
+            /// </exception>
+            /// <exception cref="CoinAlreadyInPortfolioException">
+            /// <seealso cref="assertCoinNotAlreadyInPortfolio(long)"/>
+            /// </exception>
+            /// <exception cref="DatabaseCommunicationException">
+            /// <seealso cref="handleDatabaseHandlerException(string, SQLiteDatabaseHandlerException)"/>
+            /// </exception>
             public void AddCoins(IList<long> coinIds)
-            {
+            { 
                 assertManagerInitialized("AddCoins");
 
                 foreach(long coinId in coinIds) // perform checks for all coinIds in advance
@@ -466,8 +545,26 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// removes <see cref="PortfolioEntry"/>s corresponding to specified <paramref name="coinIds"/>
+            /// from portfolio.
+            /// </summary>
+            /// <seealso cref="PortfolioDatabaseManager.RemoveCoins(IEnumerable{long})"/>
+            /// <param name="coinIds"></param>
+            /// <exception cref="ManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
+            /// <exception cref="InvalidCoinIdException">
+            /// <seealso cref="assertCoinIdValid(long)"/>
+            /// </exception>
+            /// <exception cref="CoinNotInPortfolioException">
+            /// <seealso cref="assertCoinInPortfolio(long)"/>
+            /// </exception>
+            /// <exception cref="DatabaseCommunicationException">
+            /// <seealso cref="handleDatabaseHandlerException(string, SQLiteDatabaseHandlerException)"/>
+            /// </exception>
             public void RemoveCoins(long[] coinIds)
-            {
+            { 
                 assertManagerInitialized("RemoveCoins");
 
                 foreach (long coinId in coinIds) // perform checks for all coinIds
@@ -519,8 +616,27 @@ namespace CryptoBlock
                 }
             }
 
-            // can have a better implementation (support on database manager level for multiple buys
-            public void BuyCoin(IEnumerable<BuyTransaction> buyTransactions)
+            /// <summary>
+            /// performs the specified <paramref name="buyTransactions"/>.
+            /// </summary>
+            /// <remarks>
+            /// can have a better implementation 
+            /// (support on PortfolioDatabaseManager level for multiple buys).
+            /// </remarks>
+            /// <param name="buyTransactions"></param>
+            /// <exception cref="ManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
+            /// <exception cref="CoinNotInPortfolioException">
+            /// <seealso cref="BuyCoin(BuyTransaction)"/>
+            /// </exception>
+            /// <exception cref="InvalidPriceException">
+            /// <seealso cref="BuyCoin(BuyTransaction)"/>
+            /// </exception>
+            /// <exception cref="DatabaseCommunicationException">
+            /// <seealso cref="BuyCoin(BuyTransaction)"/>
+            /// </exception>
+            public void BuyCoin(IList<BuyTransaction> buyTransactions)
             {
                 assertManagerInitialized("BuyCoin");
 
@@ -570,7 +686,28 @@ namespace CryptoBlock
                 }
             }
 
-            // can have a better implementation (support on database manager level for multiple sells
+            // can have a better implementation (support on PortfolioDatabaseManager level for multiple sells
+
+            /// <summary>
+            /// performs the specified <paramref name="sellTransactions"/>.
+            /// </summary>
+            /// <seealso cref="SellCoin(SellTransaction)"/>
+            /// <param name="sellTransactions"></param>
+            /// <exception cref="ManagerNotInitializedException">
+            /// <seealso cref="ManagerNotInitializedException"/>
+            /// </exception>
+            /// <exception cref="CoinNotInPortfolioException">
+            /// <seealso cref="SellCoin(SellTransaction)"/>
+            /// </exception>
+            /// <exception cref="InvalidPriceException">
+            /// <seealso cref="SellCoin(SellTransaction)"/>
+            /// </exception>
+            /// <exception cref="InsufficientFundsException">
+            /// <seealso cref="SellCoin(SellTransaction)"/>
+            /// </exception>
+            /// <exception cref="DatabaseCommunicationException">
+            /// <seealso cref="SellCoin(SellTransaction)"/>
+            /// </exception>
             public void SellCoin(IList<SellTransaction> sellTransactions)
             {
                 assertManagerInitialized("SellCoin");
@@ -658,26 +795,6 @@ namespace CryptoBlock
                 return portfolioEntry;
             }
 
-            //  private void fileDataSaveTask_Target()
-            //  {
-            //      try
-            //      {
-            //          string jsonString = JsonUtils.SerializeObject(this);
-            ////          FileIOManager.Instance.WriteTextToDataFile(DATA_SAVE_FILE_NAME, jsonString);
-            //      }
-            //      catch (Exception exception) // serialization or write to file failed
-            //      {
-            //          // notify user about exception
-            //          ConsoleIOManager.Instance.LogError(
-            //              "An error occurred while trying to save portfolio data to file.");
-            //          ExceptionManager.Instance.ConsoleLogReferToErrorLogFileMessage();
-
-            //          // log exception to error log file
-            //          DataFileSaveException dataFileSaveException = new DataFileSaveException(exception);
-            //          ExceptionManager.Instance.LogToErrorFile(dataFileSaveException);
-            //      }
-            //  }
-
             /// <summary>
             /// handles an <see cref="SQLiteDatabaseHandlerException"/> that was thrown by
             /// <see cref="PortfolioDatabaseManager"/>, while performing specified
@@ -727,6 +844,13 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// asserts that a recently performed undoable portfolio action is available.
+            /// </summary>
+            /// <seealso cref="UndoableLastActionAvailable"/>
+            /// <exception cref="UndoableLastActionNotAvailableException">
+            /// thrown if a recently performed undoable portfolio action is not available
+            /// </exception>
             private void assertUndoableLastActionAvailable()
             {
                 if (!this.UndoableLastActionAvailable)

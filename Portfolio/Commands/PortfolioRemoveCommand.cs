@@ -37,11 +37,15 @@ namespace CryptoBlock
             /// <summary>
             /// removes <see cref="PortfolioEntry"/> corresponding to coin id
             /// specified in <paramref name="commandArguments"/>[0] from portfolio.
-            /// returns whether command was executed successfully.
+            /// returns whether command executed successfully.
             /// </summary>
             /// <seealso cref="CoinListingManager.GetCoinIdByNameOrSymbol(string)"/>
             /// <seealso cref="PortfolioManager.RemoveCoin(int)"/>
             /// <param name="commandArguments"></param>
+            /// <returns>
+            /// true if command executed successfully,
+            /// else false
+            /// </returns>
             protected override bool Execute(string[] commandArguments)
             {
                 bool commandExecutedSuccessfuly;
@@ -91,7 +95,7 @@ namespace CryptoBlock
                 }
                 catch (DatabaseCommunicationException databaseCommunicationException)
                 {
-                   PortfolioCommandUtils.HandleDatabaseCommunicationException(databaseCommunicationException);
+                   PortfolioCommand.HandleDatabaseCommunicationException(databaseCommunicationException);
 
                     commandExecutedSuccessfuly = false;
                 }

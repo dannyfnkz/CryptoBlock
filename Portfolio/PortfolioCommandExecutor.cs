@@ -12,7 +12,6 @@ using System.Collections.Generic;
 using System.Text;
 using static CryptoBlock.PortfolioManagement.PortfolioManager;
 using static CryptoBlock.ServerDataManagement.CoinListingManager;
-using static CryptoBlock.Utils.IO.SqLite.SQLiteDatabaseHandler;
 
 namespace CryptoBlock
 {

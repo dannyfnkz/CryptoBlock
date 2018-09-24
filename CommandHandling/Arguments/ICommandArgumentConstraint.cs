@@ -28,6 +28,7 @@ namespace CryptoBlock
             /// action to be performed in case <paramref name="commandArgumentArray"/>
             /// is found to be invalid.
             /// </summary>
+            /// <seealso cref="IsValid(string[])"/>
             /// <param name="commandArgumentArray"></param>
             void OnInvalidCommandArgumentArray(string[] commandArgumentArray);
         }

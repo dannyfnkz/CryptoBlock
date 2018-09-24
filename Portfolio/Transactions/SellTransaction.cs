@@ -2,10 +2,15 @@
 {
     namespace PortfolioManagement.Transactions
     {
+        /// <summary>
+        /// <summary>
+        /// represents a <see cref="Transaction"/> which performs a sale
+        /// of specified coin.
+        /// </summary>
         public class SellTransaction : Transaction
         {
             public SellTransaction(long coinId, double amount, double pricePerCoin, long unixTimestamp)
-                : base(eType.Sell, coinId, amount, pricePerCoin, unixTimestamp)
+                : base(eTransactionType.Sell, coinId, amount, pricePerCoin, unixTimestamp)
             {
 
             }

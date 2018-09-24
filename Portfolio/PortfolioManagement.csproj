@@ -46,7 +46,6 @@
     <Compile Include="Commands\PortfolioAddCommand.cs" />
     <Compile Include="Commands\PortfolioClearCommand.cs" />
     <Compile Include="Commands\PortfolioCommand.cs" />
-    <Compile Include="Commands\PortfolioCommandUtils.cs" />
     <Compile Include="Commands\PortfolioRemoveCommand.cs" />
     <Compile Include="Commands\TransactionCommands\PortfolioBuyCommand.cs" />
     <Compile Include="Commands\TransactionCommands\PortfolioSellCommand.cs" />

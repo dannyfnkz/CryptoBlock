@@ -10,6 +10,9 @@ namespace CryptoBlock
 {
     namespace PortfolioManagement.Commands
     {
+        /// <summary>
+        /// removes all coins from portfolio.
+        /// </summary>
         internal class PortfolioClearCommand : PortfolioCommand
         {
             private const int MIN_NUMBER_OF_ARGUMENTS = 0;
@@ -26,6 +29,15 @@ namespace CryptoBlock
 
             }
 
+            /// <summary>
+            /// removes all <see cref="PortfolioEntry"/>s from portfolio.
+            /// returns whether command was executed successfully.
+            /// </summary>
+            /// <param name="commandArguments"></param>
+            /// <returns>
+            /// true if command executed successfully,
+            /// else false 
+            /// </returns>
             protected override bool Execute(string[] commandArguments)
             {
                 bool commandExecutedSuccessfuly;
@@ -35,7 +47,7 @@ namespace CryptoBlock
                     // get all coinIds in portfolio
                     long[] coinIdsToBeRemoved = PortfolioManager.Instance.CoinIds;
 
-                    // delete PortfolioEntry corresponding to coinId from portfolio
+                    // remove all PortfolioEntry s from portfolio
                     PortfolioManager.Instance.RemoveCoins(coinIdsToBeRemoved);
 
                     // log successful removal notice to console
@@ -49,7 +61,7 @@ namespace CryptoBlock
                 }
                 catch (DatabaseCommunicationException databaseCommunicationException)
                 {
-                    PortfolioCommandUtils.HandleDatabaseCommunicationException(databaseCommunicationException);
+                    PortfolioCommand.HandleDatabaseCommunicationException(databaseCommunicationException);
                     commandExecutedSuccessfuly = false;
                 }
 

@@ -76,7 +76,7 @@ namespace CryptoBlock
                 }
                 catch (DatabaseCommunicationException databaseCommunicationException)
                 {
-                   PortfolioCommandUtils.HandleDatabaseCommunicationException(databaseCommunicationException);
+                   PortfolioCommand.HandleDatabaseCommunicationException(databaseCommunicationException);
                     commandExecutedSuccessfuly = false;
                 }
                 catch (CoinAlreadyInPortfolioException coinAlreadyInPortfolioException)

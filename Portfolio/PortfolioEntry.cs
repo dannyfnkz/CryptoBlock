@@ -1,7 +1,6 @@
 ﻿using CryptoBlock.CMCAPI;
 using CryptoBlock.PortfolioManagement.Transactions;
 using CryptoBlock.Utils;
-using CryptoBlock.Utils.IO.SqLite;
 using CryptoBlock.Utils.IO.SQLite.Schema;
 using Newtonsoft.Json;
 using System;
@@ -277,7 +276,7 @@ namespace CryptoBlock
                 double newHoldings;
                 double? newAverageBuyPrice;
 
-                if (transaction.Type == Transaction.eType.Buy) // buy transaction
+                if (transaction.TransactionType == Transaction.eTransactionType.Buy) // buy transaction
                 {
                     newHoldings = this.holdings + transaction.Amount;
 
@@ -379,7 +378,7 @@ namespace CryptoBlock
             /// </exception>
             private void assertCoinTickerIdMatchesCoinId(CoinTicker coinTicker)
             {
-                if (this.coinId != coinTicker.Id)
+                if (this.CoinId != coinTicker.Id)
                 {
                     throw new PortfolioAndTickerCoinIdMismatchException();
                 }

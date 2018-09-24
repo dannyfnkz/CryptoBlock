@@ -16,7 +16,8 @@ namespace CryptoBlock
     {
         /// <summary>
         /// <para>
-        /// sells specified amount of specified coin, for a specified price per coin.
+        /// rpresents a <see cref="PortfolioTransactionCommand{T}"/> which performs a sell of specified
+        /// amount of specified coin, for a specified price per coin.
         /// </para>
         /// <para>
         /// command syntax: portfolio sell [coin name / symbol] [sell amount] [sell price per coin]
@@ -172,7 +173,7 @@ namespace CryptoBlock
                 }
                 catch (DatabaseCommunicationException databaseCommunicationException)
                 {
-                    PortfolioCommandUtils.HandleDatabaseCommunicationException(databaseCommunicationException);
+                    PortfolioCommand.HandleDatabaseCommunicationException(databaseCommunicationException);
                     commandExecutedSuccessfuly = false;
                 }
 

@@ -23,7 +23,7 @@ using static Utils.IO.SQLite.ResultSet;
 
 namespace CryptoBlock
 {
-    namespace Utils.IO.SqLite
+    namespace Utils.IO.SQLite
     {
         /// <summary>
         /// handles performing database operations on a single SQLite database local file,

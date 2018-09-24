@@ -12,13 +12,13 @@ namespace CryptoBlock
             /// <summary>
             /// type of <see cref= "Transaction"/>.
             /// </summary>
-            internal enum eType
+            internal enum eTransactionType
             {
                 Buy, Sell
             }
 
             [JsonProperty]
-            private readonly eType type;
+            private readonly eTransactionType transactionType;
 
             [JsonProperty]
             private readonly long coinId;
@@ -34,13 +34,13 @@ namespace CryptoBlock
 
             [JsonConstructor]
             internal Transaction(
-                eType type,
+                eTransactionType transactionType,
                 long coinId,
                 double amount,
                 double pricePerCoin,
                 long unixTimestamp)
             {
-                this.type = type;
+                this.transactionType = transactionType;
                 this.coinId = coinId;
                 this.amount = amount;
                 this.pricePerCoin = pricePerCoin;
@@ -51,9 +51,9 @@ namespace CryptoBlock
             /// type of <see cref="Transaction"/>.
             /// </summary>
             [JsonIgnore]
-            internal eType Type
+            internal eTransactionType TransactionType
             {
-                get { return type; }
+                get { return transactionType; }
             }
 
             public long CoinId

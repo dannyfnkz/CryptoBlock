@@ -2,7 +2,6 @@
 using CryptoBlock.IOManagement;
 using CryptoBlock.PortfolioManagement.Transactions;
 using CryptoBlock.ServerDataManagement;
-using CryptoBlock.Utils.IO.SqLite;
 using CryptoBlock.Utils.IO.SQLite.Queries.DataQueries;
 using CryptoBlock.Utils.IO.SQLite.Queries.Columns;
 using CryptoBlock.Utils.IO.SQLite.Queries.Conditions;
@@ -17,13 +16,23 @@ using CryptoBlock.Utils.IO.SQLite.Queries.DataQueries.Write;
 using CryptoBlock.Utils.IO.SQLite.Queries.DataQueries.Read;
 using CryptoBlock.Utils.IO.SQLite.Xml.Documents;
 using CryptoBlock.Utils.IO.FileIO;
+using CryptoBlock.Utils.IO.SQLite.Xml.Documents.Exceptions;
+using CryptoBlock.Utils.IO.SQLite;
+using static CryptoBlock.Utils.IO.SQLite.SQLiteDatabaseHandler;
 
 namespace CryptoBlock
 {
     namespace PortfolioManagement
     {
+        /// <summary>
+        /// manages <see cref="PortfolioManager"/> database operations.
+        /// </summary>
         internal class PortfolioDatabaseManager
         {
+            /// <summary>
+            /// thrown if an exception occurred while performing a <see cref="PortfolioDatabaseManager"/>
+            /// operation.
+            /// </summary>
             internal class PortfolioDatabaseManagerException : Exception
             {
                 internal PortfolioDatabaseManagerException(
@@ -35,6 +44,28 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if <see cref="PortfolioDatabaseManager"/> initialization failed.
+            /// </summary>
+            internal class PortfolioDatabaseManagerInitializationException : PortfolioDatabaseManagerException
+            {
+                internal PortfolioDatabaseManagerInitializationException(
+                    Exception innerException)
+                    : base(formatExceptionMessage(), innerException)
+                {
+
+                }
+
+                private static string formatExceptionMessage()
+                {
+                    return "Initializing PortfolioDatabaseManager failed.";
+                }
+            }
+
+            /// <summary>
+            /// thrown if an undoable recently performed database action was requested to be undone,
+            /// but one is not available.
+            /// </summary>
             internal class UndoableLastActionNotAvailableException : PortfolioDatabaseManagerException
             {
                 internal UndoableLastActionNotAvailableException()
@@ -45,12 +76,18 @@ namespace CryptoBlock
 
                 private static string formatExceptionMessage()
                 {
-                    return "No undoable last action available.";
+                    return "No undoable recently performed database action available.";
                 }
             }
 
+            /// <summary>
+            /// contains data regarding database structure.
+            /// </summary>
             private static class DatabaseStructure
             {
+                /// <summary>
+                /// contains data regarding PortfolioEntry table structure.
+                /// </summary>
                 internal static class PortfolioEntryTableStructure
                 {
                     internal static readonly string TABLE_NAME = "PortfolioEntry";
@@ -61,15 +98,9 @@ namespace CryptoBlock
                     internal static readonly string AVERAGE_BUY_PRICE_COLUMN_NAME = "averageBuyPrice";
                 }
 
-                //internal static class PortfolioEntryTransactionTableStructure
-                //{
-                //    internal static readonly string TABLE_NAME = "PortfolioEntryCoinTransaction";
-
-                //    internal static readonly string ID_COLUMN_NAME = "_id";
-                //    internal static readonly string PORTFOLIO_ENTRY_ID_COLUMN_NAME = "portfolioEntryId";
-                //    internal static readonly string COIN_TRANSACTION_ID_COLUMN_NAME = "coinTransactionId";
-                //}
-
+                /// <summary>
+                /// contains data regarding TransactionType table structure.
+                /// </summary>
                 internal static class TransactionTypeTableStructure
                 {
                     internal static readonly string TABLE_NAME = "CoinTransactionType";
@@ -78,6 +109,9 @@ namespace CryptoBlock
                     internal static readonly string NAME_COLUMN_NAME = "name";
                 }
 
+                /// <summary>
+                /// contains data regarding CoinTransaction table structure.
+                /// </summary>
                 internal static class CoinTransactionTableStructure
                 {
                     internal static readonly string TABLE_NAME = "CoinTransaction";
@@ -113,7 +147,7 @@ namespace CryptoBlock
                             "Portfolio data file not found. Creating new data file ..",
                             ConsoleIOManager.eOutputReportType.SystemCritical);
 
-                        createNewPortfolioDatabaseFile();
+                        initializeByCreatingNewPortfolioDatabaseFile();
 
                         ConsoleIOManager.Instance.LogNotice(
                             "New portfolio data file created successfully.",
@@ -128,17 +162,27 @@ namespace CryptoBlock
                         
                         FileIOManager.Instance.DeleteFile(SQLite_DATABASE_FILE_PATH);
 
-                        throw exception;
+                        throw new PortfolioDatabaseManagerInitializationException(exception);
                     }                  
                 }
                 else // data file exists
                 {
-                    ConsoleIOManager.Instance.LogNotice(
-                        "Portfolio data file found. Using existing file.",
-                        ConsoleIOManager.eOutputReportType.System);
+                    try
+                    {
+                        ConsoleIOManager.Instance.LogNotice(
+                            "Portfolio data file found. Using existing file.",
+                            ConsoleIOManager.eOutputReportType.System);
 
-                    useExistingPortfolioDatabaseFile();
+                        initializeUsingExistingPortfolioDatabaseFile();
+                    }
+                    catch (SQLiteDatabaseHandlerException SQLiteDatabaseHandlerException)
+                    {
+                        throw new PortfolioDatabaseManagerInitializationException(
+                            SQLiteDatabaseHandlerException);
+                    }
                 }
+
+                this.sqliteDatabaseHandler.OpenConnection();
             }
 
             internal static PortfolioDatabaseManager Instance
@@ -146,6 +190,9 @@ namespace CryptoBlock
                 get { return instance; }
             }
 
+            /// <summary>
+            /// whether an undoable, recently performed database action exists.
+            /// </summary>
             internal bool UndoableLastActionAvailable
             {
                 get { return undoableLastActionAvailable; }
@@ -156,6 +203,12 @@ namespace CryptoBlock
                 instance = new PortfolioDatabaseManager();
             }
 
+            /// <summary>
+            /// undoes the last action performed on database.
+            /// </summary>
+            /// <exception cref="UndoableLastActionNotAvailableException">
+            /// <seealso cref="assertUndoableLastActionAvailable"/>
+            /// </exception>
             internal void UndoLastAction()
             {
                 assertUndoableLastActionAvailable();
@@ -165,11 +218,47 @@ namespace CryptoBlock
             }
 
             // executes database operations described in portfolioDatabaseAction atomically
-            internal void ExecuteAsOneAction(Action portfolioDatabaseAction)
+
+            /// <summary>
+            /// executes database operations contained in <paramref name="action"/> in an automic manner.
+            /// </summary>
+            /// <param name="action"></param>
+            internal void ExecuteAsOneAction(Action action)
             {
-                this.sqliteDatabaseHandler.ExecuteWithinTransaction(portfolioDatabaseAction);
+                this.sqliteDatabaseHandler.ExecuteWithinTransaction(action);
             }
 
+            /// <summary>
+            /// adds empty <see cref="PortfolioEntry"/>s to database, corresponding to specified
+            /// <paramref name="coinIds"/>.
+            /// </summary>
+            /// <seealso cref="AddCoin(long)"/>
+            /// <param name="coinIds"></param>
+            /// <exception cref="SQLiteDatabaseHandlerException">
+            /// <seealso cref="AddCoin(long)"/>
+            /// </exception>
+            internal void AddCoins(IEnumerable<long> coinIds)
+            {
+                this.sqliteDatabaseHandler.ExecuteWithinTransaction(() => 
+                    {
+                        foreach(long coinId in coinIds)
+                        {
+                            AddCoin(coinId);
+                        }
+                    }
+                );
+
+                this.undoableLastActionAvailable = true;
+            }
+
+            /// <summary>
+            /// adds empty <see cref="PortfolioEntry"/> to database, corresponding to specified
+            /// <paramref name="coinId"/>.
+            /// </summary>
+            /// <param name="coinId"></param>
+            /// <exception cref="SQLiteDatabaseHandlerException">
+            /// <seealso cref="SQLiteDatabaseHandler.InsertIntoTable(InsertQuery)"/>
+            /// </exception>
             internal void AddCoin(long coinId)
             {
                 // create a new portfolio entry associated with specified coin id
@@ -186,39 +275,15 @@ namespace CryptoBlock
                 this.undoableLastActionAvailable = true;
             }
 
-            internal void AddCoins(IEnumerable<long> coinIds)
-            {
-                this.sqliteDatabaseHandler.ExecuteWithinTransaction(() => 
-                    {
-                        foreach(long coinId in coinIds)
-                        {
-                            AddCoin(coinId);
-                        }
-                    }
-                );
-
-                this.undoableLastActionAvailable = true;
-            }
-
-            internal void RemoveCoin(long coinId)
-            {
-                this.sqliteDatabaseHandler.ExecuteWithinTransaction(
-                    () =>
-                        {
-                            // get portfolio id associated with specified coinId
-                            long portfolioEntryId = GetPortfolioEntryId(coinId);
-
-                            // delete portfolio entry with specified coinId
-                            deletePortfolioEntry(coinId);
-
-                            // delete transactions associated with portfolioEntryId
-                            deleteTransactionsAssociatedWithPortfolioEntry(portfolioEntryId);
-                        }
-                );
-
-                this.undoableLastActionAvailable = true;
-            }
-
+            /// <summary>
+            /// removes <see cref="PortfolioEntry"/>s in database corresponding to specified 
+            /// <paramref name="coinIds"/>.
+            /// </summary>
+            /// <seealso cref="RemoveCoin(long)"/>
+            /// <param name="coinIds"></param>
+            /// <exception cref="SQLiteDatabaseHandlerException">
+            /// <seealso cref="RemoveCoin(long)"/>
+            /// </exception>
             internal void RemoveCoins(IEnumerable<long> coinIds)
             {
                 this.sqliteDatabaseHandler.ExecuteWithinTransaction(
@@ -234,6 +299,47 @@ namespace CryptoBlock
                 this.undoableLastActionAvailable = true;
             }
 
+            /// <summary>
+            /// removes <see cref="PortfolioEntry"/> in database corresponding to specified
+            /// <paramref name="coinId"/>.
+            /// </summary>
+            /// <param name="coinId"></param>
+            /// <exception cref="SQLiteDatabaseHandlerException">
+            /// <seealso cref="GetPortfolioEntryId(long)"/>
+            /// <seealso cref="deletePortfolioEntry(long)"/>
+            /// <seealso cref="deleteTransactionsAssociatedWithPortfolioEntry(long)"/>
+            /// </exception>
+            internal void RemoveCoin(long coinId)
+            {
+                this.sqliteDatabaseHandler.ExecuteWithinTransaction(
+                    () =>
+                    {
+                        // get portfolio id associated with specified coinId
+                        long portfolioEntryId = GetPortfolioEntryId(coinId);
+
+                        // delete portfolio entry with specified coinId
+                        deletePortfolioEntry(coinId);
+
+                        // delete transactions associated with portfolioEntryId
+                        deleteTransactionsAssociatedWithPortfolioEntry(portfolioEntryId);
+                    }
+                );
+
+                this.undoableLastActionAvailable = true;
+            }
+
+            /// <summary>
+            /// returns id of <see cref="PortfolioEntry"/> in database corresponding to specified
+            /// <paramref name="coinId"/>.
+            /// </summary>
+            /// <param name="coinId"></param>
+            /// <returns>
+            /// id of <see cref="PortfolioEntry"/> in database corresponding to specified
+            /// <paramref name="coinId"/>
+            /// </returns>
+            /// <exception cref="SQLiteDatabaseHandlerException">
+            /// <seealso cref="SQLiteDatabaseHandler.SelectFromTable(SelectQuery)"/>
+            /// </exception>
             internal long GetPortfolioEntryId(long coinId)
             {
                 // get portfolio id associated with specified coinId
@@ -265,6 +371,15 @@ namespace CryptoBlock
                 return portfolioEntryId;
             }
 
+            /// <summary>
+            /// adds specified <paramref name="transaction"/>, associated to specified 
+            /// <paramref name="portfolioEntry"/> to database.
+            /// </summary>
+            /// <param name="transaction"></param>
+            /// <param name="portfolioEntry"></param>
+            /// <exception cref="SQLiteDatabaseHandlerException">
+            /// <seealso cref="SQLiteDatabaseHandler.InsertIntoTable(InsertQuery)"/>
+            /// </exception>
             internal void AddTransaction(Transaction transaction, PortfolioEntry portfolioEntry)
             {
                 this.sqliteDatabaseHandler.ExecuteWithinTransaction(
@@ -301,16 +416,25 @@ namespace CryptoBlock
                             );
 
                             sqliteDatabaseHandler.InsertIntoTable(insertTransactionIntoTableQuery);
-
-                            //// create database association between inserted Transaction
-                            //// and its corresponding PortfolioEntry
-                            //associatePortfolioEntryAndLastInsertedTransaction(portfolioEntry.Id);
                         }
                 );
 
                 this.undoableLastActionAvailable = true;
             }
 
+            /// <summary>
+            /// returns whether a <see cref="PortfolioEntry"/> corresponding to
+            /// specified <paramref name="coinId"/> exists in portfolio.
+            /// </summary>
+            /// <param name="coinId"></param>
+            /// <returns>
+            /// true if a <see cref="PortfolioEntry"/> corresponding to
+            /// specified <paramref name="coinId"/> exists in portfolio,
+            /// else false
+            /// </returns>
+            /// <exception cref="SQLiteDatabaseHandlerException">
+            /// <seealso cref="SQLiteDatabaseHandler.SelectFromTable(SelectQuery)"/>
+            /// </exception>
             internal bool IsCoinIdInPortfolio(long coinId)
             {
                 // count portfolio entries with specified coinId from PortfolioEntry table
@@ -338,6 +462,14 @@ namespace CryptoBlock
                 return numberOfPortfolioEntriesWithCoinId == 1;
             }
 
+            /// <summary>
+            /// updates <see cref="PortfolioEntry"/> in database with data from specified
+            /// <paramref name="portfolioEntry"/>.
+            /// </summary>
+            /// <param name="portfolioEntry"></param>
+            /// <exception cref="SQLiteDatabaseHandlerException">
+            /// <seealso cref="SQLiteDatabaseHandler.UpdateTable(UpdateQuery)"/>
+            /// </exception>
             internal void UpdatePortfolioEntry(PortfolioEntry portfolioEntry)
             {
                 // update PortfolioEntry table with PortfolioEntry data which might have changed
@@ -366,6 +498,18 @@ namespace CryptoBlock
                 this.undoableLastActionAvailable = true;
             }
 
+            /// <summary>
+            /// returns <see cref="PortfolioEntry"/> in database
+            /// corresponding to specified <paramref name="coinId"/>.
+            /// </summary>
+            /// <param name="coinId"></param>
+            /// <returns>
+            /// <see cref="PortfolioEntry"/> in database
+            /// corresponding to specified <paramref name="coinId"/>
+            /// </returns>
+            /// <exception cref="SQLiteDatabaseHandlerException">
+            /// <seealso cref="SQLiteDatabaseHandler.SelectFromTable(SelectQuery)"/>
+            /// </exception>
             internal PortfolioEntry GetPortfolioEntry(long coinId)
             {
                 // select all columns of PortfolioEntry with specified coinId
@@ -421,6 +565,16 @@ namespace CryptoBlock
                 return portfolioEntry;
             }
 
+            /// <summary>
+            /// returns coin ids corresponding to all <see cref="PortfolioEntry"/>s in database.
+            /// </summary>
+            /// <returns>
+            /// coin id array, containing coin ids corresponding to all
+            /// <see cref="PortfolioEntry"/>s in database
+            /// </returns>
+            /// <exception cref="SQLiteDatabaseHandlerException">
+            /// <seealso cref="SQLiteDatabaseHandler.SelectFromTable(SelectQuery)"/>
+            /// </exception>
             internal long[] GetCoinIdsInPortfolio()
             {
                 long[] coinIds;
@@ -450,11 +604,20 @@ namespace CryptoBlock
                 return coinIds;
             }
 
+            /// <summary>
+            /// returns a <see cref="SelectQuery"/>, selecting transaction type id
+            /// corresponding to specified <paramref name="transaction"/>.
+            /// </summary>
+            /// <param name="transaction"></param>
+            /// <returns>
+            /// <see cref="SelectQuery"/>, selecting transaction type id
+            /// corresponding to specified <paramref name="transaction"/>
+            /// </returns>
             private SelectQuery buildTransactionTypeIdSelectQuery(Transaction transaction)
             {
                 SelectQuery transactionTypeIdSelectQuery;
 
-                string transactionTypeString = transaction.Type.ToString();
+                string transactionTypeString = transaction.TransactionType.ToString();
 
                 transactionTypeIdSelectQuery
                     = new SelectQuery(DatabaseStructure.TransactionTypeTableStructure.TABLE_NAME,
@@ -477,48 +640,16 @@ namespace CryptoBlock
                 return transactionTypeIdSelectQuery;
             }
 
-            // assumes SQL transaction is underway
+            /// <summary>
+            /// deletes from database all <see cref="Transaction"/>s associated with specified
+            /// <paramref name="portfolioEntryId"/>.
+            /// </summary>
+            /// <param name="portfolioEntryId"></param>
+            /// <exception cref="SQLiteDatabaseHandlerException">
+            /// <seealso cref="SQLiteDatabaseHandler.DeleteFromTable(DeleteQuery)"/>
+            /// </exception>
             private void deleteTransactionsAssociatedWithPortfolioEntry(long portfolioEntryId)
             {
-                //// select transactionIds associated with portfolioEntryId
-                //SelectQuery transactionIdSelectQuery = new SelectQuery
-                //    (DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
-                //    new TableColumn[]
-                //    {
-                //        new TableColumn(
-                //            DatabaseStructure.PortfolioEntryTransactionTableStructure
-                //            .COIN_TRANSACTION_ID_COLUMN_NAME,
-                //            DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME)
-                //    },
-                //    null,
-                //    new BasicCondition(
-                //        new ValuedTableColumn(
-                //            DatabaseStructure.PortfolioEntryTransactionTableStructure
-                //            .PORTFOLIO_ENTRY_ID_COLUMN_NAME,
-                //            DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
-                //            portfolioEntryId),
-                //        BasicCondition.eOperatorType.Equal
-                //        )
-                //    );
-
-                //// delete Transactions with selected transactionIds from "CoinTransaction" table
-                //DeleteQuery transactionDeleteQuery = new DeleteQuery(
-                //    DatabaseStructure.CoinTransactionTableStructure.TABLE_NAME,
-                //    new BasicCondition(
-                //        new ValuedTableColumn(
-                //            DatabaseStructure.CoinTransactionTableStructure.ID_COLUMN_NAME,
-                //            DatabaseStructure.CoinTransactionTableStructure.TABLE_NAME,
-                //            transactionIdSelectQuery),
-                //        BasicCondition.eOperatorType.In
-                //        )
-                //    );
-
-                //sqliteDatabaseHandler.DeleteFromTable(transactionDeleteQuery);
-
-                //// delete association between deleted Transactions and deleted PortfolioEntry
-                //// from "PortfolioEntryTransaction" table
-                //deletePortfolioEntryTransactionAssociations(portfolioEntryId);
-
                 DeleteQuery transactionDeleteQuery = new DeleteQuery(
                     DatabaseStructure.CoinTransactionTableStructure.TABLE_NAME,
                     new BasicCondition(
@@ -532,25 +663,15 @@ namespace CryptoBlock
                 this.sqliteDatabaseHandler.DeleteFromTable(transactionDeleteQuery);
             }
 
-            //private void deletePortfolioEntryTransactionAssociations(long portfolioEntryId)
-            //{
-            //    DeleteQuery transactionToPortfolioEntryAssociationDeleteQuery =
-            //        new DeleteQuery(
-            //            DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
-            //            new BasicCondition(
-            //                new ValuedTableColumn(
-            //                    DatabaseStructure.PortfolioEntryTransactionTableStructure
-            //                    .PORTFOLIO_ENTRY_ID_COLUMN_NAME,
-            //                    DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
-            //                    portfolioEntryId),
-            //                BasicCondition.eOperatorType.Equal
-            //                )
-            //       );
-
-            //    sqliteDatabaseHandler.DeleteFromTable(transactionToPortfolioEntryAssociationDeleteQuery);
-            //}
-
-            private void deletePortfolioEntry(long coinId)
+            /// <summary>
+            /// deletes from database <see cref="PortfolioEntry"/> associated with specified
+            /// <paramref name="portfolioEntryCoinId"/>.
+            /// </summary>
+            /// <param name="portfolioEntryCoinId"></param>
+            /// <exception cref="SQLiteDatabaseHandlerException">
+            /// <seealso cref="SQLiteDatabaseHandler.DeleteFromTable(DeleteQuery)"/>
+            /// </exception>
+            private void deletePortfolioEntry(long portfolioEntryCoinId)
             {
                 // delete PortfolioEntry with specified coinId from "PortfolioEntry" table
                 DeleteQuery portfolioEntryDeleteQuery = new DeleteQuery(
@@ -559,47 +680,29 @@ namespace CryptoBlock
                         new ValuedTableColumn(
                             DatabaseStructure.PortfolioEntryTableStructure.COIN_ID_COLUMN_NAME,
                             DatabaseStructure.PortfolioEntryTableStructure.TABLE_NAME,
-                            coinId),
+                            portfolioEntryCoinId),
                         BasicCondition.eOperatorType.Equal)
                     );
 
                 sqliteDatabaseHandler.DeleteFromTable(portfolioEntryDeleteQuery);
             }
 
-            //private void associatePortfolioEntryAndLastInsertedTransaction(long portfolioEntryId)
-            //{
-            //    // get id of inserted Transaction
-            //    SelectQuery transactionIdSelectQuery = new SelectQuery(
-            //        null,
-            //        new TableColumn[]
-            //        {
-            //                    new FunctionTableColumn(FunctionTableColumn.eFunctionType.LastInsertRowid)
-            //        });
-
-            //    // create association between inserted Transaction and PortfolioEntry
-            //    // by INSERTing into "PortfolioEntryTransaction" table
-            //    InsertQuery associateTransactionWithPortfolioEntryInsertQuery = new InsertQuery(
-            //        DatabaseStructure.PortfolioEntryTransactionTableStructure.TABLE_NAME,
-            //        new ValuedColumn[]
-            //        {
-            //                    new ValuedColumn(
-            //                        DatabaseStructure.PortfolioEntryTransactionTableStructure
-            //                        .PORTFOLIO_ENTRY_ID_COLUMN_NAME,
-            //                        portfolioEntryId),
-            //                    new ValuedColumn(
-            //                        DatabaseStructure.PortfolioEntryTransactionTableStructure
-            //                        .COIN_TRANSACTION_ID_COLUMN_NAME,
-            //                        transactionIdSelectQuery)
-            //        });
-
-            //    sqliteDatabaseHandler.InsertIntoTable(
-            //        associateTransactionWithPortfolioEntryInsertQuery);
-            //}
-
-            private void createNewPortfolioDatabaseFile()
+            /// <summary>
+            /// initializes this <see cref="PortfolioDatabaseManager"/> by creating a new 
+            /// portfolio database file.
+            /// </summary>
+            /// <exception cref="FileXmlDocumentInitializationException">
+            /// <seealso cref="FileXmlDocument(string)"/>
+            /// </exception>
+            /// <exception cref="SQLiteDatabaseHandlerException">
+            /// <seealso cref="SQLiteDatabaseHandler(string,bool)"/>
+            /// <seealso cref="SQLiteDatabaseHandler.LoadDatabaseSchema(FileXmlDocument)"/>
+            /// <seealso cref="SQLiteDatabaseHandler.LoadTableData(FileXmlDocument)"/>
+            /// </exception>
+            private void initializeByCreatingNewPortfolioDatabaseFile()
             {
                 // parse XML files
-
+                
                 // read DatabaseSchema XML from file
                 FileXmlDocument databaseSchemaXmlDocument = new FileXmlDocument(DATABASE_SCHEMA_FILE_PATH);
 
@@ -621,20 +724,34 @@ namespace CryptoBlock
 
                 // initialize TransactionTypeTable (representing Transaction.eType) with enum data 
                 // insert rows specfied in FileXmlDocument into TransactionTypeTable
-                sqliteDatabaseHandler.LoadTableData(transactionTypeTableDataXmlDocument);
+                this.sqliteDatabaseHandler.LoadTableData(transactionTypeTableDataXmlDocument);
 
                 // commit initialization transaction
                 this.sqliteDatabaseHandler.CommitTransactionIfStartedByCaller(
                     transactionHandle,
                     transactionStarted);
+
+                // close connection
+                this.sqliteDatabaseHandler.CloseConnection();
             }
 
-            private void useExistingPortfolioDatabaseFile()
-            {
+            /// <summary>
+            /// initializes this <see cref="PortfolioDatabaseManager"/> using an existing database file.
+            /// </summary>
+            /// <exception cref="SQLiteDatabaseHandlerException">
+            /// <seealso cref="SQLiteDatabaseHandler(string, bool)"/>
+            /// </exception>
+            private void initializeUsingExistingPortfolioDatabaseFile()
+            { 
                 sqliteDatabaseHandler = new SQLiteDatabaseHandler(SQLite_DATABASE_FILE_PATH);
-                sqliteDatabaseHandler.OpenConnection();
             }
 
+            /// <summary>
+            /// asserts that a recently performed undoable action is available.
+            /// </summary>
+            /// <exception cref="UndoableLastActionNotAvailableException">
+            /// thrown if a recently performed undoable action is not available
+            /// </exception>
             private void assertUndoableLastActionAvailable()
             {
                 if(!this.undoableLastActionAvailable)

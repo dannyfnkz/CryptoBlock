@@ -9,6 +9,9 @@ namespace CryptoBlock
 {
     namespace PortfolioManagement.Commands
     {
+        /// <summary>
+        /// undoes the last action performed on portfolio, if one exists.
+        /// </summary>
         internal class UndoLastActionCommand : PortfolioCommand
         {
             private const int MIN_NUMBER_OF_ARGUMENTS = 0;
@@ -23,10 +26,21 @@ namespace CryptoBlock
 
             }
 
+            /// <summary>
+            /// undoes the last action performed on portfolio, if one exists.
+            /// returns whether last action was successfully undone.
+            /// </summary>
+            /// <param name="commandArguments"></param>
+            /// <returns>
+            /// true if last action was successfully undone,
+            /// else false
+            /// </returns>
             protected override bool Execute(string[] commandArguments)
             {
                 bool commandExecutedSuccessfuly;
 
+                // check whether an undoable last action is available (that is, an action was performed
+                // on portfolio and has not yet been undone)
                 if(PortfolioManager.Instance.UndoableLastActionAvailable)
                 {
                     PortfolioManager.Instance.UndoLastAction();
