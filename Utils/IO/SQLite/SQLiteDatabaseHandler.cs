@@ -248,9 +248,6 @@ namespace CryptoBlock
             /// <exception cref="SQLiteDatabaseHandlerException">
             /// <seealso cref="initializeEmptyDatabase"/>
             /// </exception>
-            /// <exception cref="AggregateException">
-            /// <seealso cref="initializeEmptyDatabase"/>
-            /// </exception>
             public SQLiteDatabaseHandler(string filePath, bool createNewDatabaseFile = false)
             {
                 this.filePath = filePath;
@@ -1116,12 +1113,7 @@ namespace CryptoBlock
             /// initializes an empty database file.
             /// </summary>
             /// <exception cref="SQLiteDatabaseHandlerException">
-            /// thrown if initialization of an empty database file failed,
-            /// and created empty database file was successfully deleted
-            /// </exception>
-            /// <exception cref="AggregateException">
-            /// thrown if initialization of an empty database file failed,
-            /// and created empty database file was deletion failed
+            /// thrown if initialization of an empty database file failed
             /// </exception>
             private void initializeEmptyDatabase()
             {
@@ -1160,17 +1152,22 @@ namespace CryptoBlock
                         : new SQLiteDatabaseHandlerException(filePath, null, exception);
                     try
                     {
-                        if(FileIOUtils.FileExists(this.filePath))
+                        if(FileIOUtils.FileExists(this.FilePath))
                         {
-                            FileIOUtils.DeleteFile(this.filePath);
+                            FileIOUtils.DeleteFile(this.FilePath);
                         }
+
+                        throw sqliteDatabaseHandlerException;
                     }
                     catch(Exception exception1)
                     {
-                        throw new AggregateException(sqliteDatabaseHandlerException, exception1);
+                        // wrap both exceptions in an AggregateException,
+                        // then wrap AggregateException in an SQLiteDatabaseHandlerException
+                        AggregateException aggregateException = new AggregateException(
+                            exception,
+                            exception1);
+                        throw new SQLiteDatabaseHandlerException(this.FilePath, null, aggregateException);
                     }
-
-                    throw sqliteDatabaseHandlerException;
                 }
             }
 
