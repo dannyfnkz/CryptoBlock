@@ -414,7 +414,7 @@ namespace Utils.IO.SQLite
         /// <returns>
         /// <see cref="Row"/> at <paramref name="rowIndex"/>
         /// </returns>
-        /// <exception cref="assertRowIndexWithinRange(int)">
+        /// <exception cref="RowIndexOutOfRangeException">
         /// <seealso cref="assertRowIndexWithinRange(int)"/>
         /// </exception>
         public Row GetRow(int rowIndex)

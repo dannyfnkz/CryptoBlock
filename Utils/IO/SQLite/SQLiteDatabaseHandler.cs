@@ -771,12 +771,6 @@ namespace CryptoBlock
             /// <param name="action">
             /// action which should be invoked within transaction timeframe
             /// </param>
-            /// <exception cref="TransactionNotUnderwayException">
-            /// <seealso cref="CommitTransactionIfStartedByCaller(ulong, bool)"/>
-            /// </exception>
-            /// <exception cref="InvalidTransactionHandleException">
-            /// <seealso cref="CommitTransactionIfStartedByCaller(ulong, bool)"/>
-            /// </exception>
             public void ExecuteWithinTransaction(Action action)
             {
                 ulong transactionHandle = BeginTransactionIfNotAlreadyUnderway(
