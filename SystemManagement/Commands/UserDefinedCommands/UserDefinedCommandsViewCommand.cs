@@ -12,6 +12,12 @@ namespace CryptoBlock
 {
     namespace SystemManagement.Commands.UserDefinedCommands
     {
+        /// <summary>
+        /// represents a <see cref="UserDefinedCommandsCommand"/> which print data of 
+        /// a <see cref="UserDefinedCommand"/> from <see cref="UserDefinedCommand"/> repository,
+        /// corresponding to specified alias, or all <see cref="UserDefinedCommand"/>s in repository
+        /// if no alias was specified.
+        /// </summary>
         internal class UserDefinedCommandsViewCommand : UserDefinedCommandsCommand
         {
             private const string PREFIX = "view";
@@ -25,6 +31,16 @@ namespace CryptoBlock
 
             }
 
+            /// <summary>
+            /// prints data of 
+            /// <see cref="UserDefinedCommand"/> from <see cref="UserDefinedCommand"/> repository,
+            /// corresponding to specified alias, or all <see cref="UserDefinedCommand"/>s in repository
+            /// if no alias was specified.
+            /// </summary>
+            /// <param name="commandArguments"></param>
+            /// <returns>
+            /// <seealso cref="Command.Execute(string[])"/>
+            /// </returns>
             protected override bool Execute(string[] commandArguments)
             {
                 bool commandExecutedSuccessfuly;

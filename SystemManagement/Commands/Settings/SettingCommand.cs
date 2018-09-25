@@ -8,6 +8,9 @@ namespace CryptoBlock
 {
     namespace SystemManagement.Commands.Settings
     {
+        /// <summary>
+        /// represents a <see cref="SystemCommand"/> which handles the app settings.
+        /// </summary>
         internal abstract class SettingCommand : SystemCommand
         {
             private const string BASE_PREFIX = "settings";
@@ -26,5 +29,4 @@ namespace CryptoBlock
             }
         }
     }
-
 }

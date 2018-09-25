@@ -12,6 +12,10 @@ namespace CryptoBlock
 {
     namespace SystemManagement.Commands.UserDefinedCommands
     {
+        /// <summary>
+        /// represents a <see cref="Command"/> which handles the saved <see cref="UserDefinedCommands"/>
+        /// repository.
+        /// </summary>
         internal abstract class UserDefinedCommandsCommand : Command
         {
             private const string BASE_PREFIX = "user commands";
@@ -29,6 +33,11 @@ namespace CryptoBlock
                 );
             }
 
+            /// <summary>
+            /// logs details of thrown <paramref name="userDefinedCommandsUpdateException"/>
+            /// to console and error log file.
+            /// </summary>
+            /// <param name="userDefinedCommandsUpdateException"></param>
             protected static void HandleUserDefinedCommandsUpdateException(
                 UserDefinedCommandsUpdateException userDefinedCommandsUpdateException)
             {

@@ -1,4 +1,5 @@
-﻿using CryptoBlock.ConfigurationManagement;
+﻿using CryptoBlock.CommandHandling;
+using CryptoBlock.ConfigurationManagement;
 using CryptoBlock.ConfigurationManagement.Settings;
 using CryptoBlock.IOManagement;
 using System;
@@ -12,6 +13,10 @@ namespace CryptoBlock
 {
     namespace SystemManagement.Commands.Settings.Get
     {
+        /// <summary>
+        /// represents a <see cref="SettingGetCommand"/> which logs to console details about
+        /// the currently set <see cref="OutputReportingProfile"/>.
+        /// </summary>
         internal class ReportingProfileSettingGetCommand : SettingGetCommand
         {
             private const string PREFIX = "reporting profile";
@@ -25,6 +30,14 @@ namespace CryptoBlock
 
             }
 
+            /// <summary>
+            /// logs to console details about
+            /// the currently set <see cref="OutputReportingProfile"/>.
+            /// </summary>
+            /// <param name="commandArguments"></param>
+            /// <returns>
+            /// <seealso cref="Command.Execute(string[])"/>
+            /// </returns>
             protected override bool Execute(string[] commandArguments)
             {
                 bool commandExecutedSuccessfuly;

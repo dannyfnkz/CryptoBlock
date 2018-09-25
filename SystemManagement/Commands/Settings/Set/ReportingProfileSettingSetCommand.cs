@@ -1,4 +1,5 @@
-﻿using CryptoBlock.ConfigurationManagement;
+﻿using CryptoBlock.CommandHandling;
+using CryptoBlock.ConfigurationManagement;
 using CryptoBlock.ConfigurationManagement.Settings;
 using CryptoBlock.ExceptionManagement;
 using CryptoBlock.IOManagement;
@@ -14,6 +15,10 @@ namespace CryptoBlock
 {
     namespace SystemManagement.Commands.Settings.Set
     {
+        /// <summary>
+        /// represents a <see cref="SettingSetCommand"/> which lets user set the 
+        /// <see cref="OutputReportingProfile"/>.
+        /// </summary>
         internal class ReportingProfileSettingSetCommand : SettingSetCommand
         {       
             private const string PREFIX = "reporting profile";
@@ -21,6 +26,7 @@ namespace CryptoBlock
             private const int MIN_NUMBER_OF_ARGUMENTS = 0;
             private const int MAX_NUMBER_OF_ARGUMENTS = 0;
 
+            // menu prompting user to selected one of the pre-defined OutputReportingProfiles
             private static readonly MenuDialog outputReportingProfileMenuDialog =
                 new MenuDialog(
                     "Please choose one of the following Reporting Profiles",
@@ -37,6 +43,13 @@ namespace CryptoBlock
 
             }
 
+            /// <summary>
+            /// prompts user to select one of the pre-defined <see cref="OutputReportingProfile"/>s.
+            /// </summary>
+            /// <param name="commandArguments"></param>
+            /// <returns>
+            /// <seealso cref="Command.Execute(string[])"/>
+            /// </returns>
             protected override bool Execute(string[] commandArguments)
             {
                bool commandExecutedSuccessfuly;

@@ -15,6 +15,10 @@ namespace CryptoBlock
 {
     namespace SystemManagement.Commands.UserDefinedCommands
     {
+        /// <summary>
+        /// represents a <see cref="UserDefinedCommandsCommand"/> which adds a new
+        /// <see cref="UserDefinedCommand"/> to <see cref="UserDefinedCommand"/> repository.
+        /// </summary>
         internal class UserDefinedCommandsAddCommand : UserDefinedCommandsCommand
         {
             private const string PREFIX = "add";
@@ -28,6 +32,14 @@ namespace CryptoBlock
 
             }
 
+            /// <summary>
+            /// adds specified <see cref="UserDefinedCommand"/> alias and corresponding command string
+            /// to <see cref="UserDefinedCommand"/> repository as a new <see cref="UserDefinedCommand"/>.
+            /// </summary>
+            /// <param name="commandArguments"></param>
+            /// <returns>
+            /// <seealso cref="Command.Execute(string[])"/>
+            /// </returns>
             protected override bool Execute(string[] commandArguments)
             {
                 bool commandExecutedSuccessfuly;

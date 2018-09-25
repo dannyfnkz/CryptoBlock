@@ -10,6 +10,10 @@ namespace CryptoBlock
 {
     namespace SystemManagement.Commands.UserDefinedCommands
     {
+        /// <summary>
+        /// represents a <see cref="UserDefinedCommandsCommand"/> which clears all 
+        /// <see cref="UserDefinedCommand"/>s from <see cref="UserDefinedCommand"/> repository.
+        /// </summary>
         internal class UserDefinedCommandsClearCommand : UserDefinedCommandsCommand
         {
             private const string PREFIX = "clear";
@@ -23,6 +27,14 @@ namespace CryptoBlock
 
             }
 
+            /// <summary>
+            /// clears all <see cref="UserDefinedCommand"/>s
+            /// from <see cref="UserDefinedCommand"/> repository.
+            /// </summary>
+            /// <param name="commandArguments"></param>
+            /// <returns>
+            /// <seealso cref="Command.Execute(string[])"/>
+            /// </returns>
             protected override bool Execute(string[] commandArguments)
             {
                 bool commandExecutedSuccessfuly;

@@ -12,6 +12,11 @@ namespace CryptoBlock
 {
     namespace SystemManagement.Commands.UserDefinedCommands
     {
+        /// <summary>
+        /// represents a <see cref="UserDefinedCommandsCommand"/> which removes 
+        /// <see cref="UserDefinedCommand"/> corresponding to specified alias
+        /// from <see cref="UserDefinedCommand"/> repository.
+        /// </summary>
         internal class UserDefinedCommandsRemoveCommand : UserDefinedCommandsCommand
         {
             private const string PREFIX = "remove";
@@ -25,6 +30,15 @@ namespace CryptoBlock
 
             }
 
+            /// <summary>
+            /// removes <see cref="UserDefinedCommand"/> corresponding to alias
+            /// specified as a command argument
+            /// from <see cref="UserDefinedCommand"/> repository.
+            /// </summary>
+            /// <param name="commandArguments"></param>
+            /// <returns>
+            /// <seealso cref="Command.Execute(string[])"/>
+            /// </returns>
             protected override bool Execute(string[] commandArguments)
             {
                 bool commandExecutedSuccessfuly;
@@ -69,5 +83,4 @@ namespace CryptoBlock
             }
         }
     }
-
 }

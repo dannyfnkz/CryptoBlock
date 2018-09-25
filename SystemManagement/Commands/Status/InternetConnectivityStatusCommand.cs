@@ -1,4 +1,5 @@
-﻿using CryptoBlock.IOManagement;
+﻿using CryptoBlock.CommandHandling;
+using CryptoBlock.IOManagement;
 using CryptoBlock.Utils.InternetUtils;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ namespace CryptoBlock
     {
         /// <summary>
         /// <para>
-        /// prints internet connectivity status.
+        /// represents a <see cref="StatusCommand"/> which logs internet connectivity status to console.
         /// </para>
         /// <para>
         /// syntax: status connection
@@ -30,11 +31,13 @@ namespace CryptoBlock
             }
 
             /// <summary>
-            /// prints internet connectivity status.
-            /// returns whether command was executed successfully.
+            /// logs internet connectivity status to console.
             /// </summary>
             /// <seealso cref="InternetUtils.IsConnectedToInternet"/>
             /// <param name="commandArguments"></param>
+            /// <returns>
+            /// <seealso cref="Command.Execute(string[])"/>
+            /// </returns>
             protected override bool Execute(string[] commandArguments)
             {
                 bool commandExecutedSuccessfuly;
