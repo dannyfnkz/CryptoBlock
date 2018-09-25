@@ -5,7 +5,7 @@
         /// <summary>
         /// represents a range having a lower and upper bound
         /// </summary>
-        public class Range
+        public struct Range
         {
             private readonly int lowerBound;
             private readonly int upperBound;

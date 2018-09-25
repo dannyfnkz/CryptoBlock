@@ -385,6 +385,22 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// returns a coin id array where the it'h element is the coin id corresponding to
+            /// the i'th coin name or symbol in specified <paramref name="coinNamesOrSymbols"/> list.
+            /// </summary>
+            /// <seealso cref="GetCoinIdByNameOrSymbol(string)"/>
+            /// <param name="coinNamesOrSymbols"></param>
+            /// <returns>
+            /// coin id array where the it'h element is the coin id corresponding to
+            /// the i'th coin name or symbol in specified <paramref name="coinNamesOrSymbols"/> list
+            /// </returns>
+            /// <exception cref="ManagerNotInitializedException">
+            /// <seealso cref="assertManagerInitialized(string)"/>
+            /// </exception>
+            /// <exception cref="CoinNameOrSymbolNotFoundException">
+            /// <seealso cref="GetCoinIdByNameOrSymbol(string)"/>
+            /// </exception>
             public long[] GetCoinIdsByNamesOrSymbols(IList<string> coinNamesOrSymbols)
             {
                 assertManagerInitialized("GetCoinIdByNameOrSymbol");
