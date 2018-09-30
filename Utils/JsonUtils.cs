@@ -29,40 +29,6 @@ namespace CryptoBlock
                 }
             }
 
-            ///// <summary>
-            ///// thrown if an exception occurs while trying to deserialize a JSON string.
-            ///// </summary>
-            //public class JsonSerializationException : JsonException
-            //{
-            //    public JsonSerializationException(Exception innerException)
-            //        : base(formatExceptionMessage(), innerException)
-            //    {
-
-            //    }
-
-            //    private static string formatExceptionMessage()
-            //    {
-            //        return "An exception occurred while trying to serialize JSON object.";
-            //    }
-            //}
-
-            ///// <summary>
-            ///// thrown if an exception occurs while trying to deserialize a JSON string.
-            ///// </summary>
-            //public class JsonDeserializationException : JsonException
-            //{
-            //    public JsonDeserializationException(Exception innerException)
-            //        : base(formatExceptionMessage(), innerException)
-            //    {
-
-            //    }
-
-            //    private static string formatExceptionMessage()
-            //    {
-            //        return "An exception occurred while trying to deserialize JSON object.";
-            //    }
-            //}
-
             /// <summary>
             /// thrown if a requested JSON property does not exist in specified JToken, or has a different
             /// type than expected.

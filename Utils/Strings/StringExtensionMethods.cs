@@ -129,6 +129,28 @@ namespace CryptoBlock
                 return Split(str, StringSplitOptions.None, parameters);
             }
 
+            /// <summary>
+            /// returns a substring of <paramref name="str"/> in range
+            /// [<paramref name="startIndex"/>, <paramref name="endIndex"/>),
+            /// omitting all occurrences of any expression contained in specified
+            /// <paramref name="expressionsToOmit"/>.
+            /// </summary>
+            /// <param name="str"></param>
+            /// <param name="startIndex"></param>
+            /// <param name="endIndex"></param>
+            /// <param name="expressionsToOmit"></param>
+            /// <returns>
+            /// substring of <paramref name="str"/> in range
+            /// [<paramref name="startIndex"/>, <paramref name="endIndex"/>),
+            /// omitting all occurrences of any expression contained in specified
+            /// <paramref name="expressionsToOmit"/>
+            /// </returns>
+            /// <exception cref="IndexOutOfRangeException">
+            /// <seealso cref="StringUtils.AssertValidRangeIndicesInString(int, int, string)"/>
+            /// </exception>
+            /// <exception cref="ArgumentOutOfRangeException">
+            /// <seealso cref="StringUtils.AssertValidStringLengths(int[])"/>
+            /// </exception>
             public static string SubstringByIndexWithout(
                 this string str,
                 int startIndex, 
@@ -200,6 +222,26 @@ namespace CryptoBlock
                 return substringBuilder.ToString();
             }
 
+            /// <summary>
+            /// returns the index of the first occurrence of the first expression in
+            /// specified <paramref name="expressions"/> array which appears in
+            /// in <paramref name="str"/>. if no expression appears in <paramref name="str"/> returns -1.
+            /// </summary>
+            /// <param name="str"></param>
+            /// <param name="startIndex"></param>
+            /// <param name="expressions"></param>
+            /// <param name="chosenExpression">
+            /// the expression which appears first in specified <paramref name="str"/>
+            /// </param>
+            /// <returns>
+            /// index of the first occurrence of the first expression in
+            /// specified <paramref name="expressions"/> array which appears in
+            /// in <paramref name="str"/>,
+            /// or -1 if no expression appears in <paramref name="str"/>
+            /// </returns>
+            /// <exception cref="IndexOutOfRangeException">
+            /// <seealso cref="StringUtils.AssertValidIndexInString(int, string, string)"/>
+            /// </exception>
             public static int IndexOfAny(
                 this string str,
                 int startIndex,
@@ -240,7 +282,20 @@ namespace CryptoBlock
                 return indexOfFirstOccurrenceOfChosenExpression;
             }
 
-            // exclusive
+            /// <summary>
+            /// returns a substring of specified <paramref name="str"/> in the range
+            /// [<paramref name="startIndex"/>, <paramref name="endIndex"/>).
+            /// </summary>
+            /// <param name="str"></param>
+            /// <param name="startIndex"></param>
+            /// <param name="endIndex"></param>
+            /// <returns>
+            /// substring of specified <paramref name="str"/> in the range
+            /// [<paramref name="startIndex"/>, <paramref name="endIndex"/>)
+            /// </returns>
+            /// <exception cref="IndexOutOfRangeException">
+            /// <seealso cref="StringUtils.AssertValidRangeIndicesInString(int, int, string)"/>
+            /// </exception>
             public static string SubstringByIndex(this string str, int startIndex, int endIndex)
             {
                 StringUtils.AssertValidRangeIndicesInString(startIndex, endIndex, str);
@@ -254,25 +309,39 @@ namespace CryptoBlock
             /// <summary>
             /// returns a substring of <paramref name="str"/>,
             /// starting immediately after <paramref name="prefix"/>.
-            /// if <paramref name="prefix"/> does not exist in <paramref name="str"/>,
+            /// if <paramref name="str"/> does not start with <paramref name="prefix"/>,
             /// returns <paramref name="str"/>.
             /// </summary>
             /// <param name="str"></param>
             /// <param name="prefix"></param>
             /// <returns>
-            /// <para>
             /// substring of <paramref name="str"/>, starting immediately after <paramref name="prefix"/>, 
-            /// if <paramref name="prefix"/> exists in in <paramref name="str"/>.
-            /// </para>
-            /// <para>
-            /// else, <paramref name="str"/>.
-            /// </para>
+            /// if <paramref name="str"/> starts with <paramref name="prefix"/>,
+            /// else <paramref name="str"/>
             /// </returns>
             public static string GetSubstringAfterPrefix(this string str, string prefix)
             {
-                return str.Substring(prefix.Length);
+                string substringAfterPrefix = str.StartsWith(prefix)
+                    ? str.Substring(prefix.Length)
+                    : str;
+
+                return substringAfterPrefix;
             }
 
+            /// <summary>
+            /// returns whether <paramref name="str"/> starts with one of the
+            /// specified <paramref name="prefixes"/>,
+            /// beginning at specified <paramref name="startIndex"/>.
+            /// </summary>
+            /// <param name="str"></param>
+            /// <param name="startIndex"></param>
+            /// <param name="prefixes"></param>
+            /// <returns>
+            /// true if <paramref name="str"/> starts with one of the
+            /// specified <paramref name="prefixes"/>,
+            /// beginning at specified <paramref name="startIndex"/>,
+            /// else false
+            /// </returns>
             public static bool StartsWith(this string str, int startIndex, params string[] prefixes)
             {
                 bool startsWithOneOfPrefixes = false;
@@ -290,6 +359,21 @@ namespace CryptoBlock
                 return startsWithOneOfPrefixes;
             }
 
+            /// <summary>
+            /// returns whether <paramref name="str"/> starts with specified <paramref name="prefix"/>,
+            /// beginning at specified <paramref name="startIndex"/>.
+            /// </summary>
+            /// <param name="str"></param>
+            /// <param name="startIndex"></param>
+            /// <param name="prefix"></param>
+            /// <returns>
+            /// true if <paramref name="str"/> starts with specified <paramref name="prefix"/>,
+            /// beginning at specified <paramref name="startIndex"/>,
+            /// else false
+            /// </returns>
+            /// <exception cref="IndexOutOfRangeException">
+            /// <seealso cref="StringUtils.AssertValidIndexInString(int, string, string)"/>
+            /// </exception>
             public static bool StartsWith(this string str, int startIndex, string prefix)
             {
                 StringUtils.AssertValidIndexInString(startIndex, str, "startIndex");

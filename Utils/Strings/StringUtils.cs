@@ -281,11 +281,30 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// assserts that <paramref name="startIndex"/>, <paramref name="endIndex"/> are valid
+            /// range indices in <paramref name="str"/>.
+            /// </summary>
+            /// <seealso cref="AssertValidRangeIndexInString(int, string, string)"/>
+            /// <param name="startIndex"></param>
+            /// <param name="endIndex"></param>
+            /// <param name="str"></param>
+            /// <exception cref="IndexOutOfRangeException">
+            /// thrown if <paramref name="startIndex"/> is larger than <paramref name="endIndex"/>
+            /// <seealso cref="AssertValidRangeIndexInString(int, string, string)"/>
+            /// </exception>
             internal static void AssertValidRangeIndicesInString(
                 int startIndex,
                 int endIndex,
                 string str)
             {
+                if(startIndex >= endIndex)
+                {
+                    string exceptionMessage = "Specified indices are invalid:" +
+                        " startIndex must be smaller than endIndex.";
+                    throw new IndexOutOfRangeException(exceptionMessage);
+                }
+
                 AssertValidRangeIndexInString(startIndex, "startIndex", str);
                 AssertValidRangeIndexInString(endIndex, "endIndex", str);
             }
@@ -293,23 +312,46 @@ namespace CryptoBlock
             /// <summary>
             /// asserts that all string lengths in <paramref name="stringLengths"/> are non-negative.
             /// </summary>
+            /// <seealso cref="AssertValidStringLength(int)"/>
             /// <param name="stringLengths"></param>
             /// <exception cref="ArgumentOutOfRangeException">
-            /// thrown if a string length in <paramref name="stringLengths"/> is negative
+            /// <seealso cref="AssertValidStringLength(int)"/>
             /// </exception>
             internal static void AssertValidStringLengths(params int[] stringLengths)
             {
                 foreach (int stringLength in stringLengths)
                 {
-                    if (stringLength < 0)
-                    {
-                        throw new ArgumentOutOfRangeException(
-                            "string length must be non-negative.",
-                            (Exception)null);
-                    }
+                    AssertValidStringLength(stringLength);
                 }
             }
 
+            /// <summary>
+            /// asserts that specified <paramref name="stringLength"/> is non-negative.
+            /// </summary>
+            /// <exception cref="ArgumentOutOfRangeException">
+            /// thrown if a string length in <paramref name="stringLengths"/> is negative
+            /// </exception>
+            internal static void AssertValidStringLength(int stringLength)
+            {
+                if (stringLength < 0)
+                {
+                    throw new ArgumentOutOfRangeException(
+                        "string length must be non-negative.",
+                        (Exception)null);
+                }
+            }
+
+            /// <summary>
+            /// asserts that <paramref name="rangeIndex"/> is within range
+            /// [0, <paramref name="str"/>.Length).
+            /// </summary>
+            /// <param name="rangeIndex"></param>
+            /// <param name="rangeIndexParameterName"></param>
+            /// <param name="str"></param>
+            /// <exception cref="IndexOutOfRangeException">
+            /// thrown if <paramref name="rangeIndex"/> is not within range
+            /// [0, <paramref name="str"/>.Length)
+            /// </exception>
             private static void AssertValidRangeIndexInString(
                 int rangeIndex,
                 string rangeIndexParameterName,
