@@ -75,8 +75,10 @@
     <Compile Include="Collections\CollectionUtils.cs" />
     <Compile Include="Collections\List\ListExtensionMethods.cs" />
     <Compile Include="Collections\List\ListUtils.cs" />
+    <Compile Include="Doubles\DoubleExtensionMethods.cs" />
     <Compile Include="EnumUtils.cs" />
     <Compile Include="InternetUtils\HttpGetRequestHandler.cs" />
+    <Compile Include="Ints\IntExtensionMethods.cs" />
     <Compile Include="IO\ConsoleIO\ConsoleGraphicsHandler.cs" />
     <Compile Include="IO\FileIO\FileIOUtils.cs" />
     <Compile Include="InternetUtils\TimeoutWebClient.cs" />
@@ -150,6 +152,7 @@
     <Compile Include="NumberUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReflectionUtils.cs" />
+    <Compile Include="Strings\StringBuilderExtensionMethods.cs" />
     <Compile Include="Strings\StringExtensionMethods.cs" />
     <Compile Include="Strings\StringUtils.cs" />
     <Compile Include="GeneralUtils.cs" />

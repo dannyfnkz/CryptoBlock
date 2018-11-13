@@ -62,8 +62,8 @@ namespace CryptoBlock
                         // if no command args are provided, display all entries in portfolio
                         long[] allCoinIdsInPortfolio = PortfolioManager.Instance.CoinIds;
                         coinIdsWithPortfolioEntry.AddRange(allCoinIdsInPortfolio);
-                    }
-                    else // command args are provided
+                    }    
+                    else // single / multiple PortfolioEntry s
                     {
                         // fetch coin ids corresponding to coin names / symbols
                         long[] coinIds = CoinListingManager.Instance.FetchCoinIds(commandArguments);
@@ -82,8 +82,25 @@ namespace CryptoBlock
                             }
                         }
                     }
+                    if(coinIdsWithPortfolioEntry.Count == 0) // no PortfolioEntries to display
+                    {
+                        string noticeMessage = "No portfolio entries to display.";
+                        ConsoleIOManager.Instance.LogNotice(
+                            noticeMessage,
+                            ConsoleIOManager.eOutputReportType.CommandExecution);
+                    }
+                    else if(coinIdsWithPortfolioEntry.Count == 1) // a single PortfolioEntry
+                    {
+                        // print PortfolioEntry's detailed string
+                        long portfolioEntryCoinId = coinIdsWithPortfolioEntry[0];
+                        PortfolioEntry portfolioEntry =
+                            PortfolioManager.Instance.GetPortfolioEntry(portfolioEntryCoinId);
+                        ConsoleIOManager.Instance.PrintData(
+                            portfolioEntry.GetDetailedString(),
+                            ConsoleIOManager.eOutputReportType.CommandExecution);
+                    }
 
-                    if (coinIdsWithPortfolioEntry.Count > 0)
+                    if (coinIdsWithPortfolioEntry.Count > 1) // // multiple PortfolioEntries requested
                     {
                         // print coin PortfolioEntry display table containing portfolio entries corresponding
                         // to fetched coin ids
@@ -92,13 +109,6 @@ namespace CryptoBlock
                                 coinIdsWithPortfolioEntry.ToArray());
                         ConsoleIOManager.Instance.PrintData(
                             portfolioEntryDisplayTableString,
-                            ConsoleIOManager.eOutputReportType.CommandExecution);
-                    }
-                    else // no PortfolioEntries to display
-                    {
-                        string noticeMessage = "No portfolio entries to display.";
-                        ConsoleIOManager.Instance.LogNotice(
-                            noticeMessage,
                             ConsoleIOManager.eOutputReportType.CommandExecution);
                     }
 

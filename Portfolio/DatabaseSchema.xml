@@ -8,14 +8,26 @@
       <not_null />
       <unique />
     </column>
-    <column name="holdings" type="REAL">
+  </table>
+  
+    <table name="ExchangeCoinHolding">
+    <primary_key column_index="0" />
+    <column name="_id" type="INTEGER">
+    </column>
+    <column name="exchangeId" type="INTEGER">
+      <not_null />
+    </column>
+    <column name="portfolioEntryId" type="INTEGER">
+      <not_null />
+    </column>
+    <column name="holding" type="REAL">
       <default>0</default>
     </column>
     <column name="averageBuyPrice" type="REAL">
     </column>
   </table>
-  <table name="CoinTransactionType">
-    <not_auditable />
+
+  <table name="Exchange">
     <primary_key column_index="0" />
     <column name="_id" type="INTEGER">
     </column>
@@ -25,11 +37,15 @@
       <unique />
     </column>
   </table>
+  
   <table name="CoinTransaction">
     <primary_key column_index="0" />
     <column name="_id" type="INTEGER">
     </column>
     <column name="portfolioEntryId" type="INTEGER">
+      <not_null />
+    </column>
+    <column name="exchangeId" type="INTEGER">
       <not_null />
     </column>
     <column name="coinTransactionTypeId" type="INTEGER">
@@ -43,6 +59,18 @@
     </column>
     <column name="unixTimestamp" type="INTEGER">
       <not_null />
+    </column>
+  </table>
+
+  <table name="CoinTransactionType">
+    <not_auditable />
+    <primary_key column_index="0" />
+    <column name="_id" type="INTEGER">
+    </column>
+    <column name="name" type="VARCHAR">
+      <length>50</length>
+      <not_null />
+      <unique />
     </column>
   </table>
 </database>

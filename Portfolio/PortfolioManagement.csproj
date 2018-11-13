@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExchangeCoinHolding.cs" />
     <Compile Include="Commands\PortfolioAddCommand.cs" />
     <Compile Include="Commands\PortfolioClearCommand.cs" />
     <Compile Include="Commands\PortfolioCommand.cs" />

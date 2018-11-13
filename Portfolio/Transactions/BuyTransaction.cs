@@ -8,8 +8,13 @@
         /// </summary>
         public class BuyTransaction : Transaction
         {
-            public BuyTransaction(long coinId, double amount, double pricePerCoin, long unixTimestamp)
-                : base(eTransactionType.Buy, coinId, amount, pricePerCoin, unixTimestamp)
+            public BuyTransaction(
+                long coinId, 
+                double amount,
+                double pricePerCoin,
+                string exchangeName,
+                long unixTimestamp)
+                : base(eTransactionType.Buy, coinId, amount, pricePerCoin, exchangeName, unixTimestamp)
             {
 
             }

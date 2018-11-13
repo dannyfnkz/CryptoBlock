@@ -94,16 +94,22 @@ namespace CryptoBlock
 
                     internal static readonly string ID_COLUMN_NAME = "_id";
                     internal static readonly string COIN_ID_COLUMN_NAME = "coinId";
-                    internal static readonly string HOLDINGS_COLUMN_NAME = "holdings";
+                }
+
+                internal static class ExchangeCoinHoldingTableStructure
+                {
+                    internal static readonly string TABLE_NAME = "ExchangeCoinHolding";
+
+                    internal static readonly string ID_COLUMN_NAME = "_id";
+                    internal static readonly string EXCHANGE_ID_COLUMN_NAME = "exchangeId";
+                    internal static readonly string PORTFOLIO_ENTRY_ID_COLUMN_NAME = "portfolioEntryId";
+                    internal static readonly string HOLDING_COLUMN_NAME = "holding";
                     internal static readonly string AVERAGE_BUY_PRICE_COLUMN_NAME = "averageBuyPrice";
                 }
 
-                /// <summary>
-                /// contains data regarding TransactionType table structure.
-                /// </summary>
-                internal static class TransactionTypeTableStructure
+                internal static class ExchangeTableStructure
                 {
-                    internal static readonly string TABLE_NAME = "CoinTransactionType";
+                    internal static readonly string TABLE_NAME = "Exchange";
 
                     internal static readonly string ID_COLUMN_NAME = "_id";
                     internal static readonly string NAME_COLUMN_NAME = "name";
@@ -118,10 +124,21 @@ namespace CryptoBlock
 
                     internal static readonly string ID_COLUMN_NAME = "_id";
                     internal static readonly string PORTFOLIO_ENTRY_ID_COLUMN_NAME = "portfolioEntryId";
-                    internal static readonly string TRANSACTIO_TYPE_ID_COLUMN_NAME = "coinTransactionTypeId";
+                    internal static readonly string EXCHANGE_ID_COLUMN_NAME = "exchangeId";
+                    internal static readonly string COIN_TRANSACTION_TYPE_ID_COLUMN_NAME =
+                        "coinTransactionTypeId";
                     internal static readonly string AMOUNT_COLUMN_NAME = "amount";
                     internal static readonly string PRICE_PER_COIN_COLUMN_NAME = "pricePerCoin";
                     internal static readonly string UNIX_TIMESTAMP_COLUMN_NAME = "unixTimestamp";
+
+                }
+
+                internal static class CoinTransactionTypeTableStructure
+                {
+                    internal static readonly string TABLE_NAME = "CoinTransactionType";
+
+                    internal static readonly string ID_COLUMN_NAME = "_id";
+                    internal static readonly string NAME_COLUMN_NAME = "name";
                 }
 
                 internal static readonly string DATABASE_NAME = "PortfolioData";
@@ -252,7 +269,7 @@ namespace CryptoBlock
             }
 
             /// <summary>
-            /// adds empty <see cref="PortfolioEntry"/> to database, corresponding to specified
+            /// adds a <see cref="PortfolioEntry"/> to database, corresponding to specified
             /// <paramref name="coinId"/>.
             /// </summary>
             /// <param name="coinId"></param>
@@ -311,7 +328,7 @@ namespace CryptoBlock
             /// </exception>
             internal void RemoveCoin(long coinId)
             {
-                this.sqliteDatabaseHandler.ExecuteWithinTransaction(
+                ExecuteAsOneAction(
                     () =>
                     {
                         // get portfolio id associated with specified coinId
@@ -320,21 +337,41 @@ namespace CryptoBlock
                         // delete portfolio entry with specified coinId
                         deletePortfolioEntry(coinId);
 
-                        // delete transactions associated with portfolioEntryId
+                        // delete transactions associated with portfolio entry
                         deleteTransactionsAssociatedWithPortfolioEntry(portfolioEntryId);
+
+                        // delete ExchangeCoinHoldings associated with portfolio entry
+                        deleteExchangeCoinHoldingsAssociatedWithPortfolioEntry(portfolioEntryId);
                     }
                 );
 
                 this.undoableLastActionAvailable = true;
             }
 
+            private void deleteExchangeCoinHoldingsAssociatedWithPortfolioEntry(long portfolioEntryId)
+            {
+                DeleteQuery exchangeCoinHoldingsAssociatedwithPortfolioEntryDeleteQuery = new DeleteQuery(
+                    DatabaseStructure.ExchangeCoinHoldingTableStructure.TABLE_NAME,
+                    new BasicCondition(
+                        new ValuedTableColumn(
+                            DatabaseStructure.ExchangeCoinHoldingTableStructure.PORTFOLIO_ENTRY_ID_COLUMN_NAME,
+                            DatabaseStructure.ExchangeCoinHoldingTableStructure.TABLE_NAME,
+                            portfolioEntryId),
+                        BasicCondition.eOperatorType.Equal
+                    )
+                );
+
+                this.sqliteDatabaseHandler.DeleteFromTable(
+                    exchangeCoinHoldingsAssociatedwithPortfolioEntryDeleteQuery);
+            }
+
             /// <summary>
-            /// returns id of <see cref="PortfolioEntry"/> in database corresponding to specified
+            /// returns id of <see cref="PortfolioEntry"/> in database associated with specified
             /// <paramref name="coinId"/>.
             /// </summary>
             /// <param name="coinId"></param>
             /// <returns>
-            /// id of <see cref="PortfolioEntry"/> in database corresponding to specified
+            /// id of <see cref="PortfolioEntry"/> in database associated with specified
             /// <paramref name="coinId"/>
             /// </returns>
             /// <exception cref="SQLiteDatabaseHandlerException">
@@ -371,49 +408,50 @@ namespace CryptoBlock
                 return portfolioEntryId;
             }
 
-            /// <summary>
-            /// adds specified <paramref name="transaction"/>, associated to specified 
-            /// <paramref name="portfolioEntry"/> to database.
-            /// </summary>
-            /// <param name="transaction"></param>
-            /// <param name="portfolioEntry"></param>
-            /// <exception cref="SQLiteDatabaseHandlerException">
-            /// <seealso cref="SQLiteDatabaseHandler.InsertIntoTable(InsertQuery)"/>
-            /// </exception>
-            internal void AddTransaction(Transaction transaction, PortfolioEntry portfolioEntry)
-            {
-                this.sqliteDatabaseHandler.ExecuteWithinTransaction(
+            internal void AddTransaction(Transaction transaction, long portfolioEntryId)
+            {            
+                ExecuteAsOneAction(
                     () =>
                         {
+                            addExchangeIfNotExists(transaction.ExchangeName);
+
                             // get Transacion.eType id based on Transaction.eType name ("Buy" \ "Sell")
                             SelectQuery transactionTypeIdSelectQuery =
                                 buildTransactionTypeIdSelectQuery(transaction);
 
-                            // insert Transaction into "CoinTransaction" table with Transacion.eType id
-                            // fetched by using transactionTypeIdSelectQuery
+                            // get exchange id based on exchange name
+                            SelectQuery exchangeIdSelectQuery =
+                                buildExchangeIdSelectQuery(transaction.ExchangeName);
+
+                            // insert Transaction into CoinTransaction table
                             InsertQuery insertTransactionIntoTableQuery = new InsertQuery(
                                 DatabaseStructure.CoinTransactionTableStructure.TABLE_NAME,
                                 new ValuedColumn[]
                                 {
-                                new ValuedColumn(
-                                    DatabaseStructure.CoinTransactionTableStructure.
-                                    PORTFOLIO_ENTRY_ID_COLUMN_NAME,
-                                    portfolioEntry.Id),
-                                new ValuedColumn(
-                                    DatabaseStructure.CoinTransactionTableStructure.
-                                    TRANSACTIO_TYPE_ID_COLUMN_NAME,
-                                    transactionTypeIdSelectQuery),
-                                new ValuedColumn(
-                                    DatabaseStructure.CoinTransactionTableStructure.AMOUNT_COLUMN_NAME,
-                                    transaction.Amount),
-                                new ValuedColumn(
-                                    DatabaseStructure.CoinTransactionTableStructure.PRICE_PER_COIN_COLUMN_NAME,
-                                    transaction.PricePerCoin),
-                                new ValuedColumn(
-                                    DatabaseStructure.CoinTransactionTableStructure.UNIX_TIMESTAMP_COLUMN_NAME,
-                                    transaction.UnixTimestamp)
-                                }
-                            );
+                                    new ValuedColumn(
+                                        DatabaseStructure.CoinTransactionTableStructure.
+                                        PORTFOLIO_ENTRY_ID_COLUMN_NAME,
+                                        portfolioEntryId),
+                                    new ValuedColumn(
+                                        DatabaseStructure.CoinTransactionTableStructure.
+                                        EXCHANGE_ID_COLUMN_NAME,
+                                        exchangeIdSelectQuery),
+                                    new ValuedColumn(
+                                        DatabaseStructure.CoinTransactionTableStructure.
+                                        COIN_TRANSACTION_TYPE_ID_COLUMN_NAME,
+                                        transactionTypeIdSelectQuery),
+                                    new ValuedColumn(
+                                        DatabaseStructure.CoinTransactionTableStructure.AMOUNT_COLUMN_NAME,
+                                        transaction.Amount),
+                                    new ValuedColumn(
+                                        DatabaseStructure.CoinTransactionTableStructure.
+                                        PRICE_PER_COIN_COLUMN_NAME,
+                                        transaction.PricePerCoin),
+                                    new ValuedColumn(
+                                        DatabaseStructure.CoinTransactionTableStructure.
+                                        UNIX_TIMESTAMP_COLUMN_NAME,
+                                        transaction.UnixTimestamp)
+                                });
 
                             sqliteDatabaseHandler.InsertIntoTable(insertTransactionIntoTableQuery);
                         }
@@ -453,7 +491,9 @@ namespace CryptoBlock
                             DatabaseStructure.PortfolioEntryTableStructure.COIN_ID_COLUMN_NAME,
                             DatabaseStructure.PortfolioEntryTableStructure.TABLE_NAME,
                             coinId),
-                        BasicCondition.eOperatorType.Equal));
+                        BasicCondition.eOperatorType.Equal
+                        )
+                    );
 
                 ResultSet resultSet = this.sqliteDatabaseHandler.SelectFromTable(selectQuery);
 
@@ -462,107 +502,278 @@ namespace CryptoBlock
                 return numberOfPortfolioEntriesWithCoinId == 1;
             }
 
-            /// <summary>
-            /// updates <see cref="PortfolioEntry"/> in database with data from specified
-            /// <paramref name="portfolioEntry"/>.
-            /// </summary>
-            /// <param name="portfolioEntry"></param>
-            /// <exception cref="SQLiteDatabaseHandlerException">
-            /// <seealso cref="SQLiteDatabaseHandler.UpdateTable(UpdateQuery)"/>
-            /// </exception>
-            internal void UpdatePortfolioEntry(PortfolioEntry portfolioEntry)
+            internal void AddExchangeCoinHolding(
+                ExchangeCoinHolding exchangeCoinHolding,
+                long portfolioEntryId)
             {
-                // update PortfolioEntry table with PortfolioEntry data which might have changed
-                UpdateQuery updateQuery = new UpdateQuery(
-                    DatabaseStructure.PortfolioEntryTableStructure.TABLE_NAME,
-                    new ValuedColumn[]
-                    {
-                        new ValuedColumn(
-                            DatabaseStructure.PortfolioEntryTableStructure.HOLDINGS_COLUMN_NAME,
-                            portfolioEntry.Holdings),
-                        new ValuedColumn(
-                            DatabaseStructure.PortfolioEntryTableStructure.AVERAGE_BUY_PRICE_COLUMN_NAME,
-                            portfolioEntry.AverageBuyPriceUsd)
-                    },
-                    new BasicCondition(
-                        new ValuedTableColumn(
-                            DatabaseStructure.PortfolioEntryTableStructure.ID_COLUMN_NAME,
-                            DatabaseStructure.PortfolioEntryTableStructure.TABLE_NAME,
-                            portfolioEntry.Id),
-                        BasicCondition.eOperatorType.Equal
-                        )
-                    );
+                ExecuteAsOneAction(
+                    () =>
+                        {
+                            addExchangeIfNotExists(exchangeCoinHolding.ExchangeName);
 
-                sqliteDatabaseHandler.UpdateTable(updateQuery);
+                            SelectQuery exchangeIdSelectQuery = buildExchangeIdSelectQuery(
+                                exchangeCoinHolding.ExchangeName);
+
+                            InsertQuery exchangeCoinHoldingInsertQuery = new InsertQuery(
+                                DatabaseStructure.ExchangeCoinHoldingTableStructure.TABLE_NAME,
+                                new ValuedColumn[]
+                                {
+                                    new ValuedColumn(
+                                        DatabaseStructure.ExchangeCoinHoldingTableStructure.
+                                        EXCHANGE_ID_COLUMN_NAME,
+                                        exchangeIdSelectQuery),
+                                    new ValuedColumn(
+                                        DatabaseStructure.ExchangeCoinHoldingTableStructure.
+                                        PORTFOLIO_ENTRY_ID_COLUMN_NAME,
+                                        portfolioEntryId),
+                                    new ValuedColumn(
+                                        DatabaseStructure.ExchangeCoinHoldingTableStructure.
+                                        HOLDING_COLUMN_NAME,
+                                        exchangeCoinHolding.Amount),
+                                    new ValuedColumn(
+                                        DatabaseStructure.ExchangeCoinHoldingTableStructure.
+                                        AVERAGE_BUY_PRICE_COLUMN_NAME,
+                                        exchangeCoinHolding.AverageBuyPrice)
+                                });
+
+                            this.sqliteDatabaseHandler.InsertIntoTable(exchangeCoinHoldingInsertQuery);                            
+                        }
+                );
 
                 this.undoableLastActionAvailable = true;
             }
 
-            /// <summary>
-            /// returns <see cref="PortfolioEntry"/> in database
-            /// corresponding to specified <paramref name="coinId"/>.
-            /// </summary>
-            /// <param name="coinId"></param>
-            /// <returns>
-            /// <see cref="PortfolioEntry"/> in database
-            /// corresponding to specified <paramref name="coinId"/>
-            /// </returns>
-            /// <exception cref="SQLiteDatabaseHandlerException">
-            /// <seealso cref="SQLiteDatabaseHandler.SelectFromTable(SelectQuery)"/>
-            /// </exception>
+            internal void UpdateExchangeCoinHolding(
+                ExchangeCoinHolding exchangeCoinHolding,
+                long portfolioEntryId)
+            {
+                long exchangeId = getExchangeId(exchangeCoinHolding.ExchangeName);
+
+                ExecuteAsOneAction(
+                    () =>
+                        {
+                            UpdateQuery exchangeCoinHoldingUpdateQuery = new UpdateQuery(
+                                DatabaseStructure.ExchangeCoinHoldingTableStructure.TABLE_NAME,
+                                new ValuedColumn[]
+                                {
+                                    new ValuedColumn(
+                                        DatabaseStructure.ExchangeCoinHoldingTableStructure.HOLDING_COLUMN_NAME,
+                                        exchangeCoinHolding.Amount),
+                                    new ValuedColumn(
+                                        DatabaseStructure.ExchangeCoinHoldingTableStructure.
+                                        AVERAGE_BUY_PRICE_COLUMN_NAME,
+                                        exchangeCoinHolding.AverageBuyPrice)
+                                },
+                                new ComplexCondition(
+                                    new BasicCondition(
+                                        new ValuedTableColumn(
+                                            DatabaseStructure.ExchangeCoinHoldingTableStructure.
+                                            PORTFOLIO_ENTRY_ID_COLUMN_NAME,
+                                            DatabaseStructure.ExchangeCoinHoldingTableStructure.TABLE_NAME,
+                                            portfolioEntryId),
+                                        BasicCondition.eOperatorType.Equal
+                                    ),
+                                    new BasicCondition(
+                                        new ValuedTableColumn(
+                                            DatabaseStructure.ExchangeCoinHoldingTableStructure.
+                                            EXCHANGE_ID_COLUMN_NAME,
+                                            DatabaseStructure.ExchangeCoinHoldingTableStructure.TABLE_NAME,
+                                            exchangeId),
+                                        BasicCondition.eOperatorType.Equal
+                                    ),
+                                    ComplexCondition.eLogicalOperator.And
+                                )
+                            );
+
+                            this.sqliteDatabaseHandler.UpdateTable(exchangeCoinHoldingUpdateQuery);
+                        }
+                );
+
+                this.undoableLastActionAvailable = true;
+            }
+
+            // to be implemented
+            internal void RemoveExchangeCoinHolding(
+                long exchangeCoinHoldingId)
+            {
+ 
+            }
+
             internal PortfolioEntry GetPortfolioEntry(long coinId)
             {
-                // select all columns of PortfolioEntry with specified coinId
-                SelectQuery selectQuery = new SelectQuery(
-                    DatabaseStructure.PortfolioEntryTableStructure.TABLE_NAME,
+                PortfolioEntry portfolioEntry;
+
+                long portfolioEntryId = GetPortfolioEntryId(coinId);
+                ExchangeCoinHolding[] exchangeCoinHoldings = getExchangeCoinHoldings(coinId);
+
+                portfolioEntry = new PortfolioEntry(
+                    portfolioEntryId,
+                    coinId,
+                    exchangeCoinHoldings);
+
+                return portfolioEntry;
+            }
+
+            private void addExchangeIfNotExists(string exchangeName)
+            {
+                SelectQuery exchangeNameCountSelectQuery = new SelectQuery(
+                    DatabaseStructure.ExchangeTableStructure.TABLE_NAME,
                     new TableColumn[]
                     {
-                        new TableColumn(
-                            DatabaseStructure.PortfolioEntryTableStructure.ID_COLUMN_NAME,
-                            DatabaseStructure.PortfolioEntryTableStructure.TABLE_NAME),
-                        new TableColumn(
-                            DatabaseStructure.PortfolioEntryTableStructure.COIN_ID_COLUMN_NAME,
-                            DatabaseStructure.PortfolioEntryTableStructure.TABLE_NAME),
-                        new TableColumn(
-                            DatabaseStructure.PortfolioEntryTableStructure.HOLDINGS_COLUMN_NAME,
-                            DatabaseStructure.PortfolioEntryTableStructure.TABLE_NAME),
-                        new TableColumn(
-                            DatabaseStructure.PortfolioEntryTableStructure.AVERAGE_BUY_PRICE_COLUMN_NAME,
-                            DatabaseStructure.PortfolioEntryTableStructure.TABLE_NAME)
+                        new FunctionTableColumn(
+                            FunctionTableColumn.eFunctionType.Count,
+                            DatabaseStructure.ExchangeTableStructure.NAME_COLUMN_NAME,
+                            DatabaseStructure.ExchangeTableStructure.TABLE_NAME)
                     },
                     null,
                     new BasicCondition(
                         new ValuedTableColumn(
-                            DatabaseStructure.PortfolioEntryTableStructure.COIN_ID_COLUMN_NAME,
-                            DatabaseStructure.PortfolioEntryTableStructure.TABLE_NAME,
-                            coinId),
+                            DatabaseStructure.ExchangeTableStructure.NAME_COLUMN_NAME,
+                            DatabaseStructure.ExchangeTableStructure.TABLE_NAME,
+                            exchangeName),
                         BasicCondition.eOperatorType.Equal
                         )
                     );
 
-                ResultSet resultSet = this.sqliteDatabaseHandler.SelectFromTable(selectQuery);
+                ResultSet exchangeNameCountResultSet = this.sqliteDatabaseHandler.SelectFromTable(
+                    exchangeNameCountSelectQuery);
 
-                // get single row in result set, containing PortfolioEntry columns
-                Row portfolioEntryRow = resultSet.GetRow(0);
+                long numberOfExchangesWithSpecifiedName = 
+                    exchangeNameCountResultSet.GetColumnValue<long>(0, 0);
 
-                // get CoinTicker from manager, if available
-                CoinTicker portfolioEntryCoinTicker = CoinTickerManager.Instance.HasCoinTicker(coinId)
-                    ? CoinTickerManager.Instance.GetCoinTicker(coinId)
-                    : null;
+                if(numberOfExchangesWithSpecifiedName == 0)
+                {
+                    InsertQuery exchangeInsertQuery = new InsertQuery(
+                        DatabaseStructure.ExchangeTableStructure.TABLE_NAME,
+                        new ValuedColumn[]
+                        {
+                            new ValuedColumn(
+                                DatabaseStructure.ExchangeTableStructure.NAME_COLUMN_NAME,
+                                exchangeName)
+                        }
+                    );
 
-                // init a new PortfolioEntry having fetched data
-                PortfolioEntry portfolioEntry = new PortfolioEntry(
-                    portfolioEntryRow.GetColumnValue<long>(
-                        DatabaseStructure.PortfolioEntryTableStructure.ID_COLUMN_NAME),
-                    portfolioEntryRow.GetColumnValue<long>(
-                        DatabaseStructure.PortfolioEntryTableStructure.COIN_ID_COLUMN_NAME),
-                    portfolioEntryRow.GetColumnValue<double>(
-                        DatabaseStructure.PortfolioEntryTableStructure.HOLDINGS_COLUMN_NAME),
-                    portfolioEntryRow.GetColumnValue<double?>(
-                        DatabaseStructure.PortfolioEntryTableStructure.AVERAGE_BUY_PRICE_COLUMN_NAME),
-                    portfolioEntryCoinTicker);
+                    this.sqliteDatabaseHandler.InsertIntoTable(exchangeInsertQuery);
+                }
+            }
 
-                return portfolioEntry;
+            private ExchangeCoinHolding[] getExchangeCoinHoldings(long coinId)
+            {
+                ExchangeCoinHolding[] exchangeCoinHoldings;
+
+                long portfolioEntryId = GetPortfolioEntryId(coinId);
+
+                SelectQuery exchangeCoinHoldingSelectQuery = new SelectQuery(
+                    DatabaseStructure.ExchangeCoinHoldingTableStructure.TABLE_NAME,
+                    new TableColumn[]
+                    {
+                        new TableColumn(
+                            DatabaseStructure.ExchangeCoinHoldingTableStructure.EXCHANGE_ID_COLUMN_NAME,
+                            DatabaseStructure.ExchangeCoinHoldingTableStructure.TABLE_NAME),
+                        new TableColumn(
+                            DatabaseStructure.ExchangeCoinHoldingTableStructure.HOLDING_COLUMN_NAME,
+                            DatabaseStructure.ExchangeCoinHoldingTableStructure.TABLE_NAME),
+                        new TableColumn(
+                            DatabaseStructure.ExchangeCoinHoldingTableStructure.AVERAGE_BUY_PRICE_COLUMN_NAME,
+                            DatabaseStructure.ExchangeCoinHoldingTableStructure.TABLE_NAME)
+                    },
+                    null,
+                    new BasicCondition(
+                        new ValuedTableColumn(
+                            DatabaseStructure.ExchangeCoinHoldingTableStructure.PORTFOLIO_ENTRY_ID_COLUMN_NAME,
+                            DatabaseStructure.ExchangeCoinHoldingTableStructure.TABLE_NAME,
+                            portfolioEntryId),
+                        BasicCondition.eOperatorType.Equal
+                        )
+                    );
+
+                ResultSet exchangeCoinHoldingResultSet = this.sqliteDatabaseHandler.SelectFromTable(
+                    exchangeCoinHoldingSelectQuery);
+
+                exchangeCoinHoldings = new ExchangeCoinHolding[exchangeCoinHoldingResultSet.RowCount];
+
+                for(int i = 0; i < exchangeCoinHoldingResultSet.RowCount; i++)
+                {
+                    Row exchangeCoinHoldingRow = exchangeCoinHoldingResultSet.GetRow(i);
+
+                    long exchangeId = exchangeCoinHoldingRow.GetColumnValue<long>(
+                        DatabaseStructure.ExchangeCoinHoldingTableStructure.EXCHANGE_ID_COLUMN_NAME);
+                    string exchangeName = getExchangeName(exchangeId);
+                    double coinHolding = exchangeCoinHoldingRow.GetColumnValue<double>(
+                        DatabaseStructure.ExchangeCoinHoldingTableStructure.HOLDING_COLUMN_NAME);
+                    double coinAverageBuyPrice = exchangeCoinHoldingRow.GetColumnValue<double>(
+                        DatabaseStructure.ExchangeCoinHoldingTableStructure.AVERAGE_BUY_PRICE_COLUMN_NAME);
+
+                    exchangeCoinHoldings[i] = new ExchangeCoinHolding(
+                        coinId,
+                        exchangeName,
+                        coinHolding,
+                        coinAverageBuyPrice);
+                }
+
+                return exchangeCoinHoldings;
+            }
+
+            private long getExchangeId(string exchangeName)
+            {
+                long exchangeId;
+
+                SelectQuery exchangeIdSelectQuery = new SelectQuery(
+                    DatabaseStructure.ExchangeTableStructure.TABLE_NAME,
+                    new TableColumn[]
+                    {
+                        new TableColumn(
+                            DatabaseStructure.ExchangeTableStructure.ID_COLUMN_NAME,
+                            DatabaseStructure.ExchangeTableStructure.TABLE_NAME
+                        )
+                    },
+                    null,
+                    new BasicCondition(
+                        new ValuedTableColumn(
+                            DatabaseStructure.ExchangeTableStructure.NAME_COLUMN_NAME,
+                            DatabaseStructure.ExchangeTableStructure.TABLE_NAME,
+                            exchangeName),
+                        BasicCondition.eOperatorType.Equal
+                    )
+                );
+
+                ResultSet exchangeIdResultSet = this.sqliteDatabaseHandler.SelectFromTable(
+                    exchangeIdSelectQuery);
+
+                exchangeId = exchangeIdResultSet.GetColumnValue<long>(0, 0);
+
+                return exchangeId;
+            }
+
+            private string getExchangeName(long exchangeId)
+            {
+                string exchangeName;
+
+                SelectQuery exchangeNameSelectQuery = new SelectQuery(
+                    DatabaseStructure.ExchangeTableStructure.TABLE_NAME,
+                    new TableColumn[]
+                    {
+                        new TableColumn(
+                            DatabaseStructure.ExchangeTableStructure.NAME_COLUMN_NAME,
+                            DatabaseStructure.ExchangeTableStructure.TABLE_NAME
+                        )
+                    },
+                    null,
+                    new BasicCondition(
+                        new ValuedTableColumn(
+                            DatabaseStructure.ExchangeTableStructure.ID_COLUMN_NAME,
+                            DatabaseStructure.ExchangeTableStructure.TABLE_NAME,
+                            exchangeId),
+                        BasicCondition.eOperatorType.Equal
+                    )
+                );
+
+                ResultSet exchangeNameResultSet = this.sqliteDatabaseHandler.SelectFromTable(
+                    exchangeNameSelectQuery);
+
+                exchangeName = exchangeNameResultSet.GetColumnValue<string>(0, 0);
+
+                return exchangeName;
             }
 
             /// <summary>
@@ -620,24 +831,47 @@ namespace CryptoBlock
                 string transactionTypeString = transaction.TransactionType.ToString();
 
                 transactionTypeIdSelectQuery
-                    = new SelectQuery(DatabaseStructure.TransactionTypeTableStructure.TABLE_NAME,
+                    = new SelectQuery(DatabaseStructure.CoinTransactionTypeTableStructure.TABLE_NAME,
                     new TableColumn[]
                     {
                                 new TableColumn(
-                                    DatabaseStructure.TransactionTypeTableStructure.ID_COLUMN_NAME,
-                                    DatabaseStructure.TransactionTypeTableStructure.TABLE_NAME)
+                                    DatabaseStructure.CoinTransactionTypeTableStructure.ID_COLUMN_NAME,
+                                    DatabaseStructure.CoinTransactionTypeTableStructure.TABLE_NAME)
                     },
                     null,
                     new BasicCondition(
                         new ValuedTableColumn(
-                            DatabaseStructure.TransactionTypeTableStructure.NAME_COLUMN_NAME,
-                            DatabaseStructure.TransactionTypeTableStructure.TABLE_NAME,
+                            DatabaseStructure.CoinTransactionTypeTableStructure.NAME_COLUMN_NAME,
+                            DatabaseStructure.CoinTransactionTypeTableStructure.TABLE_NAME,
                             transactionTypeString),
                         BasicCondition.eOperatorType.Equal
                         )
                     );
 
                 return transactionTypeIdSelectQuery;
+            }
+
+            private SelectQuery buildExchangeIdSelectQuery(string exchangeName)
+            {
+                SelectQuery exchangeIdSelectQuery = new SelectQuery(
+                    DatabaseStructure.ExchangeTableStructure.TABLE_NAME,
+                    new TableColumn[]
+                    {
+                        new TableColumn(
+                            DatabaseStructure.ExchangeTableStructure.ID_COLUMN_NAME,
+                            DatabaseStructure.ExchangeTableStructure.TABLE_NAME)
+                    },
+                    null,
+                    new BasicCondition(
+                        new ValuedTableColumn(
+                            DatabaseStructure.ExchangeTableStructure.NAME_COLUMN_NAME,
+                            DatabaseStructure.ExchangeTableStructure.TABLE_NAME,
+                            exchangeName),
+                        BasicCondition.eOperatorType.Equal
+                    )
+                );
+
+                return exchangeIdSelectQuery;
             }
 
             /// <summary>
@@ -684,7 +918,7 @@ namespace CryptoBlock
                         BasicCondition.eOperatorType.Equal)
                     );
 
-                sqliteDatabaseHandler.DeleteFromTable(portfolioEntryDeleteQuery);
+                this.sqliteDatabaseHandler.DeleteFromTable(portfolioEntryDeleteQuery);
             }
 
             /// <summary>

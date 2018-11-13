@@ -1,4 +1,5 @@
-﻿using CryptoBlock.ExceptionManagement;
+﻿using CryptoBlock.CMCAPI;
+using CryptoBlock.ExceptionManagement;
 using CryptoBlock.IOManagement;
 using CryptoBlock.PortfolioManagement.Transactions;
 using CryptoBlock.ServerDataManagement;
@@ -786,6 +787,9 @@ namespace CryptoBlock
                 {
                     portfolioEntry =
                         PortfolioDatabaseManager.Instance.GetPortfolioEntry(coinId);
+
+                    CoinTicker coinTicker = CoinTickerManager.Instance.GetCoinTicker(coinId);
+                    portfolioEntry.SetCoinTicker(coinTicker);
                 }
                 catch (SQLiteDatabaseHandlerException sqliteDatabaseHandlerException)
                 {

@@ -128,10 +128,12 @@ namespace CryptoBlock
                             // purchase performed successfully
                             string successfulPurchaseNoticeMessage = buyTransactions.Length == 1
                                 ? string.Format(
-                                    "Successfully purchased {0} {1} for {2}$ each.",
+                                    "Successfully purchased {0} {1} for {2}$ each, stored in exchange " +
+                                    "'{3}'.",
                                     buyTransactions[0].Amount,
                                     coinName,
-                                    buyTransactions[0].PricePerCoin)
+                                    buyTransactions[0].PricePerCoin,
+                                    buyTransactions[0].ExchangeName)
                                 : string.Format(
                                     "{0} Specified purchases made successfully.",
                                     buyTransactions.Length);

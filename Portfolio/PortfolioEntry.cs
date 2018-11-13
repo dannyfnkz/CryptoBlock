@@ -1,10 +1,14 @@
 ﻿using CryptoBlock.CMCAPI;
 using CryptoBlock.PortfolioManagement.Transactions;
+using CryptoBlock.ServerDataManagement;
 using CryptoBlock.Utils;
 using CryptoBlock.Utils.IO.SQLite.Schema;
+using CryptoBlock.Utils.Strings;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace CryptoBlock
 {
@@ -71,57 +75,62 @@ namespace CryptoBlock
                 }
             }
 
-            /// <summary>
-            /// thrown if there were not enough funds to perform the specified operation.
-            /// </summary>
             public class InsufficientFundsException : PortfolioEntryException
             {
-                public InsufficientFundsException(long coinId, double holdings)
-                    : base(coinId, formatExceptionMessage(holdings))
-                {
+                private readonly string exchangeName;
+                private readonly double exchangeHolding;
 
+                public InsufficientFundsException(long coinId, string exchangeName, double exchangeHolding)
+                    : base(coinId, formatExceptionMessage(exchangeName, exchangeHolding))
+                {
+                    this.exchangeName = exchangeName;
+                    this.exchangeHolding = exchangeHolding;
                 }
 
-                private static string formatExceptionMessage(double funds)
+                public string ExchangeName
                 {
-                    return string.Format("Not enough funds for requested operation. Hodlings: {0}.", funds);
+                    get { return ExchangeName; }
+                }
+
+                public double ExchangeHolding
+                {
+                    get { return exchangeHolding; }
+                }
+
+                private static string formatExceptionMessage(string exchangeName, double exchangeHolding)
+                {
+                    return string.Format(
+                        "Not enough funds in specified exchange '{0}' for requested operation. " +
+                        "Exchange holding: {1}.",
+                        exchangeName,
+                        exchangeHolding);
                 }
             }
 
-            private readonly long id;
+            private const string NOT_AVAILABLE_DATA_FIELD_STRING = "N/A";
 
-            [JsonProperty]
+            private readonly long id;
             private readonly long coinId;
-            [JsonIgnore]
+            private Dictionary<string, ExchangeCoinHolding> exchangeNameToExchangeCoinHolding
+                = new Dictionary<string, ExchangeCoinHolding>();
             private CoinTicker coinTicker;
 
-            // list of transactions performed on this entry
-            [JsonProperty]
-            private List<Transaction> transactionHistory = new List<Transaction>();
-
-            [JsonProperty]
-            private double holdings;
-
-            [JsonProperty]
-            private double? averageBuyPrice;
-
-            [JsonIgnore]
+            private double? averageCoinBuyPrice;
+            private double coinHoldings;
             private double? profitPercentageUsd;
 
-            public PortfolioEntry(
+            internal PortfolioEntry(
                 long id,
                 long coinId,
-                double holdings,
-                double? averageBuyPrice,
+                IList<ExchangeCoinHolding> exchangeCoinHoldings,
                 CoinTicker coinTicker = null)
             {
                 this.id = id;
                 this.coinId = coinId;
-                this.holdings = holdings;
-                this.averageBuyPrice = averageBuyPrice;
                 this.coinTicker = coinTicker;
 
-                setProfitPercentageUsd();
+                initializeExchangeNameToExchangeCoinHoldingDictionary(exchangeCoinHoldings);
+                updateDynamicData();
             }
 
             public long Id
@@ -132,188 +141,246 @@ namespace CryptoBlock
             /// <summary>
             /// coin id associated with portfolio entry.
             /// </summary>
-            [JsonIgnore]
             public long CoinId
             {
                 get { return coinId; }
             }
 
             /// <summary>
-            /// amount of coin currently held.
+            /// total amount of coin currently held in all exchanges.
             /// </summary>
-            [JsonIgnore]
-            public double Holdings
+            public double CoinHoldings
             {
-                get { return holdings; }
+                get { return coinHoldings; }
             }
 
             /// <summary>
-            /// whether <see cref="Holdings"/> is 0.
+            /// whether <see cref="HasNoCoinHoldings"/> is 0.
             /// </summary>
-            [JsonIgnore]
-            public bool HasNoHoldings
+            public bool HasNoCoinHoldings
             {
-                get { return holdings == 0.0; }
+                get { return coinHoldings == 0.0; }
             }
 
             /// <summary>
             /// <para>
-            /// average coin buy price, taking into account all buys and sells in transaction history.
+            /// average coin buy price across all exchanges.
             /// </para>
             /// <para>
             /// null if <see cref="HasNoHoldings"/> = true.
             /// </para>
             /// </summary>
-            [JsonIgnore]
-            public double? AverageBuyPriceUsd
+            public double? AverageCoinBuyPrice
             {
-                get { return averageBuyPrice; }
+                get { return averageCoinBuyPrice; }
             }
 
             /// <summary>
             /// <para>
-            /// percentage of profit (in relation to current price) from buying coin at <see cref="AverageBuyPrice"/>.
+            /// percentage of profit (in relation to current price) from buying coin at
+            /// <see cref="AverageBuyPrice"/>.
             /// </para>
             /// <para>
             /// null if <see cref="HasNoHoldings"/> = true or data regarding price (USD) is not available.
             /// </para>
             /// </summary>
-            [JsonIgnore]
             public double? ProfitPercentageUsd
             {
                 get { return profitPercentageUsd; }
             }
 
-            /// <summary>
-            /// performs a buy transaction.
-            /// </summary>
-            /// <seealso cref="addTransaction(Transaction)"/>
-            /// <param name="buyAmount"></param>
-            /// <param name="buyPricePerCoin"></param>
-            /// <param name="unixTimestamp">unix timestamp when purchase was made</param>
-            /// <exception cref="InvalidPriceException">
-            /// <seealso cref="addTransaction(Transaction)"/>
-            /// </exception>
-            /// <exception cref="SQLiteDatabaseHandlerException">
-            /// <seealso cref="addTransaction(Transaction)"/>
-            /// </exception>
-            public void Buy(Transaction buyTransaction)
+            internal double GetCoinHoldings(string exchangeName)
+            {
+                double coinHoldings;
+
+                if(this.exchangeNameToExchangeCoinHolding.ContainsKey(exchangeName)) 
+                {
+                    // specified exchange has coin holdings
+                    ExchangeCoinHolding exchangeCoinHolding = 
+                        this.exchangeNameToExchangeCoinHolding[exchangeName];
+                    coinHoldings = exchangeCoinHolding.Amount;
+                }
+                else
+                {
+                    // specified exchange has no coin holdings 
+                    coinHoldings = 0.0;
+                }
+
+                return coinHoldings;
+            }
+
+            internal void Buy(Transaction buyTransaction)
             {
                 addTransaction(buyTransaction);
             }
 
-            /// <summary>
-            /// performs a sale transaction.
-            /// </summary>
-            /// <seealso cref="addTransaction(Transaction)"/>
-            /// <param name="sellTransaction"></param>
-            /// <exception cref="InvalidPriceException">
-            /// <seealso cref="addTransaction(Transaction)"/>
-            /// </exception>
-            /// <exception cref="InsufficientFundsException">
-            /// <seealso cref="addTransaction(Transaction)"/>
-            /// </exception>
-            /// <exception cref="SQLiteDatabaseHandlerException">
-            /// <seealso cref="addTransaction(Transaction)"/>
-            /// </exception>
-            public void Sell(SellTransaction sellTransaction)
+
+            internal void Sell(SellTransaction sellTransaction)
             {
                 addTransaction(sellTransaction);
             }
 
-            /// <summary>
-            /// creates a new <see cref="Transaction"/> with specified
-            /// <paramref name="transactionType"/>, <paramref name="amount"/>,
-            /// <paramref name="pricePerCoin"/> and
-            /// <paramref name="unixTimestamp"/>, updates <see cref="PortfolioEntry"/> accordingly
-            /// and adds <see cref="Transaction"/> to its transaction history.
-            /// </summary>
-            /// <seealso cref="handleTransaction(Transaction)"/>
-            /// <param name="transactionType"></param>
-            /// <param name="holdings"></param>
-            /// <param name="pricePerCoin"></param>
-            /// <param name="unixTimestamp"></param>
-            /// <exception cref="InvalidPriceException">
-            /// <seealso cref="handleTransaction(Transaction)"/>
-            /// </exception>
-            /// <exception cref="InsufficientFundsException">
-            ///  <seealso cref="handleTransaction(Transaction)"/>
-            /// </exception>
-            /// <exception cref="SQLiteDatabaseHandlerException">
-            /// <seealso cref="PortfolioDatabaseManager.UpdatePortfolioEntry(PortfolioEntry)"/>
-            /// </exception>
+            internal void SetCoinTicker(CoinTicker coinTicker)
+            {
+                this.coinTicker = coinTicker;
+                updateProfitPercentageUsd();
+            }
+
+            internal String GetDetailedString()
+            {
+                StringBuilder detailedStringBuilder = new StringBuilder();
+
+                // append data fields
+                // append coin name
+                string coinName = CoinListingManager.Instance.GetCoinNameById(this.CoinId);
+                detailedStringBuilder.AppendFormatLine("Name: {0}", coinName);
+
+                // append coin symbol
+                string coinSymbol = CoinListingManager.Instance.GetCoinSymbolById(this.coinId);
+                detailedStringBuilder.AppendFormatLine("Symbol: {0}", coinSymbol);
+
+                // append coin price (USD)
+                string coinPriceUsdString = GetDataFieldstring(this.coinTicker.PriceUsd);
+                detailedStringBuilder.AppendFormatLine("Price (USD): {0}", coinPriceUsdString);
+
+                // append % of 24 hour coin price change
+                string coinPricePercentChange24hUsdString = 
+                    GetDataFieldstring(this.coinTicker.PricePercentChange24hUsd);
+                detailedStringBuilder.AppendFormatLine(
+                    "Price change % (24h): {0}",
+                    coinPricePercentChange24hUsdString);
+
+                // append coin holdings
+                // append total coin holdings
+                detailedStringBuilder.AppendFormatLine(
+                    "Total Holdings: {0} {1}",
+                    this.CoinHoldings,
+                    coinSymbol);
+
+                // append coin holding for each exchange
+                string[] exchangeNameArray =this.exchangeNameToExchangeCoinHolding.Keys.ToArray();
+                Array.Sort(exchangeNameArray);
+                foreach(string exchangeName in exchangeNameArray)
+                {
+                    double exchangeCoinAmount = 
+                        this.exchangeNameToExchangeCoinHolding[exchangeName].Amount;
+                    detailedStringBuilder.AppendFormatTabbedLine(
+                        "{0} Holdings: {1} {2}",
+                        exchangeName,
+                        exchangeCoinAmount,
+                        coinSymbol);
+                }
+
+                // append coin % of profit (USD)
+                string coinProfitPercentageUsd =
+                    GetDataFieldstring(this.ProfitPercentageUsd);
+                detailedStringBuilder.AppendFormatLine(
+                    "Profit % (USD): {0}%",
+                    coinProfitPercentageUsd);
+
+                return detailedStringBuilder.ToString();
+            }
+
+            private string GetDataFieldstring<T>(Nullable<T> nullable) where T : struct
+            {
+                return nullable.HasValue
+                    ? nullable.Value.ToString()
+                    : NOT_AVAILABLE_DATA_FIELD_STRING;
+            }
+                
             private void addTransaction(Transaction transaction)
             {
-                PortfolioDatabaseManager.Instance.ExecuteAsOneAction(() =>
-                {
-                    // add to transaction history stored in database
-                    PortfolioDatabaseManager.Instance.AddTransaction(transaction, this);
+                PortfolioDatabaseManager.Instance.ExecuteAsOneAction(
+                    () =>
+                    {
+                        // add to transaction history stored in database
+                        PortfolioDatabaseManager.Instance.AddTransaction(transaction, this.Id);
 
-                    // handel transaction 
-                    handleTransaction(transaction);
+                        // handel transaction 
+                        ExchangeCoinHolding affectedExchangeCoinHolding = 
+                            handleTransaction(transaction, out bool newExchangeCoinHoldingAdded);
 
-                    // update PortfolioEntry row in database
-                    PortfolioDatabaseManager.Instance.UpdatePortfolioEntry(this);
-                }
+                        if(newExchangeCoinHoldingAdded)
+                        {
+                            PortfolioDatabaseManager.Instance.AddExchangeCoinHolding(
+                                affectedExchangeCoinHolding,
+                                this.Id);
+                        }
+                        else
+                        {
+                            PortfolioDatabaseManager.Instance.UpdateExchangeCoinHolding(
+                                affectedExchangeCoinHolding,
+                                this.Id);
+                        }
+                    }
                 );
             }
 
-            /// <summary>
-            /// adds <paramref name="transaction"/> to transaction history and updates
-            /// <see cref="AverageBuyPriceUsd"/> and <see cref="Holdings"/> accordingly.
-            /// </summary>
-            /// <param name="transaction"></param>
-            /// <exception cref="InvalidPriceException">
-            /// <seealso cref="assertValidPrice(double)"/>
-            /// </exception>
-            /// <exception cref="InsufficientFundsException">
-            /// thrown if there are not enough funds to perform sell <paramref name="transaction"/>.
-            /// </exception>
-            private void handleTransaction(Transaction transaction)
+            private ExchangeCoinHolding handleTransaction(
+                Transaction transaction, 
+                out bool newExchangeCoinHoldingAdded)
             {
                 assertValidPrice(transaction.PricePerCoin);
 
-                double newHoldings;
-                double? newAverageBuyPrice;
-
+                ExchangeCoinHolding affectedExchangeCoinHolding;
+                    
                 if (transaction.TransactionType == Transaction.eTransactionType.Buy) // buy transaction
                 {
-                    newHoldings = this.holdings + transaction.Amount;
+                    if(this.exchangeNameToExchangeCoinHolding.ContainsKey(transaction.ExchangeName))
+                    {
+                        affectedExchangeCoinHolding = 
+                            this.exchangeNameToExchangeCoinHolding[transaction.ExchangeName];
+                        affectedExchangeCoinHolding.HandleTransaction(transaction);
 
-                    if (HasNoHoldings) // no holdings, so average buy price is transaction price
-                    {
-                        newAverageBuyPrice = transaction.PricePerCoin;
+                        newExchangeCoinHoldingAdded = false;
                     }
-                    else // has holdings, calculate new average buy price
+                    else
                     {
-                        newAverageBuyPrice = calcAverageBuyPrice(
-                            this.holdings,
-                            this.averageBuyPrice.Value,
+                        affectedExchangeCoinHolding = new ExchangeCoinHolding(
+                            transaction.CoinId,
+                            transaction.ExchangeName,
                             transaction.Amount,
                             transaction.PricePerCoin);
-                    }
+                        this.exchangeNameToExchangeCoinHolding.Add(
+                            affectedExchangeCoinHolding.ExchangeName,
+                            affectedExchangeCoinHolding);
 
+                        newExchangeCoinHoldingAdded = true;
+                    }
                 }
                 else // sell transaction
                 {
-                    newHoldings = this.holdings - transaction.Amount;
+                    newExchangeCoinHoldingAdded = false;
 
-                    if(newHoldings < 0) // less funds than requested sell amount
+                    if (this.exchangeNameToExchangeCoinHolding.ContainsKey(transaction.ExchangeName))
                     {
-                        throw new InsufficientFundsException(this.coinId, this.holdings);
-                    }
+                        affectedExchangeCoinHolding =
+                            this.exchangeNameToExchangeCoinHolding[transaction.ExchangeName];
 
-                    // if after selling holdings == 0, average buy price is undefined
-                    // otherwise, it remains unchanged
-                    newAverageBuyPrice = HasNoHoldings ? null : this.averageBuyPrice;
+                        if(affectedExchangeCoinHolding.Amount >= transaction.Amount)
+                        {
+                            affectedExchangeCoinHolding.HandleTransaction(transaction);
+                        }
+                        else
+                        {
+                            throw new InsufficientFundsException(
+                                this.CoinId,
+                                transaction.ExchangeName,
+                                affectedExchangeCoinHolding.Amount);
+                        }
+                    }
+                    else
+                    {
+                        throw new InsufficientFundsException(
+                            this.CoinId,
+                            transaction.ExchangeName,
+                            0.0);
+                    }
                 }
 
-                // update holdings and average buy price
-                this.holdings = newHoldings;
-                this.averageBuyPrice = newAverageBuyPrice;
+                updateDynamicData();
 
-                // update profit percentage (USD)
-                setProfitPercentageUsd();
+                return affectedExchangeCoinHolding;
             }
 
             /// <summary>
@@ -342,11 +409,57 @@ namespace CryptoBlock
                 return newAverageBuyPrice;
             }
 
+            private void initializeExchangeNameToExchangeCoinHoldingDictionary(
+                IList<ExchangeCoinHolding> exchangeCoinHoldings)
+            {
+                foreach (ExchangeCoinHolding exchangeCoinHolding in exchangeCoinHoldings)
+                {
+                    this.exchangeNameToExchangeCoinHolding.Add(
+                        exchangeCoinHolding.ExchangeName,
+                        exchangeCoinHolding);
+                }
+            }
+
+            private void updateDynamicData()
+            {
+                updateCoinHoldings();
+                updateAverageCoinBuyPrice();
+                updateProfitPercentageUsd();
+            }
+
+            private void updateCoinHoldings()
+            {
+                this.coinHoldings = 0;
+
+                foreach (ExchangeCoinHolding exchangeCoinHolding in
+                    this.exchangeNameToExchangeCoinHolding.Values)
+                {
+                    this.coinHoldings += exchangeCoinHolding.Amount;
+                }
+            }
+
+            private void updateAverageCoinBuyPrice()
+            {
+                if(!this.HasNoCoinHoldings)
+                {
+                    double sumOfAverageBuyPrices = 0;
+
+                    foreach (ExchangeCoinHolding exchangeCoinHolding in
+                        this.exchangeNameToExchangeCoinHolding.Values)
+                    {
+                        sumOfAverageBuyPrices += 
+                            exchangeCoinHolding.Amount * exchangeCoinHolding.AverageBuyPrice;
+                    }
+
+                    this.averageCoinBuyPrice = sumOfAverageBuyPrices / this.CoinHoldings;
+                }         
+            }
+
             /// <summary>
             /// sets <see cref="profitPercentageUsd"/> according to current coin price (USD) and
             /// <see cref="AverageBuyPriceUsd"/>.
             /// </summary>
-            private void setProfitPercentageUsd()
+            private void updateProfitPercentageUsd()
             {
                 // current USD price of coin is not available
                 if (this.coinTicker == null || !this.coinTicker.PriceUsd.HasValue)
@@ -355,14 +468,10 @@ namespace CryptoBlock
                 }
                 else // current USD price of coin is available
                 {
-                    if(HasNoHoldings) // no holdings, so profit percentage is undefined
+                    if(!HasNoCoinHoldings) // has holdings
                     {
-                        this.profitPercentageUsd = null;
-                    }
-                    else // has holdings
-                    {
-                        double diff = coinTicker.PriceUsd.Value - averageBuyPrice.Value;
-                        this.profitPercentageUsd = (diff / averageBuyPrice) * 100.0;
+                        double diff = coinTicker.PriceUsd.Value - this.AverageCoinBuyPrice.Value;
+                        this.profitPercentageUsd = (diff / this.AverageCoinBuyPrice.Value) * 100.0;
                     }
                 }
             }

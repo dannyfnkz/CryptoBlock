@@ -21,21 +21,25 @@ namespace CryptoBlock
         {
             /// <summary>
             /// represents a <see cref="ICommandArgumentConstraint"/> requiring that the number of 
-            /// command arguments be odd.
+            /// command arguments, when devided by three,
+            /// gives a remainder of one.
             /// </summary>
-            private class OddNumberOfArgumentsCommandArgumentConstraint : ICommandArgumentConstraint
+            private class OneRemainderInDivisionByThreeNumberOfArgumentsCommandArgumentConstraint 
+                : ICommandArgumentConstraint
             {
                 /// <summary>
-                /// returns whether number of command arguments is odd.
+                /// returns whether number of command arguments, when devided by three,
+                /// gives a remainder of one.
                 /// </summary>
                 /// <param name="commandArgumentArray"></param>
                 /// <returns>
-                /// true if number of command arguments is odd,
+                /// true if number of command arguments, when devided by three,
+                /// gives a remainder of one,
                 /// else false
                 /// </returns>
                 bool ICommandArgumentConstraint.IsValid(string[] commandArgumentArray)
                 {
-                    return NumberUtils.IsOdd(commandArgumentArray.Length);
+                    return commandArgumentArray.Length % 3 == 1;
                 }
 
                 /// <summary>
@@ -44,7 +48,8 @@ namespace CryptoBlock
                 /// <param name="commandArgumentArray"></param>
                 void ICommandArgumentConstraint.OnInvalidCommandArgumentArray(string[] commandArgumentArray)
                 {
-                    string errorMessage = "Invalid format: number of arguments must be odd.";
+                    string errorMessage = "Invalid format: number of arguments must be 3x + 1, " +
+                        "where x is the number of operations.";
                     ConsoleIOManager.Instance.LogError(
                         errorMessage,
                         ConsoleIOManager.eOutputReportType.CommandExecution);
@@ -57,8 +62,13 @@ namespace CryptoBlock
             // max number of buy / sell operations on specified coin
             private const int MAX_NUMBER_OF_OPERATIONS = 5;
 
-            private const int MIN_NUMBER_OF_ARGUMENTS = 1 + 2 * MIN_NUMBER_OF_OPERATIONS;
-            private const int MAX_NUMBER_OF_ARGUMENTS = 1 + 2 * MAX_NUMBER_OF_OPERATIONS;
+            // number of arguments (e.g amount, pricePerCoin) for each operation
+            private const int NUMBER_OF_ARGUMENTS_PER_OPERATION = 3;
+
+            private const int MIN_NUMBER_OF_ARGUMENTS = 
+                1 + NUMBER_OF_ARGUMENTS_PER_OPERATION * MIN_NUMBER_OF_OPERATIONS;
+            private const int MAX_NUMBER_OF_ARGUMENTS =
+                1 + NUMBER_OF_ARGUMENTS_PER_OPERATION * MAX_NUMBER_OF_OPERATIONS;
 
             private static readonly Dictionary<Type, string> transactionTypeToSubPrefix
                 = new Dictionary<Type, string>()
@@ -75,7 +85,7 @@ namespace CryptoBlock
             {
                 // add OddNumberOfArgumentsCommandArgumentConstraint to command constraint list
                 base.commandArgumentConstraintList.Add(
-                    new OddNumberOfArgumentsCommandArgumentConstraint());
+                    new OneRemainderInDivisionByThreeNumberOfArgumentsCommandArgumentConstraint());
             }
 
             /// <summary>
@@ -86,7 +96,9 @@ namespace CryptoBlock
             /// </para>
             /// <para>
             /// <paramref name="commandArguments"/> array is expected to be in format:
-            /// 0: [coin name / symbol] 1: [amount] [pricePerCoin] 2: [amount] [pricePerCoin] ...
+            /// 0: [coin name / symbol] 1: [amount] [pricePerCoin] [exchangeName] 
+            /// 2: [amount] [pricePerCoin] [exchangeName] 
+            /// ...
             /// </para>
             /// returns parsed array if parsing succeeded, or null otherwise
             /// </summary>
@@ -105,30 +117,32 @@ namespace CryptoBlock
                 long unixTimestamp,
                 out bool transactionArrayParseSuccesss)
             {
-                // first argument is coin name / symbol, rest are consecutive pairs of 
-                // (amount, pricePerCoin)
-                T[] transactions = new T[(commandArguments.Length - 1) / 2];
+                // first argument is coin name / symbol, rest are consecutive triplets of 
+                // (amount, pricePerCoin, exchangeName)
+                T[] transactions = new T[(commandArguments.Length - 1) / NUMBER_OF_ARGUMENTS_PER_OPERATION];
 
                 transactionArrayParseSuccesss = false;
 
                 // go through all pairs of arguments, starting from 1'th argument
-                for (int i = 1; i < commandArguments.Length; i += 2)
+                for (int i = 1; i < commandArguments.Length; i += NUMBER_OF_ARGUMENTS_PER_OPERATION)
                 {
-                    // try parsing operation amount and pricePerCoin for argument pair
+                    // try parsing operation amount, pricePerCoin and exchangeName for argument pair
                     string amountArgument = commandArguments[i];
                     string pricePerCoinArgument = commandArguments[i + 1];
+                    string exchangeName = commandArguments[i + 2];
 
                     // try parsing Transaction from specified amountArgument and pricePerCoinArgument
                     T transaction = tryParseTransaction(
                         amountArgument,
                         pricePerCoinArgument,
                         coinId,
+                        exchangeName,
                         unixTimestamp,
                         out bool transactionParseResult);
 
                     if (transactionParseResult) // transaction parse success
                     {
-                        transactions[i / 2] = transaction;
+                        transactions[i / NUMBER_OF_ARGUMENTS_PER_OPERATION] = transaction;
                     }
                     else // transaction parse failed
                     {
@@ -144,8 +158,7 @@ namespace CryptoBlock
             /// <summary>
             /// <para>
             /// tries parsing a <typeparamref name="T"/> (derived from <see cref="Transaction"/>)
-            /// from specified <paramref name="amountArgument"/>, <paramref name="pricePerCoinArgument"/>,
-            /// <paramref name="coinId"/>, and <paramref name="unixTimestamp"/>.
+            /// from specified parameters.
             /// </para>
             /// <para>
             /// returns the parsed <typeparamref name="T"/> if parsing succeeded,
@@ -156,6 +169,7 @@ namespace CryptoBlock
             /// <param name="pricePerCoinArgument"></param>
             /// <param name="coinId"></param>
             /// <param name="unixTimestamp"></param>
+            /// <param name="exchangeName"
             /// <param name="parseSuccess">whether parsing succeeded</param>
             /// <returns>
             /// parsed <typeparamref name="T"/> (derived from <see cref="Transaction"/>) if
@@ -166,6 +180,7 @@ namespace CryptoBlock
                 string amountArgument,
                 string pricePerCoinArgument,
                 long coinId,
+                string exchangeName,
                 long unixTimestamp,
                 out bool parseSuccess)
             {
@@ -188,8 +203,18 @@ namespace CryptoBlock
                 if (amountParseResult && priceParseResult)
                 {
                     transaction = typeof(T) == typeof(BuyTransaction)
-                        ? (Transaction)(new BuyTransaction(coinId, amount, pricePerCoin, unixTimestamp))
-                        : (Transaction)(new SellTransaction(coinId, amount, pricePerCoin, unixTimestamp));
+                        ? (Transaction)(new BuyTransaction(
+                            coinId,
+                            amount, 
+                            pricePerCoin,
+                            exchangeName,
+                            unixTimestamp))
+                        : (Transaction)(new SellTransaction(
+                            coinId,
+                            amount, 
+                            pricePerCoin,
+                            exchangeName,
+                            unixTimestamp));
 
                     parseSuccess = true;
                 }

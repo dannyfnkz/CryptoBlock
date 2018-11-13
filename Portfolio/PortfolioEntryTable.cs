@@ -148,8 +148,8 @@ namespace CryptoBlock
             private enum eDisplayProperty
             {
                 ProfitPercentageUsd,
-                Holdings
-            }
+                CoinHoldings
+            }          
 
             // properties of CoinData which represent a column in table
             private static readonly Property[] COIN_DATA_PROPERTIES =
@@ -191,10 +191,10 @@ namespace CryptoBlock
                 displayPropertyToProperty = new Dictionary<eDisplayProperty, Property>
                 {
                     {
-                        eDisplayProperty.Holdings,
+                        eDisplayProperty.CoinHoldings,
                         new Property(
                             PORTFOLIO_ENTRY_PROPERTY_TYPE,
-                            "Holdings")
+                            "CoinHoldings")
                     },
                     {
                         eDisplayProperty.ProfitPercentageUsd,
@@ -213,11 +213,11 @@ namespace CryptoBlock
                 displayPropertyToPropertyColumn = new Dictionary<eDisplayProperty, PropertyColumn>
                 {
                     {
-                        eDisplayProperty.Holdings,
+                        eDisplayProperty.CoinHoldings,
                         new PropertyColumn(
                             "Holdings",
                             13,
-                            displayPropertyToProperty[eDisplayProperty.Holdings])
+                            displayPropertyToProperty[eDisplayProperty.CoinHoldings])
                     },
                     {
                         eDisplayProperty.ProfitPercentageUsd,

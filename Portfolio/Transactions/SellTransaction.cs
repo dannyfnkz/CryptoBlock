@@ -9,8 +9,13 @@
         /// </summary>
         public class SellTransaction : Transaction
         {
-            public SellTransaction(long coinId, double amount, double pricePerCoin, long unixTimestamp)
-                : base(eTransactionType.Sell, coinId, amount, pricePerCoin, unixTimestamp)
+            public SellTransaction(
+                long coinId, 
+                double amount, 
+                double pricePerCoin,
+                string exchangeName,
+                long unixTimestamp)
+                : base(eTransactionType.Sell, coinId, amount, pricePerCoin, exchangeName, unixTimestamp)
             {
 
             }

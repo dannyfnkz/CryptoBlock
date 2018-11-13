@@ -24,10 +24,13 @@ namespace CryptoBlock
             private readonly long coinId;
 
             [JsonProperty]
-            private double amount;
+            private readonly double amount;
 
             [JsonProperty]
             private readonly double pricePerCoin;
+
+            [JsonProperty]
+            private readonly string exchangeName;
 
             [JsonProperty]
             private readonly long unixTimestamp;
@@ -38,12 +41,14 @@ namespace CryptoBlock
                 long coinId,
                 double amount,
                 double pricePerCoin,
+                string exchangeName,
                 long unixTimestamp)
             {
                 this.transactionType = transactionType;
                 this.coinId = coinId;
                 this.amount = amount;
                 this.pricePerCoin = pricePerCoin;
+                this.exchangeName = exchangeName;
                 this.unixTimestamp = unixTimestamp;
             }
 
@@ -79,8 +84,14 @@ namespace CryptoBlock
                 get { return pricePerCoin; }
             }
 
+            [JsonIgnore]
+            public string ExchangeName
+            {
+                get { return exchangeName; }
+            }
+
             /// <summary>
-            /// <see cref="Transaction"/> timestamp.
+            /// timestamp of this <see cref="Transaction"/>.
             /// </summary>
             [JsonIgnore]
             public long UnixTimestamp

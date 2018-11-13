@@ -773,12 +773,20 @@ namespace CryptoBlock
             /// </param>
             public void ExecuteWithinTransaction(Action action)
             {
-                ulong transactionHandle = BeginTransactionIfNotAlreadyUnderway(
-                    out bool newTransactionStarted);
+                try
+                {
+                    ulong transactionHandle = BeginTransactionIfNotAlreadyUnderway(
+                        out bool newTransactionStarted);
 
-                action.Invoke();
-                
-                CommitTransactionIfStartedByCaller(transactionHandle, newTransactionStarted);
+                    action.Invoke();
+
+                    CommitTransactionIfStartedByCaller(transactionHandle, newTransactionStarted);
+                }
+                catch(Exception exception)
+                {
+                    onExceptionThrown();
+                    throw exception;
+                }           
             }
 
             /// <summary>

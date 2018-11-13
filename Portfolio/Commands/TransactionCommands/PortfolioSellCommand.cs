@@ -28,12 +28,17 @@ namespace CryptoBlock
             private class InsufficientFundsForSellTransactionsException : Exception
             {
                 private readonly long coinId;
-                private readonly double coinHoldings;
+                private readonly string exchangeName;
+                private readonly double exchangeCoinHoldings;
 
-                internal InsufficientFundsForSellTransactionsException(long coinId, double coinHoldings)
+                internal InsufficientFundsForSellTransactionsException(
+                    long coinId, 
+                    string exchangeName,
+                    double exchangeCoinHoldings)
                 {
                     this.coinId = coinId;
-                    this.coinHoldings = coinHoldings;
+                    this.exchangeName = exchangeName;
+                    this.exchangeCoinHoldings = exchangeCoinHoldings;
                 }
 
                 internal long CoinId
@@ -41,9 +46,14 @@ namespace CryptoBlock
                     get { return coinId; }
                 }
 
-                internal double CoinHoldings
+                internal string ExchangeName
                 {
-                    get { return coinHoldings; }
+                    get { return exchangeName; }
+                }
+
+                internal double ExchangeCoinHoldings
+                {
+                    get { return exchangeCoinHoldings; }
                 }
             }
 
@@ -82,7 +92,6 @@ namespace CryptoBlock
                     // current timestamp
                     long unixTimestamp = DateTimeUtils.GetUnixTimestamp();
 
-
                     // parse buy transactions
                     SellTransaction[] sellTransactions = tryParseTransactionArray(
                         commandArguments,
@@ -92,17 +101,22 @@ namespace CryptoBlock
 
                     if (sellTransactionArrayParseSuccess)
                     {
-
                         // check if there are enough funds for sell transactions
                         PortfolioEntry portfolioEntry = PortfolioManager.Instance.GetPortfolioEntry(coinId);
                         bool sufficientFundsForSellTransactions = sufficientFundsForTransactions(
-                            portfolioEntry, sellTransactions);
+                            portfolioEntry,
+                            sellTransactions,
+                            out string lackingExchangeName);
 
                         if (!sufficientFundsForSellTransactions) // not enough funds to perform sales
                         {
+                            double lackingExchangeCoinHoldings = portfolioEntry.GetCoinHoldings(
+                                lackingExchangeName);
+
                             throw new InsufficientFundsForSellTransactionsException(
                                 coinId,
-                                portfolioEntry.Holdings);
+                                lackingExchangeName,
+                                lackingExchangeCoinHoldings);
                         }
 
                         // execute sell transactions
@@ -111,9 +125,10 @@ namespace CryptoBlock
                         // sale(s) performed successfully
                         string successfulSaleNoticeMessage = sellTransactions.Length == 1
                             ? string.Format(
-                                "Successfully sold {0} {1} for {2}$ each.",
+                                "Successfully sold {0} '{1}' from exchange '{2}' for {3}$ each.",
                                 sellTransactions[0].Amount,
                                 coinName,
+                                sellTransactions[0].ExchangeName,
                                 sellTransactions[0].PricePerCoin)
                             : string.Format(
                                 "{0} Specified sales made successfully.",
@@ -153,8 +168,8 @@ namespace CryptoBlock
 
                     commandExecutedSuccessfuly = false;
                 }
-                catch(
-                InsufficientFundsForSellTransactionsException insufficientFundsForSellTransactionsException)
+                catch(InsufficientFundsForSellTransactionsException 
+                    insufficientFundsForSellTransactionsException)
                 {
                     string coinName = CoinListingManager.Instance.GetCoinNameById(
                         insufficientFundsForSellTransactionsException.CoinId);
@@ -164,9 +179,11 @@ namespace CryptoBlock
                     ConsoleIOManager.Instance.LogErrorFormat(
                         false,
                         ConsoleIOManager.eOutputReportType.CommandExecution,
-                        "Not enough funds for requested sell operation(s). {0} holdings: {1} {2}.",
+                        "Not enough funds for requested sell operation(s)." +
+                        " '{0}' holdings in exchange '{1}': {2} {3}.",
                         coinName,
-                        insufficientFundsForSellTransactionsException.CoinHoldings,
+                        insufficientFundsForSellTransactionsException.ExchangeName,
+                        insufficientFundsForSellTransactionsException.ExchangeCoinHoldings,
                         coinSymbol);
 
                     commandExecutedSuccessfuly = false;
@@ -182,16 +199,37 @@ namespace CryptoBlock
 
             private bool sufficientFundsForTransactions(
                 PortfolioEntry portfolioEntry,
-                SellTransaction[] sellTransactions)
+                SellTransaction[] sellTransactions,
+                out string lackingExchangeName)
             {
-                double requiredFunds = 0;
+                bool sufficientFundsForTransactions = true;
+                lackingExchangeName = null;
+
+                Dictionary<string, double> exchangeNameToExchangeSellAmount =
+                    new Dictionary<string, double>();
 
                 foreach (SellTransaction sellTransaction in sellTransactions)
                 {
-                    requiredFunds += sellTransaction.Amount;
+                    if(!exchangeNameToExchangeSellAmount.ContainsKey(sellTransaction.ExchangeName))
+                    {
+                        exchangeNameToExchangeSellAmount[sellTransaction.ExchangeName] = 0;
+                    }
+
+                    exchangeNameToExchangeSellAmount[sellTransaction.ExchangeName] +=
+                        sellTransaction.Amount;
                 }
 
-                return requiredFunds <= portfolioEntry.Holdings;
+                foreach(string exchangeName in exchangeNameToExchangeSellAmount.Keys)
+                {
+                    double exchangeSellAmount = exchangeNameToExchangeSellAmount[exchangeName];
+                    if (portfolioEntry.GetCoinHoldings(exchangeName) < exchangeSellAmount)
+                    {
+                        sufficientFundsForTransactions = false;
+                        lackingExchangeName = exchangeName;
+                    }
+                }
+
+                return sufficientFundsForTransactions;
             }
         }
     }
