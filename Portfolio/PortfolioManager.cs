@@ -788,8 +788,11 @@ namespace CryptoBlock
                     portfolioEntry =
                         PortfolioDatabaseManager.Instance.GetPortfolioEntry(coinId);
 
-                    CoinTicker coinTicker = CoinTickerManager.Instance.GetCoinTicker(coinId);
-                    portfolioEntry.SetCoinTicker(coinTicker);
+                    if(CoinTickerManager.Instance.HasCoinTicker(coinId))
+                    {
+                        CoinTicker coinTicker = CoinTickerManager.Instance.GetCoinTicker(coinId);
+                        portfolioEntry.SetCoinTicker(coinTicker);
+                    }
                 }
                 catch (SQLiteDatabaseHandlerException sqliteDatabaseHandlerException)
                 {

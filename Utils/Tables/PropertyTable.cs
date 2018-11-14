@@ -3,6 +3,7 @@ using CryptoBlock.Utils.Collections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Utils.Tables.StringTransformers;
 using static CryptoBlock.Utils.Tables.Table;
 
 namespace CryptoBlock
@@ -27,12 +28,12 @@ namespace CryptoBlock
                 /// <summary>
                 /// thrown if specified property name does not exist in specified <see cref="System.Type"/>
                 /// </summary>
-                public class PropertyNameNotInTypeException : Exception
+                public class PropertyNameNotFoundInTypeException : Exception
                 {
                     private Type classType;
                     private string propertyName;
 
-                    public PropertyNameNotInTypeException(Type classType, string propertyName)
+                    public PropertyNameNotFoundInTypeException(Type classType, string propertyName)
                         : base(formatExceptionMessage(classType, propertyName))
                     {
                         this.classType = classType;
@@ -53,21 +54,26 @@ namespace CryptoBlock
                     private static string formatExceptionMessage(Type type, string PropertyName)
                     {
                         return string.Format(
-                            "Property {0} does not exist in type {1}.",
+                            "Property '{0}' does not exist in type '{1}' or is not accessible.",
                             PropertyName,
                             type.FullName);
                     }
                 }
 
-                private Type classType;
-                private string propertyName;
+                private readonly Type classType;
+                private readonly string propertyName;
+                private readonly IStringTransformer stringTransformer;
 
-                public Property(Type classType, string propertyName)
+                public Property(
+                    Type classType,
+                    string propertyName,
+                    IStringTransformer stringTransformer = null)
                 {
                     assertHasProperty(classType, propertyName);
 
                     this.classType = classType;
                     this.propertyName = propertyName;
+                    this.stringTransformer = stringTransformer;
                 }
 
                 public Type ClassType
@@ -78,6 +84,11 @@ namespace CryptoBlock
                 public string PropertyName
                 {
                     get { return propertyName; }
+                }
+
+                internal IStringTransformer StringTransformer
+                {
+                    get { return stringTransformer; }
                 }
 
                 public override bool Equals(object obj)
@@ -123,7 +134,7 @@ namespace CryptoBlock
                 {
                     if (!ReflectionUtils.HasPublicProperty(type, propertyName))
                     {
-                        throw new PropertyNameNotInTypeException(type, propertyName);
+                        throw new PropertyNameNotFoundInTypeException(type, propertyName);
                     }
                 }
             }
@@ -449,7 +460,9 @@ namespace CryptoBlock
                         }
                         else
                         {
-                            propertyValueString = propertyValue.ToString();
+                            propertyValueString = property.StringTransformer != null
+                                ? property.StringTransformer.TransformToString(propertyValue)
+                                : propertyValue.ToString();
                         }
                     }
 

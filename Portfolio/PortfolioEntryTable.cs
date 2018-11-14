@@ -1,7 +1,9 @@
 ﻿using CryptoBlock.CMCAPI;
 using CryptoBlock.ServerDataManagement;
 using CryptoBlock.Utils.Collections;
+using CryptoBlock.Utils.Doubles;
 using CryptoBlock.Utils.Tables;
+using CryptoBlock.Utils.Tables.StringTransformers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -200,7 +202,8 @@ namespace CryptoBlock
                         eDisplayProperty.ProfitPercentageUsd,
                         new Property(
                             PORTFOLIO_ENTRY_PROPERTY_TYPE,
-                            "ProfitPercentageUsd")
+                            "ProfitPercentageUsd",
+                            new DoubleStringTransformer(4))
                     }
                 };
 

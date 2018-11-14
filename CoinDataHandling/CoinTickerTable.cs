@@ -1,7 +1,9 @@
 ﻿using CryptoBlock.CMCAPI;
 using CryptoBlock.Utils;
 using CryptoBlock.Utils.Collections;
+using CryptoBlock.Utils.Doubles;
 using CryptoBlock.Utils.Tables;
+using CryptoBlock.Utils.Tables.StringTransformers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +25,8 @@ namespace CryptoBlock
                 Volume24hUsd,
                 PricePercentChange24hUsd
             }
+
+            private const int DOUBLE_DISPLAY_NUMBER_OF_MOST_SIGNIFICANT_DIGITS = 7;
 
             // Properties associated with CoinData
             private static readonly Property[] COIN_DATA_PROPERTIES =
@@ -51,25 +55,29 @@ namespace CryptoBlock
                         eDisplayProperty.CirculatingSupply,
                         new Property(
                             COIN_TICKER_PROPERTY_TYPE,
-                            "CirculatingSupply")
+                            "CirculatingSupply",
+                            new DoubleStringTransformer(7))
                     },
                     {
                         eDisplayProperty.PriceUsd,
                         new Property(
                             COIN_TICKER_PROPERTY_TYPE,
-                            "PriceUsd")
+                            "PriceUsd",
+                            new DoubleStringTransformer(7))
                     },
                     {
                         eDisplayProperty.Volume24hUsd,
                         new PropertyTable.Property(
                             COIN_TICKER_PROPERTY_TYPE,
-                            "Volume24hUsd")
+                            "Volume24hUsd",
+                            new DoubleStringTransformer(7))
                     },
                     {
                         eDisplayProperty.PricePercentChange24hUsd,
                         new Property(
                             COIN_TICKER_PROPERTY_TYPE,
-                            "PricePercentChange24hUsd")
+                            "PricePercentChange24hUsd",
+                            new DoubleStringTransformer(4))
                     },
                 };
 
