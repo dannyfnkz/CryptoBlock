@@ -63,9 +63,9 @@ namespace CryptoBlock
                     PortfolioManager.Instance.RemoveCoins(coinIds);
 
                     // log success notice
-                    string portfolioRemoveSuccessNotice = buildPortfolioRemoveSuccessNotice(coinIds);
+                    string portfolioCoinRemoveSuccessNotice = buildPortfolioCoinRemoveSuccessNotice(coinIds);
                     ConsoleIOManager.Instance.LogNotice(
-                        portfolioRemoveSuccessNotice,
+                        portfolioCoinRemoveSuccessNotice,
                         ConsoleIOManager.eOutputReportType.CommandExecution);
 
                     commandExecutedSuccessfuly = true;
@@ -103,7 +103,16 @@ namespace CryptoBlock
                 return commandExecutedSuccessfuly;
             }
 
-            private static string buildPortfolioRemoveSuccessNotice(long[] coinIds)
+            /// <summary>
+            /// returns a success notice for removing coins corresponding to
+            /// specified <paramref name="coinIds"/>.
+            /// </summary>
+            /// <param name="coinIds"></param>
+            /// <returns>
+            /// success notice for removing coins corresponding to
+            /// specified <paramref name="coinIds"/>
+            /// </returns>
+            private static string buildPortfolioCoinRemoveSuccessNotice(long[] coinIds)
             {
                 StringBuilder removeNoticeStringBuilder = new StringBuilder();
 

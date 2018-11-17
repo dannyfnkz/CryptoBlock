@@ -2,9 +2,7 @@
 using CryptoBlock.PortfolioManagement.Transactions;
 using CryptoBlock.ServerDataManagement;
 using CryptoBlock.Utils;
-using CryptoBlock.Utils.IO.SQLite.Schema;
 using CryptoBlock.Utils.Strings;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -75,6 +73,10 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// thrown if <see cref="ExchangeHolding"/> in exchange having <see cref="ExchangeName"/>
+            /// is not sufficient for the requested operation.
+            /// </summary>
             public class InsufficientFundsException : PortfolioEntryException
             {
                 private readonly string exchangeName;
@@ -133,6 +135,9 @@ namespace CryptoBlock
                 updateDynamicData();
             }
 
+            /// <summary>
+            /// <see cref="PortfolioEntry"/> ID, as set in database.
+            /// </summary>
             public long Id
             {
                 get { return id; }
@@ -189,6 +194,15 @@ namespace CryptoBlock
                 get { return profitPercentageUsd; }
             }
 
+            /// <summary>
+            /// returns amount of coins of <see cref="CoinId"/> stored in exchange having
+            /// specified <paramref name="exchangeName"/>.
+            /// </summary>
+            /// <param name="exchangeName"></param>
+            /// <returns>
+            /// amount of coins of <see cref="CoinId"/> stored in exchange having
+            /// specified <paramref name="exchangeName"/>
+            /// </returns>
             internal double GetCoinHoldings(string exchangeName)
             {
                 double coinHoldings;
@@ -209,23 +223,47 @@ namespace CryptoBlock
                 return coinHoldings;
             }
 
+            /// <summary>
+            /// handles specified <see cref="BuyTransaction"/>
+            /// </summary>
+            /// <seealso cref="addTransaction(Transaction)"/>
+            /// <param name="buyTransaction"></param>
             internal void Buy(Transaction buyTransaction)
             {
                 addTransaction(buyTransaction);
             }
 
-
+            /// <summary>
+            /// handles specified <paramref name="sellTransaction"/>.
+            /// </summary>
+            /// <seealso cref="addTransaction(Transaction)"/>
+            /// <param name="sellTransaction"></param>
             internal void Sell(SellTransaction sellTransaction)
             {
                 addTransaction(sellTransaction);
             }
 
+            /// <summary>
+            /// sets specified <paramref name="coinTicker"/> and updates relevant data fields
+            /// accordingly.
+            /// </summary>
+            /// <seealso cref="updateProfitPercentageUsd"/>
+            /// <param name="coinTicker"></param>
             internal void SetCoinTicker(CoinTicker coinTicker)
             {
                 this.coinTicker = coinTicker;
                 updateProfitPercentageUsd();
             }
 
+            /// <summary>
+            /// returns a detailed <see cref="String"/> representation of this
+            /// <see cref="PortfolioEntry"/>.
+            /// </summary>
+            /// <seealso cref="getDataFieldstring{T}(T?)"/>
+            /// <returns>
+            /// detailed <see cref="String"/> representation of this
+            /// <see cref="PortfolioEntry"/>
+            /// </returns>
             internal String GetDetailedString()
             {
                 StringBuilder detailedStringBuilder = new StringBuilder();
@@ -240,12 +278,12 @@ namespace CryptoBlock
                 detailedStringBuilder.AppendFormatLine("Symbol: {0}", coinSymbol);
 
                 // append coin price (USD)
-                string coinPriceUsdString = GetDataFieldstring(this.coinTicker.PriceUsd);
+                string coinPriceUsdString = getDataFieldstring(this.coinTicker.PriceUsd);
                 detailedStringBuilder.AppendFormatLine("Price (USD): {0}", coinPriceUsdString);
 
                 // append % of 24 hour coin price change
-                string coinPricePercentChange24hUsdString = 
-                    GetDataFieldstring(this.coinTicker.PricePercentChange24hUsd);
+                string coinPricePercentChange24hUsdString =
+                    getDataFieldstring(this.coinTicker.PricePercentChange24hUsd);
                 detailedStringBuilder.AppendFormatLine(
                     "Price change % (24h): {0}",
                     coinPricePercentChange24hUsdString);
@@ -258,7 +296,7 @@ namespace CryptoBlock
                     coinSymbol);
 
                 // append coin holding for each exchange
-                string[] exchangeNameArray =this.exchangeNameToExchangeCoinHolding.Keys.ToArray();
+                string[] exchangeNameArray = this.exchangeNameToExchangeCoinHolding.Keys.ToArray();
                 Array.Sort(exchangeNameArray);
                 foreach(string exchangeName in exchangeNameArray)
                 {
@@ -273,7 +311,7 @@ namespace CryptoBlock
 
                 // append coin % of profit (USD)
                 string coinProfitPercentageUsd =
-                    GetDataFieldstring(this.ProfitPercentageUsd);
+                    getDataFieldstring(this.ProfitPercentageUsd);
                 detailedStringBuilder.AppendFormatLine(
                     "Profit % (USD): {0}%",
                     coinProfitPercentageUsd);
@@ -281,13 +319,27 @@ namespace CryptoBlock
                 return detailedStringBuilder.ToString();
             }
 
-            private string GetDataFieldstring<T>(Nullable<T> nullable) where T : struct
+            /// <summary>
+            /// returns a <see cref="String"/> representation of data field represented by
+            /// specified <paramref name="nullable"/>.
+            /// </summary>
+            /// <typeparam name="T"></typeparam>
+            /// <param name="nullable"></param>
+            /// <returns>
+            /// <see cref="String"/> representation of data field represented by
+            /// specified <paramref name="nullable"/>.
+            /// </returns>
+            private string getDataFieldstring<T>(Nullable<T> nullable) where T : struct
             {
                 return nullable.HasValue
                     ? nullable.Value.ToString()
                     : NOT_AVAILABLE_DATA_FIELD_STRING;
             }
                 
+            /// <summary>
+            /// associates specified <paramref name="transaction"/> with this <see cref="PortfolioEntry"/>.
+            /// </summary>
+            /// <param name="transaction"></param>
             private void addTransaction(Transaction transaction)
             {
                 PortfolioDatabaseManager.Instance.ExecuteAsOneAction(
@@ -316,6 +368,18 @@ namespace CryptoBlock
                 );
             }
 
+            /// <summary>
+            /// handles specified <paramref name="transaction"/> and returns
+            /// <see cref="ExchangeCoinHolding"/> associated with it.
+            /// </summary>
+            /// <param name="transaction"></param>
+            /// <param name="newExchangeCoinHoldingAdded">
+            /// whether a new <see cref="ExchangeCoinHolding"/> was created in the process of
+            /// handling specified <paramref name="transaction"/>.
+            /// </param>
+            /// <returns>
+            /// <see cref="ExchangeCoinHolding"/> associated with handled <paramref name="transaction"/>
+            /// </returns>
             private ExchangeCoinHolding handleTransaction(
                 Transaction transaction, 
                 out bool newExchangeCoinHoldingAdded)
@@ -409,6 +473,10 @@ namespace CryptoBlock
                 return newAverageBuyPrice;
             }
 
+            /// <summary>
+            /// initializes <see cref="exchangeNameToExchangeCoinHolding"/>.
+            /// </summary>
+            /// <param name="exchangeCoinHoldings"></param>
             private void initializeExchangeNameToExchangeCoinHoldingDictionary(
                 IList<ExchangeCoinHolding> exchangeCoinHoldings)
             {
@@ -420,6 +488,12 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// updates dynamic data fields.
+            /// </summary>
+            /// <seealso cref="updateCoinHoldings"/>
+            /// <seealso cref="updateAverageCoinBuyPrice"/>
+            /// <seealso cref="updateProfitPercentageUsd"/>
             private void updateDynamicData()
             {
                 updateCoinHoldings();
@@ -427,6 +501,10 @@ namespace CryptoBlock
                 updateProfitPercentageUsd();
             }
 
+            /// <summary>
+            /// updates <see cref="CoinHoldings"/> based on <see cref="ExchangeCoinHolding.Amount"/>
+            /// of each <see cref="ExchangeCoinHolding"/>.
+            /// </summary>
             private void updateCoinHoldings()
             {
                 this.coinHoldings = 0;
@@ -438,6 +516,10 @@ namespace CryptoBlock
                 }
             }
 
+            /// <summary>
+            /// updates <see cref="AverageCoinBuyPrice"/> based on 
+            /// <see cref="ExchangeCoinHolding.AverageBuyPrice"/> of each <see cref="ExchangeCoinHolding"/>.
+            /// </summary>
             private void updateAverageCoinBuyPrice()
             {
                 if(!this.HasNoCoinHoldings)

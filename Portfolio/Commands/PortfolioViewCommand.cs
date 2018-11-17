@@ -91,7 +91,7 @@ namespace CryptoBlock
                     }
                     else if(coinIdsWithPortfolioEntry.Count == 1) // a single PortfolioEntry
                     {
-                        // print PortfolioEntry's detailed string
+                        // print PortfolioEntry's detailed data string
                         long portfolioEntryCoinId = coinIdsWithPortfolioEntry[0];
                         PortfolioEntry portfolioEntry =
                             PortfolioManager.Instance.GetPortfolioEntry(portfolioEntryCoinId);
@@ -128,6 +128,7 @@ namespace CryptoBlock
 
                     commandExecutedSuccessfuly = true;
                 }
+                // user specified coin names / symbols which don't exist in CoinListingManager
                 catch (CoinListingManager.CoinNameOrSymbolNotFoundException coinNameOrSymbolNotFoundException)
                 {
                     ConsoleIOManager.Instance.LogError(

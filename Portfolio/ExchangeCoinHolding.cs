@@ -9,6 +9,10 @@ namespace CryptoBlock
 {
     namespace PortfolioManagement
     {
+        /// <summary>
+        /// represents a holding of coin having <see cref="CoinId"/> in exchange having 
+        /// <see cref="ExchangeName"/>.
+        /// </summary>
         public class ExchangeCoinHolding
         {
             private readonly long coinId;
@@ -48,6 +52,10 @@ namespace CryptoBlock
                 get { return averageBuyPrice; }
             }
 
+            /// <summary>
+            /// handles <paramref name="transaction"/> made to this <see cref="ExchangeCoinHolding"/>.
+            /// </summary>
+            /// <param name="transaction"></param>
             internal void HandleTransaction(Transaction transaction)
             {
                 if (transaction.TransactionType == Transaction.eTransactionType.Buy)

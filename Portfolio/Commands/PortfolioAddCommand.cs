@@ -59,9 +59,9 @@ namespace CryptoBlock
                     PortfolioManager.Instance.AddCoins(coinIds);
 
                     // log success notice
-                    string coinsPortfolioAddSuccessNotice = buildPortfolioAddSuccessNotice(coinIds);
+                    string portfolioCoinAddSuccessNotice = buildPortfolioCoinAddSuccessNotice(coinIds);
                     ConsoleIOManager.Instance.LogNotice(
-                        coinsPortfolioAddSuccessNotice,
+                        portfolioCoinAddSuccessNotice,
                         ConsoleIOManager.eOutputReportType.CommandExecution);
 
                     commandExecutedSuccessfuly = true;
@@ -97,7 +97,16 @@ namespace CryptoBlock
                 return commandExecutedSuccessfuly;
             }
 
-            private static string buildPortfolioAddSuccessNotice(long[] coinIds)
+            /// <summary>
+            /// returns a success notice for adding coins corresponding
+            /// to specified <paramref name="coinIds"/>.
+            /// </summary>
+            /// <param name="coinIds"></param>
+            /// <returns>
+            /// success notice for adding coins corresponding
+            /// to specified <paramref name="coinIds"/>
+            /// </returns>
+            private static string buildPortfolioCoinAddSuccessNotice(long[] coinIds)
             {
                 StringBuilder successNoticeStringBuilder = new StringBuilder();
 

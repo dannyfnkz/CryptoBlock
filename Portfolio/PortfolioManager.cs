@@ -1,13 +1,9 @@
 ﻿using CryptoBlock.CMCAPI;
-using CryptoBlock.ExceptionManagement;
-using CryptoBlock.IOManagement;
 using CryptoBlock.PortfolioManagement.Transactions;
 using CryptoBlock.ServerDataManagement;
-using CryptoBlock.Utils;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using static CryptoBlock.PortfolioManagement.PortfolioEntry;
 using static CryptoBlock.Utils.IO.SQLite.SQLiteDatabaseHandler;
 
 namespace CryptoBlock

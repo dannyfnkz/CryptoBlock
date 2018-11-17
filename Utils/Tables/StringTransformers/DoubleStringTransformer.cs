@@ -10,6 +10,10 @@ namespace CryptoBlock
 {
     namespace Utils.Tables.StringTransformers
     {
+        /// <summary>
+        /// transforms <see cref="Double"/> provided as argument into a <see cref="string"/>
+        /// representation of its <see cref="numberOfMostSignificantDigits"/> most significant digits.
+        /// </summary>
         public class DoubleStringTransformer : IStringTransformer
         {
             private const int DEFAULT_NUMBER_OF_MOST_SIGNIFICANT_DIGITS_IN_STRING_REPRESENTATION = 7;

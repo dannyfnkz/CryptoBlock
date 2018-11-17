@@ -78,7 +78,6 @@
     <Compile Include="Doubles\DoubleExtensionMethods.cs" />
     <Compile Include="EnumUtils.cs" />
     <Compile Include="InternetUtils\HttpGetRequestHandler.cs" />
-    <Compile Include="Ints\IntUtils.cs" />
     <Compile Include="Ints\IntExtensionMethods.cs" />
     <Compile Include="IO\ConsoleIO\ConsoleGraphicsHandler.cs" />
     <Compile Include="IO\FileIO\FileIOUtils.cs" />

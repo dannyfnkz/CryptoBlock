@@ -9,11 +9,26 @@ namespace CryptoBlock
 {
     namespace Utils.Doubles
     {
+        /// <summary>
+        /// contains extension methods for <see cref="double"/>.
+        /// </summary>
         public static class DoubleExtensionMethods
         {
-            // if numberOfMostSignificantDigits <=0  return "0'
-            // if numberOfMostSignificantDigits > total number of digits in d (including integer
-            // part and mantissa) pads with zeros to the right of the mantissa 
+            /// <summary>
+            /// returns a string representation of the <paramref name="numberOfMostSignificantDigits"/>
+            /// most significant digits of <paramref name="d"/>.
+            /// </summary>
+            /// <param name="d"></param>
+            /// <param name="numberOfMostSignificantDigits"></param>
+            /// <returns>
+            /// <para>
+            /// string representation of the <paramref name="numberOfMostSignificantDigits"/>
+            /// most significant digits of <paramref name="d"/>;
+            /// </para>
+            /// <para>
+            /// "0" if <paramref name="numberOfMostSignificantDigits"/> is less than or equal to 0
+            /// </para>
+            /// </returns>
             public static string toMostSignificantDigitString(
                 this double d,
                 int numberOfMostSignificantDigits)
@@ -49,8 +64,8 @@ namespace CryptoBlock
                     string signSymbolString = mantissaPartInt.getSignSymbolString();
 
                     // remove sign from integer antissa parts
-                    integerPart = IntUtils.GetNonNegative(integerPart);
-                    mantissaPartInt = IntUtils.GetNonNegative(mantissaPartInt);
+                    integerPart = Math.Abs(integerPart);
+                    mantissaPartInt = Math.Abs(mantissaPartInt);
 
                     mostSignificantDigitStringRepresentation = string.Format(
                           "{0}{1}.{2}",

@@ -1,4 +1,4 @@
 
-format doubles in table
+command syntax and documentation in .txt file
 
-documentation
+menu & help for commands, about
